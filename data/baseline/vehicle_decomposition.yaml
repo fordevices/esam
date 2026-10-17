@@ -1,0 +1,127 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SYNTHETIC ESAM BASELINE — for learning only. Not a real programme.
+#
+# Format follows ESAM_Pilot_Implementation_v1.0.md §4.3 (the SE-owned YAML
+# baseline). WBS codes are the real MIL-STD-881F Appendix G codes
+# (13 May 2022, G.3 table); everything below Level 3 is invented.
+#
+# The story: a light tactical vehicle with two software-heavy subsystems —
+#   * Brake Control ECU  — hard real-time, safety-critical  -> RTOS
+#   * Driver Digital Cluster — soft real-time display       -> Linux (GPOS)
+# They talk over a SAE J1939 CAN backbone. The brake ECU broadcasts the
+# EBC1 message; the cluster (and, possibly, the engine ECM) consume it.
+# ─────────────────────────────────────────────────────────────────────────────
+
+metadata:
+  programme: "SYNTH-LTV (synthetic light tactical vehicle)"
+  mil_std_ref: "MIL-STD-881F Appendix G"
+  baseline_rev: "0.1"
+  synthetic: true
+
+vehicle:
+  id: V-001
+  name: "SYNTH-LTV Ground Vehicle System"
+  wbs_code: "1.0"
+  families:
+    - id: FAM-001
+      name: "SYNTH-LTV Family of Vehicles"
+      wbs_code: "1.1"
+      variants:
+        - id: VAR-001
+          name: "Lead Variant (Utility)"
+          wbs_code: "1.1.1"
+          role: lead
+          systems:
+
+            # G.4.2.1.5: "Wheels, tracks, BRAKES, and steering gears for
+            # traction and control functions" -> brake control lives here.
+            - id: SYS-SUSP
+              name: "Suspension/Steering"
+              wbs_code: "1.1.1.5"
+              universality: universal
+              subsystems:
+                - id: SUB-BRK-ECU
+                  name: "Brake Control ECU (ABS)"
+                  safety_critical: true
+                  safety_classification: "MIL-STD-882E SwCI 1"
+                  os_class: rtos
+                  j1939_source_address: 11      # "Brakes - System Controller"
+                  functions:
+                    - id: FN-BRK-SLIP
+                      name: "Wheel-slip regulation"
+                      description: "Modulates brake pressure per wheel to prevent wheel lock-up."
+                      safety_classification: "SwCI 1"
+                    - id: FN-BRK-STATUS
+                      name: "Brake status broadcast"
+                      description: "Publishes ABS/brake state on the J1939 backbone (EBC1)."
+
+            # G.4.2.1.6: "Data control and distribution", "Controls and
+            # displays" -> the CAN backbone and the driver cluster live here.
+            - id: SYS-VETR
+              name: "Vehicle Electronics"
+              wbs_code: "1.1.1.6"
+              universality: universal
+              subsystems:
+                - id: SUB-J1939-BB
+                  name: "J1939 Vehicle Data Backbone"
+                  safety_critical: true
+                  functions:
+                    - id: FN-BB-TRANSPORT
+                      name: "CAN message transport"
+                      description: "250 kbit/s J1939 CAN segment connecting powertrain, chassis and crew-station ECUs."
+                - id: SUB-DCL
+                  name: "Driver Digital Cluster"
+                  safety_critical: false
+                  os_class: gpos
+                  j1939_source_address: 23      # "Instrument Cluster #1"
+                  functions:
+                    - id: FN-DCL-BRKWARN
+                      name: "Brake warning telltales"
+                      description: "Shows ABS fault and brake-system warnings to the driver."
+                    - id: FN-DCL-NVG
+                      name: "NVG / blackout display mode"
+                      description: "Night-vision-goggle compatible dimming and blackout operation."
+
+            # G.4.2.1.7: Power Package/Drive Train (engine)
+            - id: SYS-PWR
+              name: "Power Package/Drive Train"
+              wbs_code: "1.1.1.7"
+              universality: universal
+              subsystems:
+                - id: SUB-ENG-ECM
+                  name: "Engine Control Module"
+                  safety_critical: false
+                  j1939_source_address: 0       # "Engine #1"
+
+# Interfaces = edges of the graph. `status` follows the SCHEMA-GRAPH pattern:
+# candidate = proposed, not yet reviewed by an SE; confirmed = reviewed.
+interfaces:
+  - from: SUB-BRK-ECU
+    to: SUB-J1939-BB
+    type: signal
+    message: "EBC1 (PGN 61441)"
+    status: confirmed
+    source_artifact: ICD-BRK-001
+  - from: SUB-J1939-BB
+    to: SUB-DCL
+    type: signal
+    message: "EBC1 (PGN 61441)"
+    status: confirmed
+    source_artifact: ICD-BRK-001
+  - from: SUB-J1939-BB
+    to: SUB-ENG-ECM
+    type: signal
+    message: "EBC1 (PGN 61441)"
+    status: candidate                   # nobody has confirmed the ECM uses it
+    source_artifact: ""
+    notes: "ECM may use EBC1 ASR bits for traction torque reduction — unconfirmed."
+
+# Artifacts. `file` is relative to data/documents/; the file stem equals the
+# artifact id, so documents link to graph nodes by EXACT id (the earlier
+# script guessed links from file names).
+artifacts:
+  - { id: ICD-BRK-001,  name: "Brake ECU J1939 Interface Control Document", type: icd,  revision: A, attached_to: SUB-BRK-ECU, file: ICD-BRK-001.md }
+  - { id: SSDD-BRK-001, name: "Brake Control ECU Software Design",          type: ssdd, revision: A, attached_to: SUB-BRK-ECU, file: SSDD-BRK-001.md }
+  - { id: SSR-BRK-001,  name: "Brake Control ECU Software Requirements",    type: ssr,  revision: A, attached_to: SUB-BRK-ECU, file: SSR-BRK-001.md }
+  - { id: SSDD-DCL-001, name: "Driver Digital Cluster Software Design",     type: ssdd, revision: A, attached_to: SUB-DCL,     file: SSDD-DCL-001.md }
+  - { id: SSR-DCL-001,  name: "Driver Digital Cluster Software Requirements", type: ssr, revision: A, attached_to: SUB-DCL,    file: SSR-DCL-001.md }

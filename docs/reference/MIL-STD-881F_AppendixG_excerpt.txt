@@ -1,0 +1,399 @@
+                                                     APPENDIX G
+
+                                        APPENDIX G: GROUND VEHICLE SYSTEMS
+                        APPENDIX G: GROUND VEHICLE SYSTEMS
+                     WORK BREAKDOWN STRUCTURE AND DEFINITIONS
+G.1 SCOPE
+         This appendix provides the Work Breakdown Structure and Definitions for ground vehicle systems. Definitions
+for WBS elements common to all defense materiel items are given in Appendix K: Common Elements, Work Breakdown
+Structure and Definitions.
+
+G.2 APPLICABLE DOCUMENTS
+
+         G.2.1 General. The documents listed in this section are specified in Appendix G of this Standard. This section
+does not include documents cited in other appendices of this Standard or recommended for additional information or as
+examples. While every effort has been made to ensure the completeness of this list, document users are cautioned that
+they must meet all specified requirements of documents cited in appendices of this Standard, whether or not they are
+listed.
+
+         G.2.2 Government documents.
+
+          G.2.2.1     Specifications, standards, and handbooks. The following specifications, standards, and handbooks
+form a part of this document to the extent specified herein. Unless otherwise specified, the issues of these documents are
+those cited in the solicitation or contract.
+
+         G.2.2.2 Other Government documents, drawings, and publications.
+
+         G.2.3 Non-Government publications. The following documents form a part of this document to the extent
+specified herein. Unless otherwise specified, the issues of these documents are those cited in the solicitation or contract.
+
+                     INSTITUTE OF ELECTRICAL AND ELECTRONICS ENGINEERS (IEEE)
+
+                      IEEE 24765:2017 – Systems and Software Engineering – Vocabulary
+           ISO/IEC/IEEE 12207:2017 - Systems and Software Engineering – Software Life Cycle Processes
+
+(Copies of these documents are available from www.ieee.org or The Institute of Electrical and Electronics Engineers,
+                    Inc. (IEEE) Operations Center, 445 Hoes Lane, Piscataway, NJ 08854-1331)
+
+
+
+
+                                                           132
+
+                           Source: http://assist.dla.mil -- Downloaded: 2022-07-14T18:37Z
+                         Check the source to verify that this is the current version before use.
+                                                 MIL-STD-881F
+                                                 APPENDIX G
+
+G.3 WORK BREAKDOWN STRUCTURE LEVELS
+WBS # Level 1 Level 2 Level 3 Level 4
+1.0      Ground Vehicle System
+1.1             Family of Vehicles
+1.1.1                    Lead Variant
+1.1.1.1                            Lead Variant Integration, Assembly, Test, and Checkout
+1.1.1.2                            Hull/Frame/Body/Cab
+1.1.1.3                            System Survivability
+1.1.1.4                            Turret Assembly
+1.1.1.5                            Suspension/Steering
+1.1.1.6                            Vehicle Electronics
+1.1.1.7                            Power Package/Drive Train
+1.1.1.8                            Auxiliary Automotive
+1.1.1.9                            Fire Control
+1.1.1.10                           Armament
+1.1.1.11                           Automatic Ammunition Handling
+1.1.1.12                           Navigation and Remote Piloting Systems
+1.1.1.13                           Special Equipment
+1.1.1.14                           Communications
+1.1.1.15                           Lead Variant Software Release 1...n (Specify)
+1.1.1.16                           Other Lead Variant Subsystems 1...n (Specify)
+1.1.2                    Variant 2...n (Specify)
+1.1.2.1                            Variant Integration, Assembly, Test, and Checkout
+1.1.2.2                            Hull/Frame/Body/Cab
+1.1.2.3                            System Survivability
+1.1.2.4                            Turret Assembly
+1.1.2.5                            Suspension/Steering
+1.1.2.6                            Vehicle Electronics
+1.1.2.7                            Power Package/Drive Train
+1.1.2.8                            Auxiliary Automotive
+1.1.2.9                            Fire Control
+1.1.2.10                           Armament
+1.1.2.11                           Automatic Ammunition Handling
+1.1.2.12                           Navigation and Remote Piloting Systems
+1.1.2.13                           Special Equipment
+1.1.2.14                           Communications
+1.1.2.15                           Variant Software Release 1...n (Specify)
+1.1.2.16                           Other Variant Subsystems 1...n (Specify)
+1.1.3                    Equipment Kits 1...n (Specify)
+1.2             Secondary Vehicle (See Note at G.4.3)
+1.3             Systems Engineering
+1.3.1                    Software Systems Engineering
+1.3.2                    Integrated Logistics Support (ILS) Systems Engineering
+1.3.3                    Cybersecurity Systems Engineering
+1.3.4                    Core Systems Engineering
+1.3.5                    Other Systems Engineering 1...n (Specify)
+1.4             Program Management
+1.4.1                    Software Program Management
+1.4.2                    Integrated Logistics Support (ILS) Program Management
+1.4.3                    Cybersecurity Management
+1.4.4                    Core Program Management
+1.4.5                    Other Program Management 1...n (Specify)
+1.5             System Test and Evaluation
+1.5.1                    Developmental Test and Evaluation
+1.5.1.1                            Cybersecurity Test and Evaluation
+1.5.1.2                            Other DT&E Tests 1…n (Specify)
+
+                                                        133
+                         Source: http://assist.dla.mil -- Downloaded: 2022-07-14T18:37Z
+                       Check the source to verify that this is the current version before use.
+                                           MIL-STD-881F
+                                           APPENDIX G
+
+1.5.2                Operational Test and Evaluation
+1.5.2.1                        Cybersecurity Test and Evaluation
+1.5.2.2                        Other OT&E Tests 1…n (Specify)
+1.5.3                Live Fire Test and Evaluation
+1.5.4                Mock-ups/System Integration Labs (SILs)
+1.5.5                Test and Evaluation Support
+1.5.6                Test Facilities
+1.6       Training
+1.6.1                Equipment
+1.6.1.1                         Operator Instructional Equipment
+1.6.1.2                         Maintainer Instructional Equipment
+1.6.2                Services
+1.6.2.1                         Operator Instructional Services
+1.6.2.2                         Maintainer Instructional Services
+1.6.3                Facilities
+1.6.4                Training Software 1...n (Specify)
+1.7       Data
+1.7.1               Data Deliverables 1...n (Specify)
+1.7.2               Data Repository
+1.7.3               Data Rights 1...n (Specify)
+1.8       Peculiar Support Equipment
+1.8.1               Test and Measurement Equipment
+1.8.1.1                        Test and Measurement Equipment (Airframe/Hull/Vehicle)
+1.8.1.2                        Test and Measurement Equipment (Propulsion)
+1.8.1.3                        Test and Measurement Equipment (Electronics/Avionics)
+1.8.1.4                        Test and Measurement Equipment (Other Major Subsystems 1...n (Specify))
+1.8.2               Support and Handling Equipment
+1.8.2.1                        Support and Handling Equipment (Airframe/Hull/Vehicle)
+1.8.2.2                        Support and Handling Equipment (Propulsion)
+1.8.2.3                        Support and Handling Equipment (Electronics/Avionics)
+1.8.2.4                        Support and Handling Equipment (Other Major Subsystems 1...n (Specify))
+1.9       Common Support Equipment
+1.9.1               Test and Measurement Equipment
+1.9.1.1                        Test and Measurement Equipment (Airframe/Hull/Vehicle)
+1.9.1.2                        Test and Measurement Equipment (Propulsion)
+1.9.1.3                        Test and Measurement Equipment (Electronics/Avionics)
+1.9.1.4                        Test and Measurement Equipment (Other Major Subsystems 1...n (Specify))
+1.9.2               Support and Handling Equipment
+1.9.2.1                        Support and Handling Equipment (Airframe/Hull/Vehicle)
+1.9.2.2                        Support and Handling Equipment (Propulsion)
+1.9.2.3                        Support and Handling Equipment (Electronics/Avionics)
+1.9.2.4                        Support and Handling Equipment (Other Major Subsystems 1...n (Specify))
+1.10      Operational/Site Activation by Site 1...n (Specify)
+1.10.1              System Assembly, Installation, and Checkout
+1.10.2              Contractor Technical Support
+1.10.3              Site Construction
+1.10.4              Site/Ship/Vehicle Conversion
+1.10.5              Interim Contractor Support
+1.11      Contractor Logistics Support (CLS)
+1.12      Industrial Facilities
+1.12.1              Construction/Conversion/Expansion
+1.12.2              Equipment Acquisition or Modernization
+1.12.3              Maintenance (Industrial Facilities)
+1.13      Initial Spares and Repair Parts
+
+
+
+
+                                                  134
+                   Source: http://assist.dla.mil -- Downloaded: 2022-07-14T18:37Z
+                 Check the source to verify that this is the current version before use.
+                                                       MIL-STD-881F
+                                                       APPENDIX G
+
+         G.3.1 Application of Common WBS Elements (Appendix K). WBS elements that are common (i.e., Integration,
+
+[...]
+
+                                                     APPENDIX G
+
+
+        G.4.2.1.1 Lead Variant Integration, Assembly, Test, and Checkout. This element includes all effort of technical
+and functional activities associated with the design, development, and production of mating common surfaces,
+structures, equipment, parts, materials, and software required to assemble and test the vehicle subsystem parts and
+subsystems equipment (hardware/software) elements. Reference Appendix K: Common Elements, Work Breakdown
+Structure and Definitions for further detail.
+
+         G.4.2.1.2 Hull/Frame/Body/Cab. The vehicle’s primary load bearing component, which provides the structural
+integrity to withstand the operational loading stresses generated while traversing various terrain profiles (hull/frame),
+and (if applicable) the major component to be mated to a chassis to provide a complete vehicle having a defined
+mission capability (body/cab).
+
+          Includes, for example:
+          a. Simple wheeled vehicle frame or combat vehicle hull that satisfies the structural requirements
+               including armor integral to the frame
+          b. Structural subassemblies and appendages that attach directly to the primary structure
+          c. Towing and lifting fittings, bumpers, hatches, and grilles
+          d. Provision to accommodate other subsystems such as mountings for suspension, weapons, turret,
+               truck body, cab, special equipment loads
+          e. Accommodations for personnel, cargo, and such subsystems as need to be placed in proximity to
+               operators
+          Excludes, for example:
+          a. Non-integral armor and radiological shielding (included in survivability element)
+
+          G.4.2.1.3 System Survivability. The equipment required to maximize the survivability of the crew and the
+system.
+
+          Includes, for example:
+          a. Active protection systems and defensive aids for both short and long-range threats
+          b. Radiological shielding for hull and turret. This includes supplemental ballistic protection,
+               attachment approaches for external armor, liners, and behind armor debris shielding
+          c. Signature management hardware associated with reducing system susceptibility and vulnerability
+          d. Improvised explosive device (IED) countermeasure subsystems
+          e. Fire detection and suppression
+          f. Survivability systems control hardware. This includes electronics, sensors, and miscellaneous
+               equipment that have functionality in more than one survivability WBS element
+          g. Ballistic crew seats for crew protection during ballistic events
+          h. Sensor subsystems, threat warning systems, and hostile weapon fire detection sensor subsystems
+          i. Chemical, biological, radiological, and nuclear survivability
+          j. Combat identification systems
+          k. Anti-tamper systems
+
+         G.4.2.1.4 Turret Assembly. The structure, including armor integral to the turret and equipment
+ installations required to provide the fighting compartment element of combatant vehicles.
+
+          Includes, for example:
+          a. Turret rings, slip rings
+          b. Attachments and appendages, such as hatches and cupolas
+          c. Accommodations for personnel, weapons, and command and control
+          d. Drive motors
+          e. Turret drive stabilization system
+
+          Excludes, for example:
+          a. Non-integral armor and radiological shielding (included in survivability element)
+
+
+
+                                                            137
+                             Source: http://assist.dla.mil -- Downloaded: 2022-07-14T18:37Z
+                           Check the source to verify that this is the current version before use.
+                                                     MIL-STD-881F
+                                                     APPENDIX G
+
+         G.4.2.1.5 Suspension/Steering. The means for generating tractive efforts, thrust, lift, and steering forces
+ generally at or near the Earth’s surface and adapting the vehicle to the irregularities of the surface.
+
+         Includes, for example:
+         a. Wheels, tracks, brakes, and steering gears for traction and control functions
+         b. Rudder thrust devices and trim vanes for amphibians
+         c. Springs, shock absorbers, skirts, and other suspension members
+
+        G.4.2.1.6 Vehicle Electronics. All electronic subsystems and components (hardware/software) distributed
+ throughout the vehicle not directly attributable to other WBS Level 3 elements.
+
+         Includes, for example:
+         a. Computers and other devices for command and control
+         b. Data control and distribution
+         c. Controls and displays
+         d. Power distribution and management
+         e. Health management systems
+
+         Excludes, for example:
+         a. Hardware and software directly associated with other WBS elements
+
+
+  NOTE: If lower level information can be collected, use the structure and definitions in Appendix B,
+  Electronic/Avionics/Generic Systems.
+
+
+         G.4.2.1.7 Power Package/Drive Train. The means for generating and delivering power.
+
+         Includes, for example:
+         a. Engine
+         b. Engine-mounted auxiliaries such as air ducting and manifolds, controls and instrumentation,
+              exhaust systems, and cooling means
+         c. Power transport components as clutches, transmission, shafting assemblies, torque converters,
+              differentials, final drivers, and power takeoffs
+         d. Brakes and steering when integral to power transmission rather than in the suspension/steering
+              element
+         e. Hybrid electric drive systems
+         f. Energy storage systems
+         g. Raw power generators
+
+         G.4.2.1.8 Auxiliary Automotive. Hardware and software subsystems that provide services to all of the primary
+ vehicle subsystems (as distinguished from the mission equipment subsystems).
+         Includes, for example:
+         a. On-board diagnostics/prognostics system not included in other subsystems
+         b. Winch and power take-off, tools, and on-vehicle equipment
+         c. Crew accommodations (when otherwise not provided for)
+         d. Lighting systems
+
+         Excludes, for example:
+         a. Electrical subsystems and components that are now included in the vehicle electronics WBS
+             element
+         b. Fire detection and suppression system and controls associated with survivability
+
+          G.4.2.1.9 Fire Control. The equipment (hardware and software) installed in the vehicle, which provides
+intelligence necessary for weapons delivery such as launching and firing.
+
+
+                                                            138
+                             Source: http://assist.dla.mil -- Downloaded: 2022-07-14T18:37Z
+                           Check the source to verify that this is the current version before use.
+                                                  MIL-STD-881F
+                                                  APPENDIX G
+
+       Includes, for example:
+       a. Radars and other sensors necessary for search, recognition, and/or tracking
+       b. Controls and displays
+       c. Sights or scopes
+       d. Range finders, computers, computer programs, gun drives, and stabilization systems
+
+
+NOTE: If lower level information can be collected, use the structure and definitions in Appendix B,
+Electronic/Avionics/Generic Systems.
+
+
+       G.4.2.1.10 Armament. The equipment (hardware and software) for vehicles to deliver fire on targets.
+
+       Includes, for example:
+       a. Main gun and secondary guns
+       b. Missile launchers
+       c. Non-lethal weapons
+       d. Other offensive weapon systems
+
+       Excludes, for example:
+       a. Fire control systems
+
+     G.4.2.1.11 Automatic Ammunition Handling. The equipment (hardware and software) for selecting
+ammunition from a stored position in the vehicle, transferring it, and loading the armament system.
+
+       Includes, for example:
+       a. The means to eject spent cases and misfired rounds
+       b. Ammunition storage racks, transfer/lift mechanisms, ramming and ejecting mechanisms, as well
+            as specialized hydraulic and electrical controls
+
+       G.4.2.1.12 Navigation and Remote Piloting Systems. The equipment (hardware and software) installed in
+the vehicle that enables the vehicle or its operators to plan and control vehicle speed and direction, determine
+vehicle location, plot the course of the vehicle and perform other mission functions.
+
+       Includes, for example:
+       a. Equipment that senses and processes imagery data such as vision systems, laser scanners, multiple
+            sensor-fusion algorithms and processors, image-enhancement algorithms and processors, etc.
+       b. Equipment that performs mobility intelligence analysis and planning functions such as automated
+            route planners, image-understanding algorithms and processors, computer-aided-driving
+            algorithms and processors, etc.
+       c. Navigation systems such as dead reckoning, inertial, and global positioning systems
+       d. Landmark recognition algorithms and processors
+
+NOTE: If lower level information can be collected, use the structure and definitions in Appendix B,
+Electronic/Avionics/Generic Systems.
+
+         G.4.2.1.13 Special Equipment. The equipment (hardware and software) to be mated to a
+hull/frame/body/cab assembly to achieve a special mission capability.
+
+       Includes, for example:
+       a. All items required to convert basic vehicle configurations to special-purpose configurations
+       b. Blades, booms, winches, robotic arms or manipulators, etc., to equip wreckers, recovery vehicles,
+           supply vehicles and other field work units
+       c. Furnishings and equipment for command, shop, medical and other special-purpose vehicles
+       d. Specialized sensors not included elsewhere
+       e. Mine detection, neutralization, and marking equipment
+
+                                                         139
+                          Source: http://assist.dla.mil -- Downloaded: 2022-07-14T18:37Z
+                        Check the source to verify that this is the current version before use.
+                                                     MIL-STD-881F
+                                                     APPENDIX G
+
+
+      G.4.2.1.14 Communications. The equipment (hardware and software) within the system for
+ communicating information to systems and personnel interior and exterior to operating vehicles.
+
+         Includes, for example:
+         a. Radio frequency equipment, microwave and fiber optic communication links, networking
+             equipment for multiple vehicle control, and intercom and external phone systems
+         b. Means for supplementary communication like visual signaling devices
+         c. Network integration equipment
+
+
+  NOTE: If lower level information can be collected, use the structure and definitions in Appendix B,
+  Electronic/Avionics/Generic Systems.
+
+
+         G.4.2.1.15 Lead Variant Software Release 1...n. All base variant vehicle software not associated with a
+specific Level 3 element.
+
+
+  NOTE: Refer to Appendix B, Electronic/Avionics/Generic Systems for further breakout and definitions for
+  Software.
+
+        G.4.2.1.16 Other Lead Variant Subsystems 1...n (Specify). This element should be replaced with other
+product-oriented base variant subsystems that are either not listed above or that cannot be categorized into one of
+the above elements. Each additional element is to be clearly identified and defined.
+
+
+  NOTE: If lower level information can be collected, use the structure and definitions in Appendix B,
+  Electronic/Avionics/Generic Systems.
+

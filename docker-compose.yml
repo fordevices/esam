@@ -1,0 +1,34 @@
+# Local PostgreSQL 16 + pgvector — mirrors ESAM pilot VM-1, nothing installed on the host.
+#
+#   docker compose up -d        # start (data persists in the esam-pgdata volume)
+#   docker compose down         # stop, keep data
+#   docker compose down -v      # stop AND delete all data (clean slate)
+#
+# Port 5433 on the host (not 5432) so it can never clash with a host-installed
+# Postgres. Bound to 127.0.0.1 only: not reachable from the network.
+#
+# Credentials are for a local learning database only. Change them in .env if
+# you like; the defaults match ESAM_PG_DSN in esamkit/config.py.
+name: esam
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: esam-postgres
+    environment:
+      POSTGRES_USER: ${ESAM_PG_USER:-esam_user}
+      POSTGRES_PASSWORD: ${ESAM_PG_PASSWORD:-esam_local_only}
+      POSTGRES_DB: ${ESAM_PG_DB:-esam_pilot}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - esam-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  esam-pgdata:
+    name: esam-pgdata   # fixed name: `docker volume ls` shows exactly this

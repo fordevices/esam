@@ -1,0 +1,16 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Secrets
+.env
+
+# Large / generated — never commit.
+# (gitignore has no inline comments, so each note sits on its own line.)
+# Staged embedding model (~440 MB); recreate with lessons/00_setup/stage_model.py
+models/
+# Scratch output from lessons
+var/
+# Air-gap transfer bundle (wheels, models, docker images)
+bundle/
