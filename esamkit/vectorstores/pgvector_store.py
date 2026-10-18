@@ -43,6 +43,16 @@ class PgVectorStore(VectorStore):
         self._conn = psycopg.connect(dsn, autocommit=True)
         self._conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
         register_vector(self._conn)  # lets us pass Python lists as vectors
+        # Filtered search + HNSW: the index hands back its ~40 nearest
+        # candidates (hnsw.ef_search) and only THEN is the WHERE filter
+        # applied. A selective filter, e.g. one artifact among thousands, can
+        # leave fewer than k rows, or none. pgvector 0.8 can keep scanning
+        # the index until k rows pass the filter ("iterative scan").
+        # strict_order keeps results exactly ordered by distance.
+        try:
+            self._conn.execute("SET hnsw.iterative_scan = strict_order")
+        except psycopg.errors.Error:
+            pass  # pgvector < 0.8: setting doesn't exist; filtered results may be short
         self._open()
 
     def _open(self):

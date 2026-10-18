@@ -67,7 +67,11 @@ class LocalSentenceTransformerEmbedder(Embedder):
         # device="cpu": the ESAM pilot VMs have no GPU, so we learn on the
         # same footing.
         self._model = SentenceTransformer(str(model_dir), device="cpu")
-        self.dim = self._model.get_sentence_embedding_dimension()
+        # Renamed in sentence-transformers 5.x; support both so older wheels
+        # on the air-gapped side still work.
+        get_dim = (getattr(self._model, "get_embedding_dimension", None)
+                   or self._model.get_sentence_embedding_dimension)
+        self.dim = get_dim()
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         prefix = _DOC_PREFIX.get(self._family, "")

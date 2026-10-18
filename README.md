@@ -26,30 +26,38 @@ that level is invented.
 
 ```
 esam/
-├── docker-compose.yml        local PostgreSQL 16 + pgvector (127.0.0.1:5433)
+├── SESSION_HANDOFF.md        status, local credentials/DBs, resume steps, pending tasks
+├── docker-compose.yml        local PostgreSQL 16 + pgvector 0.8 (127.0.0.1:5433, volume esam-pgdata)
 ├── esamkit/                  the reusable, swappable parts
 │   ├── config.py             all settings from env vars / .env
 │   ├── factory.py            the ONLY place that picks concrete backends
-│   ├── chunking.py           documents -> retrieval-sized chunks
+│   ├── baseline.py           SE YAML baseline -> vertices + edges (no DB code)
+│   ├── chunking.py           documents -> heading-labelled chunks
+│   ├── chat.py               OpenAI-compatible chat client (lesson 05; optional)
 │   ├── embedders/
 │   │   ├── base.py           Embedder interface (embed_documents / embed_query)
 │   │   ├── local_st.py       sentence-transformers, from local folder, offline
 │   │   └── openai_compat.py  any OpenAI-compatible /v1/embeddings endpoint
-│   └── vectorstores/
-│       ├── base.py           VectorStore interface + model-mismatch guard
-│       └── pgvector_store.py PostgreSQL + pgvector (local Docker / pilot VM-1)
+│   ├── vectorstores/
+│   │   ├── base.py           VectorStore interface + model-mismatch guard
+│   │   └── pgvector_store.py PostgreSQL + pgvector, HNSW + iterative filtered scans
+│   └── graphstores/
+│       ├── base.py           GraphStore interface
+│       └── postgres_cte.py   pilot graph schema + recursive-CTE queries (commented SQL)
 ├── data/
 │   ├── baseline/vehicle_decomposition.yaml   SE-owned structure (ESAM YAML format)
 │   └── documents/*.md                        synthetic ICD / SSDD / SSR documents
-└── lessons/
-    ├── 00_setup/          install, stage the model, air-gap transfer bundle
-    ├── 01_corpus/         what we're embedding and why it's shaped this way
-    ├── 02_embeddings/     vectors and cosine similarity, by hand
-    └── 03_vector_store/   chunk -> embed -> store -> search, and its blind spot
+├── docs/reference/           MIL-STD-881F Appendix G excerpt (source of the WBS codes)
+├── lessons/
+│   ├── 00_setup/             install, stage the model, air-gap transfer bundle
+│   ├── 01_corpus/            what we're embedding and why it's shaped this way
+│   ├── 02_embeddings/        vectors and cosine similarity, by hand
+│   ├── 03_vector_store/      chunk -> embed -> store -> search, and its blind spot
+│   ├── 04_graph/             recursive CTEs (+ Gremlin / Cypher equivalents)
+│   └── 05_hybrid/            vector entry point -> graph reach -> chat model answer
+├── tests/                    pytest: pure, graph, pgvector, embedder (DB tests use database esam_test)
+└── dev/offline_test/         zero-download smoke harness (temp PG14, psycopg stand-in, toy embedder)
 ```
-
-Coming next: `04_graph/` (recursive CTE, then Gremlin) and `05_hybrid/` (vector search finds the
-entry point, graph walks from it, chat model writes the answer).
 
 ## Quick start
 
@@ -57,12 +65,18 @@ entry point, graph walks from it, chat model writes the answer).
 cd esam
 python3 -m venv .venv && source .venv/bin/activate
 pip install torch --index-url https://download.pytorch.org/whl/cpu
-pip install -r requirements.txt
-python lessons/00_setup/stage_model.py              # once, needs internet
+pip install -r requirements-dev.txt                 # requirements.txt + pytest
+python lessons/00_setup/stage_model.py              # once, needs internet (~440 MB)
 docker compose up -d --wait                         # local Postgres + pgvector
+
 python lessons/02_embeddings/embeddings_by_hand.py
 python lessons/03_vector_store/ingest.py --reset
 python lessons/03_vector_store/search.py --demo
+python lessons/04_graph/load_graph.py --reset
+python lessons/04_graph/queries.py
+python lessons/05_hybrid/hybrid.py "If we change the EBC1 message period, what is affected?"
+
+pytest -q                                           # 24 tests
 ```
 
 ## Moving to the pilot / swapping backends
@@ -86,5 +100,6 @@ ESAM_OPENAI_EMBED_MODEL=<name>
 model id and dimension it was built with and refuses to open with a different one
 (`ModelMismatchError`). Use a new `ESAM_COLLECTION` or `ingest.py --reset`.
 
-To add a backend (for example a different vector database), implement the five methods of
-`VectorStore` in `esamkit/vectorstores/base.py` and add one branch to `factory.py`.
+To add a backend, implement the interface and add one branch to `factory.py`. For a different
+vector database, that's the five methods of `VectorStore`; for JanusGraph, the methods of
+`GraphStore`, using the Gremlin in `lessons/04_graph/gremlin_equivalents.md`.

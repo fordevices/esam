@@ -1,9 +1,10 @@
 # ESAM learning project: session handoff
 
-**Paused:** 2026-10-17, because the network ran at ~15–75 KB/s and couldn't finish the large
-downloads. **Resume:** on a faster connection, start at [§4 Resume checklist](#4-resume-checklist).
-Everything needed to continue is in this folder. Nothing depends on the internet except the
-downloads listed in §4.
+**Status (2026-10-18):** resumed on a fast connection. Everything is installed, every lesson
+runs end to end on the real stack, and **24/24 tests pass**. What's left is in
+[§5 Pending tasks](#5-pending-tasks-in-order): mainly pushing to GitHub and connecting a chat model.
+
+History: paused 2026-10-17 at ~15–75 KB/s, resumed 2026-10-18 at ~8.5 MB/s.
 
 ---
 
@@ -25,8 +26,9 @@ learning-only default. Don't reuse any of them on the pilot.
 
 | Thing | Host / port | User / password | Database | State right now |
 |---|---|---|---|---|
-| **Main local DB** (`docker-compose.yml`, image `pgvector/pgvector:pg16`, container `esam-postgres`) | `127.0.0.1:5433` | `esam_user` / `esam_local_only` | `esam_pilot` | **Never started.** Image not downloaded yet |
-| ↳ its data volume | Docker named volume **`esam-pgdata`** | | | not created yet. Survives `docker compose down`; deleted only by `down -v` or `docker volume rm esam-pgdata` |
+| **Main local DB** (`docker-compose.yml`, image `pgvector/pgvector:pg16`, container `esam-postgres`) | `127.0.0.1:5433` | `esam_user` / `esam_local_only` | `esam_pilot` (lesson data) | **Running.** PostgreSQL 16.15, pgvector 0.8.7. Holds 28 chunks + the 20-vertex graph |
+| ↳ test database (pytest) | same server | same | `esam_test` | Created by `tests/conftest.py`; tests never touch `esam_pilot` |
+| ↳ its data volume | Docker named volume **`esam-pgdata`** | | | Exists. Survives `docker compose down`; deleted only by `down -v` or `docker volume rm esam-pgdata` |
 | ↳ connection string (default in `esamkit/config.py`) | `postgresql://esam_user:esam_local_only@127.0.0.1:5433/esam_pilot` | | | |
 | **Offline test DB** (host PG14 binaries, `dev/offline_test/start_temp_pg.sh`) | `127.0.0.1:55433` | `tester` / *(no password, trust auth)* | `esamtest` | **Stopped.** Data in `esam/var/pgtest` (gitignored); `start_temp_pg.sh wipe` deletes it |
 | Host system Postgres service (`postgresql`, v14) | 5432 | n/a | n/a | Installed, **inactive, never touched** this session |
@@ -63,72 +65,44 @@ docker-compose.yml    local Postgres 16 + pgvector
 
 | Component | Verified? | How |
 |---|---|---|
-| Baseline loader | ✅ | 20 vertices / 22 edges; artifact→WBS links correct |
-| Chunker | ✅ | 28 chunks over 5 docs, heading-labelled, no mid-word cuts |
-| Graph SQL (Q1 descendants, Q2 ancestors, Q3 impact, Q4 gaps, message origins) | ✅ | Real Postgres 14, idempotent load (load twice → same counts) |
-| `load_graph.py`, `queries.py` | ✅ | End to end via the psycopg stand-in on real Postgres |
-| `ingest.py`, `search.py`, `hybrid.py` control flow | ✅ (plumbing only) | Toy non-semantic embedder + in-memory store. Caught and fixed a real bug: impact must start at the message's *origin*, not wherever vector search lands |
-| `docker-compose.yml` | ✅ syntax | `docker compose config` |
-| `LocalSentenceTransformerEmbedder` | ❌ untested | needs torch + model |
-| `PgVectorStore` (pgvector SQL, HNSW) | ❌ untested | needs pgvector image + psycopg |
-| `embeddings_by_hand.py` (lesson 02) | ❌ untested | needs model |
-| `stage_model.py` | ❌ untested | needs huggingface_hub + internet |
-| `OpenAICompatEmbedder`, `chat.py` | ❌ untested | needs an endpoint |
-| Gremlin / Cypher in `gremlin_equivalents.md` | ❌ not executed | no server; marked as such in the file |
+| Baseline loader, chunker | ✅ | `tests/test_pure.py` |
+| Graph store: all queries, idempotent load, message origins, gaps | ✅ | `tests/test_graph_store.py` + lesson 04 on PG 16 |
+| `PgVectorStore`: ordering, scores, upsert/delete, column + metadata filters, model guard, name validation, HNSW used | ✅ | `tests/test_pgvector_store.py` + `EXPLAIN` |
+| `LocalSentenceTransformerEmbedder`: 768-dim, normalized, deterministic, query instruction applied | ✅ | `tests/test_embedder.py` |
+| `stage_model.py`: download, manifest, offline load | ✅ | 11 files / 439 MB, manifest OK |
+| Lessons 02, 03, 04, 05 (dry run) | ✅ | Real output captured in each lesson README |
+| `OpenAICompatEmbedder`, `chat.py` (real model call in lesson 05) | ❌ untested | Needs an endpoint (see §5) |
+| Gremlin / Cypher in `gremlin_equivalents.md` | ❌ not executed | No server; marked as such in the file |
 
 ## 4. Resume checklist
 
-On a fast connection (~1 GB total download):
+Everything is installed. To pick up again:
 
 ```bash
 cd /home/dev/Documents/kirahi/aidev/esam
-source .venv/bin/activate          # venv EXISTS but only has pip; nothing else installed yet
-
-# 1. Python packages (~250 MB). Install torch first so pip doesn't pull the 2 GB CUDA build.
-pip install torch --index-url https://download.pytorch.org/whl/cpu
-pip install -r requirements.txt
-
-# 2. Embedding model (~440 MB) -> esam/models/ + SHA-256 manifest + offline load test
-python lessons/00_setup/stage_model.py
-
-# 3. Local Postgres + pgvector (~150 MB image)
-docker compose up -d --wait
-
-# 4. Run the lessons in order
-python lessons/02_embeddings/embeddings_by_hand.py
-python lessons/03_vector_store/ingest.py --reset
-python lessons/03_vector_store/search.py --demo
-python lessons/04_graph/load_graph.py --reset
-python lessons/04_graph/queries.py
-python lessons/05_hybrid/hybrid.py "If we change the EBC1 message period, what is affected?"
+source .venv/bin/activate
+docker compose up -d --wait          # if the container isn't running (e.g. after a reboot)
+pytest -q                            # expect 24 passed
 ```
 
-Notes from the slow-network attempt:
-* The partial torch download (134 MB of ~190 MB) was deleted; pip can't resume it. Expect a fresh download.
-* `docker pull pgvector/pgvector:pg16` was cancelled part way; Docker may reuse layers it had finished.
-* A stray container named `esam-pgvector-test` (port 55432) was never created. Nothing to clean up.
-
-To test offline without any of the above, see `dev/offline_test/README.md`.
+To rebuild from scratch on another machine (needs ~1 GB of downloads), see the Quick start in
+`README.md` and the air-gap bundle steps in `lessons/00_setup/README.md`.
 
 ## 5. Pending tasks (in order)
 
-1. **Run §4** and fix whatever the untested parts in §3 turn up (most likely `PgVectorStore`
-   list→vector adaptation, and the `embed_raw` comparison in lesson 02 step 5).
-2. **Write `lessons/02_embeddings/README.md` and `lessons/03_vector_store/README.md`.**
-   Deliberately not written yet: they should explain the *actual* numbers (similarity table,
-   prefix-gap results, demo search rankings) rather than guesses.
-3. **Write `lessons/05_hybrid/README.md`.** Cover the five steps, why it re-anchors at the
-   message origin, and a real model answer once `ESAM_CHAT_*` is set.
-4. **Real tests** (`tests/`): chunking + baseline (pure Python), and graph + pgvector against the
-   compose DB. Port the checks from `dev/offline_test/`.
-5. **Update the top-level `README.md`.** Its layout section predates `graphstores/`, `baseline.py`,
-   `chat.py`, lessons 04–05 and `dev/`.
-6. **Push to GitHub.** You said you'll create a new empty repo. Then:
+Done 2026-10-18: install, stage model, run lessons 02–05, lesson 02/03/05 READMEs, tests,
+top-level README update; also turned on pgvector 0.8 iterative scans for filtered search.
+
+1. **Push to GitHub.** You said you'll create a new empty repo. Then:
    `git remote add origin git@github.com:fordevices/<new-repo>.git && git push -u origin main`.
    Claude to show the commit list before pushing.
-7. **Optional, decide later:** an ONNX Runtime embedder (drops the ~200 MB torch dependency, so
-   a smaller air-gap bundle); a `JanusGraphStore` implementing the Gremlin from lesson 04.
-8. **Raise with the programme:** `ESAM_Pilot_Implementation_v1.0.md` §3.1 says *"No on-premises
+2. **Connect a chat model for lesson 05** (`ESAM_CHAT_BASE_URL` / `ESAM_CHAT_MODEL` /
+   `ESAM_CHAT_API_KEY` in `esam/.env`). Locally that could be OpenAI; your call, since it sends the
+   synthetic documents to that provider. Then capture a real answer in the lesson 05 README.
+3. **Optional:** an ONNX Runtime embedder (drops the ~200 MB torch dependency, so a smaller
+   air-gap bundle); a `JanusGraphStore` running the Gremlin from lesson 04; delete
+   `dev/offline_test/` now that `tests/` covers it (or keep it as a zero-download smoke test).
+4. **Raise with the programme:** `ESAM_Pilot_Implementation_v1.0.md` §3.1 says *"No on-premises
    model weights"*, but a local embedder *is* model weights (~440 MB, MIT). Get an exception, or
    request an embeddings route on the IL5 API Gateway (then set `ESAM_EMBED_BACKEND=openai`).
 
