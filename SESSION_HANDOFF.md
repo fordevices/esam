@@ -6,6 +6,15 @@ runs end to end on the real stack, and **24/24 tests pass**. What's left is in
 
 History: paused 2026-10-17 at ~15–75 KB/s, resumed 2026-10-18 at ~8.5 MB/s.
 
+## ▶ Next session: start here
+
+1. **Ask the user for their notes on Lesson 01** (`lessons/01_corpus/README.md`). They're working
+   through the lessons in order (01 → 05) and will bring feedback. Fold those notes into the
+   lesson or corpus before moving on.
+2. Bring the database back: `docker compose up -d --wait` (stopped at the end of the 2026-10-18
+   session to save resources; data is kept in volume `esam-pgdata`).
+3. Sanity check: `source .venv/bin/activate && pytest -q` (expect 24 passed).
+
 ---
 
 ## 1. Where things are
