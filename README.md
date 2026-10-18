@@ -55,8 +55,7 @@ esam/
 │   ├── 03_vector_store/      chunk -> embed -> store -> search, and its blind spot
 │   ├── 04_graph/             recursive CTEs (+ Gremlin / Cypher equivalents)
 │   └── 05_hybrid/            vector entry point -> graph reach -> chat model answer
-├── tests/                    pytest: pure, graph, pgvector, embedder (DB tests use database esam_test)
-└── dev/offline_test/         zero-download smoke harness (temp PG14, psycopg stand-in, toy embedder)
+└── tests/                    pytest: pure, graph, pgvector, embedder (DB tests use database esam_test)
 ```
 
 ## Quick start

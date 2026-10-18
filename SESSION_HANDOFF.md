@@ -17,7 +17,6 @@ History: paused 2026-10-17 at ~15–75 KB/s, resumed 2026-10-18 at ~8.5 MB/s.
 | ESAM pilot design docs this follows | `aidev/ESAM_Pilot_Implementation_v1.0.md`, `ESAM_Phase0_Execution_Guide.md`, `ESAM_User_Guide_SE_PM.md` |
 | The earlier quick-and-dirty script (reviewed, superseded) | GitHub `fordevices/vce5500maxchenproject` → `embeddings.py` (no local copy exists) |
 | MIL-STD-881F Appendix G text used for WBS codes | `docs/reference/MIL-STD-881F_AppendixG_excerpt.txt` (G.3 table + G.4.2.1.x definitions) |
-| Offline test harness | `dev/offline_test/` (see its README) |
 
 ## 2. Credentials, databases, services
 
@@ -30,9 +29,7 @@ learning-only default. Don't reuse any of them on the pilot.
 | ↳ test database (pytest) | same server | same | `esam_test` | Created by `tests/conftest.py`; tests never touch `esam_pilot` |
 | ↳ its data volume | Docker named volume **`esam-pgdata`** | | | Exists. Survives `docker compose down`; deleted only by `down -v` or `docker volume rm esam-pgdata` |
 | ↳ connection string (default in `esamkit/config.py`) | `postgresql://esam_user:esam_local_only@127.0.0.1:5433/esam_pilot` | | | |
-| **Offline test DB** (host PG14 binaries, `dev/offline_test/start_temp_pg.sh`) | `127.0.0.1:55433` | `tester` / *(no password, trust auth)* | `esamtest` | **Stopped.** Data in `esam/var/pgtest` (gitignored); `start_temp_pg.sh wipe` deletes it |
-| Host system Postgres service (`postgresql`, v14) | 5432 | n/a | n/a | Installed, **inactive, never touched** this session |
-| Session-scratch PG cluster (`/tmp/claude-1001/.../scratchpad/pgtest`) | was 55433 | `tester` | `esamtest` | **Stopped**, disposable; the OS may delete `/tmp`. Superseded by the offline test DB above |
+| Host-installed Postgres 14 (apt) | n/a | n/a | n/a | **Removed 2026-10-18** (`apt purge` + `autoremove`; data cluster deleted). Docker is the only Postgres now. Leftover `postgres` system user/home is harmless (`sudo deluser --remove-home postgres` to drop it) |
 
 Other access facts:
 
@@ -60,7 +57,6 @@ lessons/02_embeddings/embeddings_by_hand.py
 lessons/03_vector_store/ingest.py, search.py
 lessons/04_graph/     load_graph.py, queries.py, README, gremlin_equivalents.md
 lessons/05_hybrid/    hybrid.py
-dev/offline_test/     harness (temp PG, psycopg stand-in, toy embedder)
 docker-compose.yml    local Postgres 16 + pgvector
 ```
 
@@ -99,8 +95,8 @@ top-level README update; also turned on pgvector 0.8 iterative scans for filtere
 2. ~~Connect a chat model for lesson 05~~ Done: OpenAI gpt-5.1.
 2a. **Rotate the Google API key exposed from `aidev/.env` line 2**, and fix that line.
 3. **Optional:** an ONNX Runtime embedder (drops the ~200 MB torch dependency, so a smaller
-   air-gap bundle); a `JanusGraphStore` running the Gremlin from lesson 04; delete
-   `dev/offline_test/` now that `tests/` covers it (or keep it as a zero-download smoke test).
+   air-gap bundle); a `JanusGraphStore` running the Gremlin from lesson 04.
+   (`dev/offline_test/` was deleted 2026-10-18 along with the host Postgres it relied on; `tests/` covers it.)
 4. **Raise with the programme:** `ESAM_Pilot_Implementation_v1.0.md` §3.1 says *"No on-premises
    model weights"*, but a local embedder *is* model weights (~440 MB, MIT). Get an exception, or
    request an embeddings route on the IL5 API Gateway (then set `ESAM_EMBED_BACKEND=openai`).
