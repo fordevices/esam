@@ -12,6 +12,8 @@ Everything is built on a **synthetic** military light tactical vehicle (SYNTH-LT
 message (EBC1). The structure uses real **MIL-STD-881F Appendix G** WBS codes. All content below
 that level is invented.
 
+> **Coming back after a break or a reboot?** See [`HOW_TO_START.md`](HOW_TO_START.md).
+
 ## Built for the ESAM pilot's constraints
 
 | Constraint (from `ESAM_Pilot_Implementation_v1.0.md`) | How this code handles it |

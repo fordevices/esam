@@ -8,6 +8,8 @@ History: paused 2026-10-17 at ~15–75 KB/s, resumed 2026-10-18 at ~8.5 MB/s.
 
 ## ▶ Next session: start here
 
+Day-to-day restart steps for the user are in [`HOW_TO_START.md`](HOW_TO_START.md). The user may keep notes in `esam/notes/` (gitignored).
+
 1. **Ask the user for their notes on Lesson 01** (`lessons/01_corpus/README.md`). They're working
    through the lessons in order (01 → 05) and will bring feedback. Fold those notes into the
    lesson or corpus before moving on.

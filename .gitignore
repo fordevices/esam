@@ -14,3 +14,5 @@ models/
 var/
 # Air-gap transfer bundle (wheels, models, docker images)
 bundle/
+# Personal study notes (private)
+notes/
