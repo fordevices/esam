@@ -95,9 +95,7 @@ To rebuild from scratch on another machine (needs ~1 GB of downloads), see the Q
 Done 2026-10-18: install, stage model, run lessons 02–05, lesson 02/03/05 READMEs, tests,
 top-level README update; also turned on pgvector 0.8 iterative scans for filtered search.
 
-1. **Push to GitHub.** You said you'll create a new empty repo. Then:
-   `git remote add origin git@github.com:fordevices/<new-repo>.git && git push -u origin main`.
-   Claude to show the commit list before pushing.
+1. ~~Push to GitHub~~ Done 2026-10-18: `git@github.com:fordevices/esam.git`, branch `main` tracks `origin/main`.
 2. ~~Connect a chat model for lesson 05~~ Done: OpenAI gpt-5.1.
 2a. **Rotate the Google API key exposed from `aidev/.env` line 2**, and fix that line.
 3. **Optional:** an ONNX Runtime embedder (drops the ~200 MB torch dependency, so a smaller
