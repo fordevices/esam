@@ -29,7 +29,7 @@ learning-only default. Don't reuse any of them on the pilot.
 | ↳ test database (pytest) | same server | same | `esam_test` | Created by `tests/conftest.py`; tests never touch `esam_pilot` |
 | ↳ its data volume | Docker named volume **`esam-pgdata`** | | | Exists. Survives `docker compose down`; deleted only by `down -v` or `docker volume rm esam-pgdata` |
 | ↳ connection string (default in `esamkit/config.py`) | `postgresql://esam_user:esam_local_only@127.0.0.1:5433/esam_pilot` | | | |
-| Host-installed Postgres 14 (apt) | n/a | n/a | n/a | **Removed 2026-10-18** (`apt purge` + `autoremove`; data cluster deleted). Docker is the only Postgres now. Leftover `postgres` system user/home is harmless (`sudo deluser --remove-home postgres` to drop it) |
+| Host-installed Postgres 14 (apt) | n/a | n/a | n/a | **Removed 2026-10-18** (`apt purge` + `autoremove`; data cluster deleted). Docker is the only Postgres now. The `postgres` system user and group were also removed. |
 
 Other access facts:
 
