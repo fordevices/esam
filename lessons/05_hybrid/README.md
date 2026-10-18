@@ -77,6 +77,34 @@ The system prompt's rules turn graph facts into honest wording: cite `[artifact 
 assess. A good answer here should point out something no single document says: that a slower
 EBC1 period moves closer to the cluster's 300 ms loss-of-signal timeout (SRS-DCL-021).
 
+## A real answer (GPT-5.1 via OpenAI, 2026-10-18)
+
+Excerpts, unedited:
+
+> **Driver Digital Cluster (SUB-DCL), confirmed impacted consumer**
+> – It assumes that **loss of EBC1 for 300 ms** means anti-lock braking is unavailable and lights
+>   the ABS telltale with a "BRAKE DATA LOST" message. [SSDD-DCL-001; SSR-DCL-001, SRS-DCL-021]
+> – If the EBC1 period were increased such that messages could legitimately arrive more than
+>   300 ms apart, the cluster would incorrectly declare "BRAKE DATA LOST" and treat ABS as
+>   unavailable. [SSDD-DCL-001; SSR-DCL-001]
+>
+> **J1939 Vehicle Data Backbone (SUB-J1939-BB)**: there are **no documents provided** for
+> SUB-J1939-BB. The specific impact on the backbone (e.g. bandwidth, timing assumptions)
+> **cannot be assessed from the documents**.
+>
+> **Engine Control Module (SUB-ENG-ECM), candidate impact (UNCONFIRMED)**: any impact on the
+> Engine Control Module is **UNCONFIRMED** and **cannot be assessed from the documents**. A systems
+> engineering review with ECM interface documentation is recommended.
+
+What made this answer possible, by source:
+
+| Part of the answer | Came from |
+|---|---|
+| The four affected subsystems, their depth, the ECM being unconfirmed | **graph** (Q3 impact walk) |
+| "No documents" for the backbone and the ECM | **graph** (empty `HAS_ARTIFACT`) |
+| 100 ms period, 300 ms timeout, Class I change rule | **vector** (best chunk per document) |
+| "A longer period trips the cluster's loss-of-signal logic" | **the model**, combining SRS-BRK-030 with SRS-DCL-021. No single document says it |
+
 ## Connecting a model
 
 Point it at any OpenAI-compatible chat endpoint (on the pilot, the IL5 API Gateway):

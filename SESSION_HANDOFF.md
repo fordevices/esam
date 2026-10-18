@@ -41,8 +41,9 @@ Other access facts:
 | GitHub via **SSH** | ✅ works, authenticates as **`fordevices`**, so `git push` over `git@github.com:` will work |
 | GitHub via **`gh` CLI** | ❌ keyring token invalid. Run `gh auth login -h github.com` if you want `gh` (not needed to push) |
 | Git identity used for commits in this repo | `max-kirahi <smadhu@alumni.cmu.edu>` (global config) |
-| OpenAI / chat keys | None used or stored by this project. `aidev/.env` exists (parent repo); this session didn't read it |
-| Chat model for lesson 05 | Not configured. Set `ESAM_CHAT_BASE_URL`, `ESAM_CHAT_MODEL`, `ESAM_CHAT_API_KEY` in `esam/.env`; until then lesson 05 runs as a dry run and prints the prompt |
+| OpenAI key | Copied from `aidev/.env` (`OPENAI_API_KEY`) into **`esam/.env`** as `ESAM_CHAT_API_KEY` (gitignored, mode 600). Never printed |
+| Chat model for lesson 05 | **OpenAI `gpt-5.1`** (`https://api.openai.com/v1`), the same model as the pilot. Lesson 05 sends the synthetic documents to OpenAI |
+| ⚠ `aidev/.env` line 2 | A bare value with no `NAME=`. Sourcing the file printed a Google API key into the 2026-10-18 session transcript. **Rotate that Google key and fix the line** |
 
 ## 3. What was built, and what's verified
 
@@ -71,7 +72,8 @@ docker-compose.yml    local Postgres 16 + pgvector
 | `LocalSentenceTransformerEmbedder`: 768-dim, normalized, deterministic, query instruction applied | ✅ | `tests/test_embedder.py` |
 | `stage_model.py`: download, manifest, offline load | ✅ | 11 files / 439 MB, manifest OK |
 | Lessons 02, 03, 04, 05 (dry run) | ✅ | Real output captured in each lesson README |
-| `OpenAICompatEmbedder`, `chat.py` (real model call in lesson 05) | ❌ untested | Needs an endpoint (see §5) |
+| `chat.py` (lesson 05 with a real model) | ✅ | GPT-5.1 answer captured in the lesson 05 README |
+| `OpenAICompatEmbedder` | ❌ untested | No embeddings endpoint in use |
 | Gremlin / Cypher in `gremlin_equivalents.md` | ❌ not executed | No server; marked as such in the file |
 
 ## 4. Resume checklist
@@ -96,9 +98,8 @@ top-level README update; also turned on pgvector 0.8 iterative scans for filtere
 1. **Push to GitHub.** You said you'll create a new empty repo. Then:
    `git remote add origin git@github.com:fordevices/<new-repo>.git && git push -u origin main`.
    Claude to show the commit list before pushing.
-2. **Connect a chat model for lesson 05** (`ESAM_CHAT_BASE_URL` / `ESAM_CHAT_MODEL` /
-   `ESAM_CHAT_API_KEY` in `esam/.env`). Locally that could be OpenAI; your call, since it sends the
-   synthetic documents to that provider. Then capture a real answer in the lesson 05 README.
+2. ~~Connect a chat model for lesson 05~~ Done: OpenAI gpt-5.1.
+2a. **Rotate the Google API key exposed from `aidev/.env` line 2**, and fix that line.
 3. **Optional:** an ONNX Runtime embedder (drops the ~200 MB torch dependency, so a smaller
    air-gap bundle); a `JanusGraphStore` running the Gremlin from lesson 04; delete
    `dev/offline_test/` now that `tests/` covers it (or keep it as a zero-download smoke test).
