@@ -1,0 +1,13 @@
+# ESAM crew tasks. Step 0 (environment) runs before every pipeline.
+
+check_environment:
+  description: >
+    Run the inspect_environment tool for the '{environment}' environment and read
+    every probe. Write a short environment report: one line per service with its
+    state, the tools the crew may use, and for each service that is not OK the
+    exact fix (the variable to set, the command to run). Name secrets by their
+    variable only. End with GREEN LIGHT if a reasoning model is available and
+    the tools this run needs ({needed_tools}) are enabled, otherwise NOT READY.
+  expected_output: >
+    A markdown environment report ending with a single line: GREEN LIGHT or NOT READY.
+  agent: environment_engineer

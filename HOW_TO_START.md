@@ -24,7 +24,7 @@ still there; it lives in the `esam-pgdata` volume, which survives reboots.
 ## 3. Check everything works (optional, 15 s)
 
 ```bash
-pytest -q                          # expect: 59 passed
+pytest -q                          # expect: 68 passed
 ```
 
 ## 4. Study
@@ -55,6 +55,13 @@ To check the baseline against the ontology (the SE vocabulary in `data/ontology/
 
 ```bash
 python -m esamkit.ontology                 # expect: 0 errors, 0 warnings
+```
+
+To check the environment and run the crew's step 0 (details in `crew/README.md`):
+
+```bash
+python -m esamkit.environment              # probes: what this machine offers, which crew tools are on
+python -m crew.main env                    # the Environment Engineer agent reads them (uses GPT-5.1)
 ```
 
 To look inside the database directly:

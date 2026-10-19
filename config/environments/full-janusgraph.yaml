@@ -1,0 +1,48 @@
+# ENVIRONMENT PROFILE: full deployment target (template). Graph in JanusGraph
+# (Gremlin), documents still in PostgreSQL + pgvector.
+# NOTE: this build has no JanusGraph graph store yet; the probe reports
+# "not implemented" and the graph tools stay off until one is added.
+name: full-janusgraph
+description: "Full deployment: JanusGraph (Gremlin) graph, PostgreSQL + pgvector documents, gateway models"
+network:
+  internet: false
+
+llm:
+  roles:
+    reasoning:
+      model: gpt-5.1
+      base_url_env: ESAM_GATEWAY_URL
+      api_key_env: ESAM_GATEWAY_KEY
+    code:
+      model: nemotron-4-15b
+      base_url_env: ESAM_GATEWAY_URL
+      api_key_env: ESAM_GATEWAY_KEY
+  pricing: null
+
+embeddings:
+  backend: local
+  model_id: BAAI/bge-base-en-v1.5
+  model_dir: models/bge-base-en-v1.5
+
+database:
+  backend: postgres
+  dsn_env: ESAM_PG_DSN
+
+vector:
+  backend: pgvector
+  collection: esam_documents
+
+graph:
+  backend: janusgraph
+  url_env: ESAM_GREMLIN_URL              # ws://<janusgraph-host>:8182/gremlin
+
+telemetry:
+  crewai: off
+  crew_memory: off
+
+limits:
+  max_llm_calls_per_run: 40
+  max_tokens_per_run: 200000
+
+usage:
+  sink: database

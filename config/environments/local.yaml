@@ -1,0 +1,53 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# ENVIRONMENT PROFILE: local learning machine (this laptop).
+#
+# A profile says what THIS place offers: models and endpoints per role,
+# which databases exist, where secrets come from, and limits. Select one with
+#   ESAM_ENV=local   (default)   or   --env <name>
+# and check it with:  python -m esamkit.environment
+#
+# Secrets: give the NAME of an environment variable (or of a line in esam/.env),
+# never the value. Probes report only "set" / "missing".
+# ─────────────────────────────────────────────────────────────────────────────
+name: local
+description: "Learning laptop: Docker PostgreSQL 16 + pgvector, BGE on CPU, OpenAI gpt-5.1 over the internet"
+network:
+  internet: true                       # false = air-gapped: probes never try public hosts
+
+llm:
+  roles:
+    reasoning:                         # triage, research, review (all three crew agents)
+      model: gpt-5.1
+      base_url: https://api.openai.com/v1
+      api_key_env: ESAM_CHAT_API_KEY
+    code: null                         # no code-generation model here; pilot uses Nemotron
+  pricing: null                        # {model: {input_per_1k: x, output_per_1k: y}}; fill with your own rates
+
+embeddings:
+  backend: local                       # local | openai | none
+  model_id: BAAI/bge-base-en-v1.5
+  model_dir: models/bge-base-en-v1.5
+
+database:                              # PostgreSQL: vectors, graph tables, run log, usage
+  backend: postgres                    # postgres | none
+  dsn_env: ESAM_PG_DSN
+  # Learning-only fallback (docker-compose.yml). Pilot profiles must not have one.
+  dsn_default: postgresql://esam_user:esam_local_only@127.0.0.1:5433/esam_pilot
+
+vector:
+  backend: pgvector                    # pgvector | none
+  collection: esam_documents
+
+graph:
+  backend: postgres                    # postgres (recursive CTEs) | janusgraph | none
+
+telemetry:
+  crewai: off                          # CREWAI_DISABLE_TELEMETRY + OTEL_SDK_DISABLED
+  crew_memory: off                     # CrewAI memory calls an embeddings API: never on without one
+
+limits:
+  max_llm_calls_per_run: 60
+  max_tokens_per_run: 400000
+
+usage:
+  sink: database                       # database | file (work/usage/usage.jsonl)

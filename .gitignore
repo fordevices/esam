@@ -16,3 +16,5 @@ var/
 bundle/
 # Personal study notes (private)
 notes/
+# Crew work area: inbox, run folders, drafts, usage ledger file
+work/

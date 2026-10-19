@@ -1,0 +1,46 @@
+# ENVIRONMENT PROFILE: ESAM pilot, AWS GovCloud IL5 (template; fill the URLs).
+# From ESAM_Pilot_Implementation_v1.0.md: chat models through the API Gateway,
+# no embeddings endpoint, no internet egress, PostgreSQL 16 + pgvector on VM-1.
+name: pilot-il5
+description: "IL5 pilot: API Gateway (GPT-5.1, Nemotron-4 15B), VM-1 PostgreSQL 16 + pgvector, air-gapped"
+network:
+  internet: false
+
+llm:
+  roles:
+    reasoning:
+      model: gpt-5.1
+      base_url_env: ESAM_GATEWAY_URL     # e.g. https://<gateway>/v1
+      api_key_env: ESAM_GATEWAY_KEY
+    code:                                # the only model approved for code generation
+      model: nemotron-4-15b
+      base_url_env: ESAM_GATEWAY_URL
+      api_key_env: ESAM_GATEWAY_KEY
+  pricing: null
+
+embeddings:
+  backend: local                         # pre-staged model weights (see the approval note in SESSION_HANDOFF)
+  model_id: BAAI/bge-base-en-v1.5
+  model_dir: models/bge-base-en-v1.5
+
+database:
+  backend: postgres
+  dsn_env: ESAM_PG_DSN                   # postgresql://esam_user:***@<vm-1>:5432/esam_pilot ; no default
+
+vector:
+  backend: pgvector
+  collection: esam_documents
+
+graph:
+  backend: postgres
+
+telemetry:
+  crewai: off
+  crew_memory: off
+
+limits:
+  max_llm_calls_per_run: 40
+  max_tokens_per_run: 200000
+
+usage:
+  sink: database
