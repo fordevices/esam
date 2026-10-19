@@ -180,6 +180,29 @@ svg.net .node { cursor: grab; touch-action: none; }
 .crumbs .sep { color: var(--ink-2); }
 .note { color: var(--ink-2); font-size: 12.5px; }
 footer { color: var(--ink-2); font-size: 12px; }
+
+/* checks (run log) */
+.runhead { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin-bottom: 12px; font-size: 13px; color: var(--ink-2); }
+.verdict { font: 700 12px var(--f-mono); letter-spacing: 0.06em; padding: 1px 8px; border-radius: 4px; }
+.verdict.pass { color: var(--ok); background: var(--ok-bg); }
+.verdict.fail { color: var(--crit); background: var(--crit-bg); }
+.scen { border-top: 1px solid var(--rule); padding-block: 12px; display: grid; gap: 8px; }
+.scen:first-of-type { border-top: 0; padding-top: 0; }
+.scen-top { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+.scen-top strong { font-size: 14px; }
+.q { color: var(--ink-2); font-size: 13px; max-width: 90ch; }
+.phases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .phases { grid-template-columns: minmax(0, 1fr); } }
+.phase { border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px; min-width: 0; }
+.phase h3 { font: 600 11.5px var(--f-display); letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 6px; }
+.phase ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 12.5px; }
+.phase li.ok::before { content: "✓ "; color: var(--ok); font-weight: 700; }
+.phase li.bad::before { content: "✗ "; color: var(--crit); font-weight: 700; }
+.phase li small { color: var(--ink-2); }
+.phase details { margin-top: 8px; font-size: 13px; }
+.phase summary { cursor: pointer; color: var(--accent); }
+.answer { white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0 0; padding: 8px 10px; background: var(--paper);
+          border-radius: 4px; font-size: 12.5px; line-height: 1.55; max-height: 320px; overflow-y: auto; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
@@ -214,6 +237,11 @@ footer { color: var(--ink-2); font-size: 12px; }
         <h2>Interfaces</h2>
         <p class="sub">Messages that cross between subsystems. <em>Candidate</em> links are proposed but not yet confirmed by an SE.</p>
         <div class="scroll"><table id="interfaces"></table></div>
+      </div>
+      <div class="panel" id="checks-panel">
+        <h2>Checks</h2>
+        <p class="sub">The latest run of each automated check. Each run replaces the previous one.</p>
+        <div id="checks"></div>
       </div>
     </section>
 
@@ -382,6 +410,42 @@ function renderDashboard() {
     h("td", {}, h("span.note", {}, e.props.notes || ""))));
   $("#interfaces").replaceChildren(h("thead", {}, ihead), h("tbody", {}, irows));
 }
+
+// ── Dashboard: checks (latest run of each) ───────────────────────────────────
+const plain = (t) => String(t || "").replace(/\*\*(.+?)\*\*/g, "$1").trim();
+const stampOf = (iso) => { const d = new Date(iso); return isNaN(d) ? String(iso) : d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }); };
+function phaseBox(title, ph) {
+  const checks = ph.checks || [];
+  return h("div.phase", {}, h("h3", {}, title),
+    h("ul", {}, checks.map((c) => h("li." + (c.ok ? "ok" : "bad"), {}, c.check, " ", h("small", {}, `(${c.kind})`)))),
+    ph.answer ? h("details", {}, h("summary", {}, "Model answer"), h("p.answer", {}, plain(ph.answer)))
+              : h("p.note", {}, "No model answer (dry run)."));
+}
+function renderChecks() {
+  const runs = M.data.runs || [];
+  const box = $("#checks");
+  if (!runs.length) {
+    box.replaceChildren(h("p.note", {}, "No checks have run yet. Run ", h("code.mono", {}, "python lessons/06_missing_document/run_test.py"),
+      " to test that ESAM says when a document is missing, then answers once it arrives."));
+    return;
+  }
+  box.replaceChildren(...runs.map((run) => {
+    const sc = (run.result && run.result.scenarios) || [];
+    return h("div", {},
+      h("div.runhead", {}, h("strong", { style: "color:var(--ink)" }, run.title),
+        h("span.verdict." + (run.passed ? "pass" : "fail"), {}, run.passed ? "PASS" : "FAIL"),
+        h("span", {}, `Last run ${stampOf(run.run_at)}`),
+        h("span", {}, `${sc.filter((x) => x.passed).length}/${sc.length} scenarios passed`),
+        run.result && run.result.model ? h("span", {}, `model ${run.result.model}`) : h("span", {}, "no model (dry run)")),
+      sc.map((x) => h("div.scen", {},
+        h("div.scen-top", {}, h("strong", {}, x.title), h("span.verdict." + (x.passed ? "pass" : "fail"), {}, x.passed ? "PASS" : "FAIL"),
+          x.ingest ? h("span.note", {}, "ingested ", nodeLinkIf(x.ingest.artifact), ` → ${x.ingest.attached_to}, ${x.ingest.chunks} chunks`) : null),
+        h("p.q", {}, "Q: ", x.question),
+        h("div.phases", {}, phaseBox("Before: document does not exist", x.before || {}), phaseBox("After ingest", x.after || {})))));
+  }));
+}
+// The scenario documents are removed again after a run, so they may not be in the graph.
+const nodeLinkIf = (eid) => (M.byId.has(eid) ? nodeLink(eid) : h("span.mono", {}, eid));
 
 // ── Graph: tree outline ──────────────────────────────────────────────────────
 function treeRow(v) {
@@ -646,7 +710,7 @@ function render(data) {
   $("#footer").textContent = snap
     ? "Snapshot: the data is baked into this page and does not update. Re-export after each ingest."
     : "Live: data comes from the graph database each time the page loads or you press Refresh.";
-  renderDashboard(); renderLegend(); renderView();
+  renderDashboard(); renderChecks(); renderLegend(); renderView();
   if (!selected || !M.byId.has(selected)) selected = M.byId.has("SUB-BRK-ECU") ? "SUB-BRK-ECU" : M.roots[0];
   select(selected);
 }

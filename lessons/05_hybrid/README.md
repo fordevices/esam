@@ -33,6 +33,10 @@ This lesson chains them. Real run:
 | 4 | vector | For every document of every reached subsystem: the best chunk, **filtered to that document** | Evidence from each affected place, not just the top 4 overall |
 | 5 | chat | Answer only from that evidence, with citation rules | The model writes; it doesn't decide what's true |
 
+> **Since lesson 06** the pipeline lives in `esamkit/hybrid.py` and has a step **3b. COVER**: it checks
+> in the graph whether the document type the question needs exists, and tells the model plainly when it
+> doesn't. Output below predates that step; see lesson 06.
+
 ## Step 3's safeguard: start where the message *originates*
 
 Impact flows **downstream** from the sender of a message. Vector search has no idea which end of an

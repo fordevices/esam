@@ -8,7 +8,7 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from cockpit.app import app, get_graph, render_page  # noqa: E402
+from cockpit.app import app, get_graph, get_runs_dsn, render_page  # noqa: E402
 from esamkit.graphstores.postgres_cte import PostgresCTEGraphStore  # noqa: E402
 
 
@@ -18,6 +18,7 @@ def client(pg_dsn, baseline):
     g.reset()
     g.load(baseline)
     app.dependency_overrides[get_graph] = lambda: g
+    app.dependency_overrides[get_runs_dsn] = lambda: pg_dsn
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -33,6 +34,13 @@ def test_cockpit_payload(client):
     # the headline finding: the safety-critical brake ECU has no test description
     assert "SUB-BRK-ECU" in data["gaps"]["std"]
     assert "SUB-BRK-ECU" not in data["gaps"]["icd"]
+
+
+def test_cockpit_shows_latest_run(client, pg_dsn):
+    from esamkit.runlog import save_run
+    save_run(pg_dsn, "missing-document", "Missing-document confidence test", True, {"scenarios": []})
+    runs = {r["name"]: r for r in client.get("/api/cockpit").json()["runs"]}
+    assert runs["missing-document"]["passed"] is True and runs["missing-document"]["run_at"]
 
 
 def test_cockpit_types_param(client):

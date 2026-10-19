@@ -24,7 +24,7 @@ still there; it lives in the `esam-pgdata` volume, which survives reboots.
 ## 3. Check everything works (optional, 15 s)
 
 ```bash
-pytest -q                          # expect: 30 passed
+pytest -q                          # expect: 39 passed
 ```
 
 ## 4. Study
@@ -38,6 +38,7 @@ Work through the lessons in order. For each: **read the README, then run the scr
 | 03 | `lessons/03_vector_store/README.md` | `python lessons/03_vector_store/ingest.py --reset`<br>`python lessons/03_vector_store/search.py --demo` |
 | 04 | `lessons/04_graph/README.md` + `gremlin_equivalents.md` | `python lessons/04_graph/load_graph.py --reset`<br>`python lessons/04_graph/queries.py` |
 | 05 | `lessons/05_hybrid/README.md` | `python lessons/05_hybrid/hybrid.py "If we change the EBC1 message period, what is affected?"` |
+| 06 | `lessons/06_missing_document/README.md` | `python lessons/06_missing_document/run_test.py` (then see **Checks** on the Cockpit Dashboard) |
 
 Try your own questions, e.g. `python lessons/03_vector_store/search.py "your question"`.
 

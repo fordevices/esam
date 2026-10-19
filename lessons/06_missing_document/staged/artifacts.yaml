@@ -1,0 +1,5 @@
+# The baseline `artifacts:` entries an SE would add when each document arrives.
+# lessons/06_missing_document/run_test.py adds them to a COPY of the baseline;
+# the committed data/baseline/vehicle_decomposition.yaml is never edited.
+- { id: STD-BRK-001, name: "Brake Control ECU Software Test Description", type: std, revision: A, attached_to: SUB-BRK-ECU, file: STD-BRK-001.md }
+- { id: ICD-ENG-001, name: "Engine Control Module J1939 Interface Control Document", type: icd, revision: A, attached_to: SUB-ENG-ECM, file: ICD-ENG-001.md }

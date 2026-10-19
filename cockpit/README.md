@@ -6,7 +6,7 @@ graph and vector stores) rather than its own SQL, and is grown one tab at a time
 
 | Tab | Shows | Status |
 |---|---|---|
-| **Dashboard** | Node/link counts; document coverage per subsystem (missing documents on safety-critical subsystems in red); interfaces with confirmed/candidate status | ✅ |
+| **Dashboard** | Node/link counts; document coverage per subsystem (missing documents on safety-critical subsystems in red); interfaces with confirmed/candidate status; **Checks**: the latest run of each automated check (lesson 06's missing-document test), with before/after answers | ✅ |
 | **Graph** | The baseline three ways: **Tree** (collapsible outline), **Tree + interfaces** (left-to-right tree with the J1939 links drawn as arcs across it), **Network** (force-directed, draggable). Click any node for where it sits, its properties, what it contains, its interfaces and its document gaps. | ✅ |
 | Health report | The six checks in the SE manual §5.2 | planned (B6) |
 | Query | Natural-language questions via the lesson 05 hybrid | planned |
@@ -38,7 +38,7 @@ or network, and it does not update: re-export after each ingest.
 |---|---|
 | `GET /` | The page |
 | `GET /api/health` | `{"status": "ok", "vertices": n, "edges": m}`, or 503 if the database is unreachable |
-| `GET /api/cockpit?types=icd,ssdd,ssr,std` | Everything the page draws: the whole graph by entity id, plus which subsystems lack each document type |
+| `GET /api/cockpit?types=icd,ssdd,ssr,std` | Everything the page draws: the whole graph by entity id, which subsystems lack each document type, and the latest run of each check (`esam_runs` table) |
 
 ## Air-gap notes
 

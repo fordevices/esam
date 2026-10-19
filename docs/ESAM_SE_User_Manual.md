@@ -12,6 +12,7 @@
 | 4 | [How ESAM walks the baseline (recursive CTEs)](#4-how-esam-walks-the-baseline-recursive-ctes) |
 | 5 | [Finding gaps after ingestion](#5-finding-gaps-after-ingestion) |
 | 6 | [When to move to a dedicated graph database](#6-when-to-move-to-a-dedicated-graph-database) |
+| 7 | [When ESAM says "that document doesn't exist yet"](#7-when-esam-says-that-document-doesnt-exist-yet) |
 
 ---
 
@@ -340,5 +341,48 @@ A possible middle step is **Apache AGE**, a PostgreSQL extension that adds a gra
 2. **Measure during the pilot.** Record how long each kind of question takes on real programme data.
 3. **Agree the trigger in advance**, for example: *"if a typical impact question takes longer than about 2 seconds, or SEs need graph analysis they will actually use, we begin the move to JanusGraph."*
 4. **The move is designed to be contained.** ESAM's graph questions all go through one internal interface, so changing the database doesn't change how you use ESAM.
+
+---
+
+## 7. When ESAM says "that document doesn't exist yet"
+
+### 7.1 Why this matters
+
+A document search always returns *something*: the closest passage that exists. Ask "How is SRS-BRK-011 verified?" when no test description has been written, and the closest passage is the requirement itself. It mentions 15 ms and wheel lock-up, so it looks like an answer, and an AI model given it could write a plausible test procedure that nobody ever approved.
+
+ESAM prevents this by checking the **baseline** before it answers. The baseline knows which documents each subsystem has, so ESAM can tell the difference between "the documents don't say" and "the document doesn't exist."
+
+### 7.2 What ESAM does with each question
+
+1. **Works out which document type would answer it.** Questions about testing or verification need a test description (STD); questions about messages or interfaces need an ICD; design questions need an SSDD; requirement questions need an SSR.
+2. **Works out which subsystem it's about**: the one you name, or else the one whose documents best match the question.
+3. **Checks the baseline.** If that subsystem has no document of that type, ESAM tells you first and plainly, then reports only what the existing documents say, without filling the gap.
+
+### 7.3 What it looks like
+
+Asked how SRS-BRK-011 is verified, before a test description exists:
+
+> *This question cannot be answered as requested because the Brake ECU test description (STD) for subsystem SUB-BRK-ECU does not exist in the baseline yet. … SRS-BRK-011 is defined as: "The software shall release brake pressure on a wheel within 15 ms of detecting incipient lock-up on that wheel." [SSR-BRK-001] … until that document exists, any detailed test sequence or thresholds would be an invention and must not be assumed.*
+
+The same question after STD-BRK-001 is added to the baseline and loaded:
+
+> *The requirement SRS-BRK-011 is verified by test case TC-BRK-011 … [STD-BRK-001] … Pass criteria: every one of the 200 releases (50 per wheel × 4 wheels) completes within 15 ms …*
+
+### 7.4 The confidence test
+
+ESAM runs this exact sequence as an automated test: ask, confirm it reports the gap, add the document, ask again, confirm the answer now cites it. It is checked in two ways:
+
+| Check | What it proves |
+|---|---|
+| **Baseline checks** | The gap is detected from the baseline, not guessed by the AI. These are the guarantee. |
+| **Answer checks** | The AI's wording reports the gap, invents nothing, and cites the new document once it exists. These are simple text rules, a useful signal rather than proof. |
+
+The SE Cockpit Dashboard shows the latest run under **Checks**: date, pass or fail, and the before and after answers.
+
+### 7.5 What this means for you
+
+- **"Doesn't exist yet" is a finding, not a failure.** It usually points at the same gap the Dashboard's document coverage table shows in red.
+- **A new document doesn't confirm a link by itself.** When an ICD shows that a subsystem really does use a message, ESAM will cite it, but still calls a *candidate* interface unconfirmed. Changing it to confirmed is your decision, made in the baseline.
+- **ESAM can only check document types it knows how to recognise in a question.** The matching is deliberately simple today and will improve once the programme's vocabulary (ontology) is defined.
 
 ---

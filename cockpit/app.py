@@ -4,7 +4,8 @@ ESAM SE Cockpit (learning build) — the web front end SEs use.
 The Phase 0 Execution Guide (Step 12) sketches the pilot Cockpit. This build
 grows it one tab at a time, on top of esamkit instead of its own SQL:
 
-    Dashboard   graph counts, document coverage per subsystem, interfaces
+    Dashboard   graph counts, document coverage per subsystem, interfaces,
+                the last run of each check (e.g. lesson 06's confidence test)
     Graph       the baseline as a tree, a tree with interface arcs, a network
 
 Still to come (see notes/): the health report (Dashboard), the query tab
@@ -28,6 +29,8 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse
 
+from esamkit import runlog
+from esamkit.config import settings
 from esamkit.factory import get_graph_store
 from esamkit.graphstores.base import GraphStore
 
@@ -54,13 +57,28 @@ def get_graph() -> GraphStore:
     return get_graph_store()
 
 
-def collect(graph: GraphStore, doc_types: list[str]) -> dict:
+def get_runs_dsn() -> str:
+    # The run log lives in the main database; tests point this elsewhere.
+    return settings.pg_dsn
+
+
+def last_runs(dsn: str) -> list[dict]:
+    """The latest run of each check. A missing or unreachable run log just
+    means "never run"; it must not take the Dashboard down."""
+    try:
+        return runlog.last_runs(dsn)
+    except Exception:
+        return []
+
+
+def collect(graph: GraphStore, doc_types: list[str], runs: list[dict] | None = None) -> dict:
     """Everything the page draws, in one payload (also what a snapshot embeds)."""
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "graph": graph.snapshot(),
         "doc_types": doc_types,
         "gaps": {t: [r["eid"] for r in graph.artifact_gaps(t)] for t in doc_types},
+        "runs": runs or [],
     }
 
 
@@ -93,6 +111,6 @@ def health(graph: GraphStore = Depends(get_graph)) -> dict:
 
 @app.get("/api/cockpit")
 def cockpit(types: str = Query(",".join(DOC_TYPES), description="comma-separated document types"),
-            graph: GraphStore = Depends(get_graph)) -> dict:
+            graph: GraphStore = Depends(get_graph), runs_dsn: str = Depends(get_runs_dsn)) -> dict:
     doc_types = [t.strip().lower() for t in types.split(",") if t.strip()]
-    return collect(graph, doc_types)
+    return collect(graph, doc_types, last_runs(runs_dsn))

@@ -15,9 +15,10 @@ Re-run after every ingest: a snapshot never updates itself.
 import argparse
 from pathlib import Path
 
+from esamkit.config import settings
 from esamkit.factory import get_graph_store
 
-from .app import DOC_TYPES, collect, render_page
+from .app import DOC_TYPES, collect, last_runs, render_page
 
 DEFAULT_OUT = Path(__file__).resolve().parents[1] / "var" / "cockpit" / "ESAM_Cockpit_snapshot.html"
 
@@ -27,7 +28,7 @@ def main() -> None:
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = ap.parse_args()
 
-    data = collect(get_graph_store(), DOC_TYPES)
+    data = collect(get_graph_store(), DOC_TYPES, last_runs(settings.pg_dsn))
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(render_page(data, source="snapshot"))
     g = data["graph"]
