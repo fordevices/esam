@@ -10,6 +10,7 @@ Tools are handed to agents only if step 0 enabled them for this environment
 
 import json
 import time
+from pathlib import Path
 from typing import Any
 
 from crewai.tools import BaseTool
@@ -339,3 +340,162 @@ class VerifyIngestionTool(WorkbenchTool):
 TOOLS = {t.model_fields["name"].default: t for t in (
     OntologyLookupTool, SearchDocumentsTool, WalkGraphTool, CheckCoverageTool, VerifiedByTool,
     HealthReportTool, OntologyCheckTool, ReviewDocumentTool, IngestDocumentTool, VerifyIngestionTool)}
+
+
+# ── Pipeline B: SRS authoring ───────────────────────────────────────────────
+#
+# The brief and the draft live in the run folder; the agent passes text, never
+# paths. Every save is linted at once, so the author sees the findings and
+# fixes them before the reviewer starts.
+
+def _authoring(wb: Workbench):
+    """(brief, assessment, library, ontology) for this run, computed once."""
+    from esamkit.srs import check_brief, load_brief
+    from esamkit.standards import default_library
+    if "_authoring" not in wb.__dict__:
+        brief = load_brief(Path(wb.state["brief"]))
+        lib = default_library()
+        wb.__dict__["_authoring"] = (brief, check_brief(brief, lib, wb.onto, wb.s), lib, wb.onto)
+    return wb.__dict__["_authoring"]
+
+
+class AuthoringTool(WorkbenchTool):
+    def _run(self, **kwargs: Any) -> str:
+        if not (self._wb and self._wb.folder and self._wb.state.get("brief")):
+            return f"{self.name} works only inside an authoring run (python -m crew.main author <brief.yaml>)."
+        return super()._run(**kwargs)
+
+
+class ReadBriefTool(AuthoringTool):
+    name: str = "read_brief"
+    description: str = ("The SE's authoring brief, checked: the document to write, its sources, and each "
+                        "safety-significant function (SSF) with the SwCI MIL-STD-882E Table V gives it, the level of "
+                        "rigor that SwCI requires, and the findings on the brief. Takes no input.")
+
+    def _call(self, **_) -> str:
+        brief, a, _, _ = _authoring(self._wb)
+        return _dump({"brief": {k: v for k, v in brief.items() if not k.startswith("_")}, "assessment": a})
+
+
+class DocInput(BaseModel):
+    document_id: str = Field(..., description="A source document id from the brief, e.g. ICD-ENG-001")
+
+
+class ReadSourceTool(AuthoringTool):
+    name: str = "read_source"
+    description: str = "The full text of a source document the brief names, with where it was read from."
+
+    args_schema: type[BaseModel] = DocInput
+
+    def _call(self, document_id: str, **_) -> str:
+        from esamkit.srs import source_text
+        got = source_text(_authoring(self._wb)[0], document_id, self._wb.s)
+        return f"[{document_id}, from {got[1]}]\n\n{got[0]}" if got else f"{document_id} is not a source of this brief."
+
+
+class CitationInput(BaseModel):
+    citation: str = Field(..., description="'<standard> <clause>', e.g. 'MIL-STD-882E 4.4.2', 'MIL-STD-882E B.2.2.5a', "
+                                           "'MIL-STD-882E Table V', 'DI-IPSC-81433A 3.7'")
+
+
+class StandardClauseTool(WorkbenchTool):
+    name: str = "standard_clause"
+    description: str = ("The exact text of one clause from the standards library, or why the citation does not exist. "
+                        "Cite only clauses this tool returns.")
+    args_schema: type[BaseModel] = CitationInput
+
+    def _call(self, citation: str, **_) -> str:
+        from esamkit.standards import default_library
+        r = default_library().resolve(citation)
+        return f"{r['standard']} {r['clause']} {r['title']}\n\n{r['text']}" if r["ok"] else f"NOT IN THE LIBRARY: {r['reason']}"
+
+
+class TermsInput(BaseModel):
+    term: str = Field(..., description="Words to find in clause titles and text, e.g. 'safety-critical' or 'qualification'")
+
+
+class SearchStandardsTool(WorkbenchTool):
+    name: str = "search_standards"
+    description: str = "Find clauses in the standards library (MIL-STD-882E extract, DI-IPSC-81433A) containing all the words."
+    args_schema: type[BaseModel] = TermsInput
+
+    def _call(self, term: str, **_) -> str:
+        from esamkit.standards import default_library
+        hits = default_library().search(term)
+        return _dump(hits) if hits else f"No clause contains all of: {term}"
+
+
+class DraftInput(BaseModel):
+    markdown: str = Field(..., description="The COMPLETE SRS in markdown (it replaces the previous draft)")
+
+
+def _lint_summary(res: dict) -> dict:
+    return {"ok": res["ok"], "errors": res["errors"], "warnings": res["warnings"],
+            "findings": [f"{f['level'].upper()} [{f['rule']}] {f['where']}: {f['message']}" + (f" (basis: {f['basis']})" if f["basis"] else "")
+                         for f in res["findings"]],
+            "requirements": len(res["requirements"])}
+
+
+class SaveDraftTool(AuthoringTool):
+    name: str = "save_draft"
+    description: str = ("Save the complete SRS draft and lint it at once against DI-IPSC-81433A, the ontology, the brief, "
+                        "the sources, the graph and the standards library. Returns every finding; fix the errors and save again.")
+    args_schema: type[BaseModel] = DraftInput
+
+    def _call(self, markdown: str, **_) -> str:
+        from esamkit.srs import check_srs
+        wb = self._wb
+        brief, a, lib, onto = _authoring(wb)
+        (wb.folder / "draft.md").write_text(markdown)
+        res = check_srs(markdown, brief, a, wb.graph, lib, onto, wb.s)
+        wb.state.setdefault("saves", []).append({"by": self._agent, "errors": res["errors"], "warnings": res["warnings"],
+                                                 "sha": res["draft_sha"]})
+        wb.save()
+        return _dump(_lint_summary(res))
+
+
+class CheckDraftTool(AuthoringTool):
+    name: str = "check_draft"
+    description: str = "Lint the current saved draft again and return every finding and every requirement with its attributes. Takes no input."
+
+    def _call(self, **_) -> str:
+        from esamkit.srs import check_srs
+        wb = self._wb
+        if not (wb.folder / "draft.md").exists():
+            return "No draft saved yet."
+        brief, a, lib, onto = _authoring(wb)
+        res = check_srs((wb.folder / "draft.md").read_text(), brief, a, wb.graph, lib, onto, wb.s)
+        return _dump({**_lint_summary(res), "requirements": res["requirements"]})
+
+
+class BuildEvidencePackTool(AuthoringTool):
+    name: str = "build_evidence_pack"
+    description: str = ("Build the certification evidence pack from the current draft: compliance matrix, traceability "
+                        "matrix, lint report and an index with provenance, in work/drafts/. Takes no input.")
+
+    def _call(self, **_) -> str:
+        wb = self._wb
+        if not (wb.folder / "draft.md").exists():
+            return "No draft saved yet."
+        files = build_pack(wb)
+        return _dump({"files": files, "lint": wb.state["final_lint"]})
+
+
+def build_pack(wb: Workbench) -> dict:
+    """The evidence pack for the run's current draft (also called by the runner at the end)."""
+    from esamkit.srs import check_srs, evidence_pack, now
+    brief, a, lib, onto = _authoring(wb)
+    text = (wb.folder / "draft.md").read_text()
+    lint = check_srs(text, brief, a, wb.graph, lib, onto, wb.s)
+    files = evidence_pack(text, brief, a, lint, lib, Path(wb.state["drafts"]),
+                          {"run_id": wb.state["run_id"], "environment": wb.state["environment"],
+                           "model": wb.state.get("model", ""), "generated": now()})
+    wb.state.update(final_lint={"errors": lint["errors"], "warnings": lint["warnings"], "sha": lint["draft_sha"]},
+                    evidence_pack=files)
+    wb.save()
+    return files
+
+
+TOOLS.update({t.model_fields["name"].default: t for t in (
+    ReadBriefTool, ReadSourceTool, StandardClauseTool, SearchStandardsTool, SaveDraftTool, CheckDraftTool,
+    BuildEvidencePackTool)})

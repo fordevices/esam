@@ -24,7 +24,7 @@ still there; it lives in the `esam-pgdata` volume, which survives reboots.
 ## 3. Check everything works (optional, 15 s)
 
 ```bash
-pytest -q                          # expect: 76 passed
+pytest -q                          # expect: 110 passed
 ```
 
 ## 4. Study
@@ -65,6 +65,8 @@ python -m crew.main env                    # the Environment Engineer agent read
 python -m crew.main review lessons/06_missing_document/staged/STD-BRK-001.md   # stops for your approval
 python -m crew.main approve <run>          # ingest + verify;  `undo <run>` reverses it
 python -m crew.main ask "Which brake requirements have no test?"
+python -m esamkit.standards show "MIL-STD-882E 4.4.2"   # the standards library
+python -m crew.main author data/briefs/SRS-ENG-001.yaml  # draft an SRS → work/drafts/ (~470k tokens)
 ```
 
 An approved ingest edits `data/baseline/vehicle_decomposition.yaml` and `data/documents/`. Undo it

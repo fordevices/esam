@@ -16,6 +16,7 @@
 | 8 | [The ESAM ontology: the programme's vocabulary](#8-the-esam-ontology-the-programmes-vocabulary) |
 | 9 | [Where attributes go, and writing documents ESAM can read](#9-where-attributes-go-and-writing-documents-esam-can-read) |
 | 10 | [Requirements and tests in the graph (traceability)](#10-requirements-and-tests-in-the-graph-traceability) |
+| 11 | [Drafting a software requirements specification with ESAM](#11-drafting-a-software-requirements-specification-with-esam) |
 
 ---
 
@@ -525,9 +526,24 @@ Today a requirement reads:
 A person can see it's safety-related and has a 20 ms deadline. ESAM can't do so reliably. Written for ESAM:
 
 > **SRS-BRK-021** On detection of an internal fault, the software shall revert the hydraulic unit to conventional braking within 20 ms.
-> Safety: SwCI 1 | Timing: 20 ms max | Verification: T | Traces to: SYS-BRK-004
+> Safety: SwCI 1 | Timing: 20 ms max | Verification: T | Traces to: SYS-BRK-004 | Basis: MIL-STD-882E 4.4.2
 
-Each field uses the ontology's values: **Safety** a SwCI from MIL-STD-882E (only if the requirement is safety-related), **Timing** a value with units (`20 ms max`, `100 ms ± 10 ms`), **Verification** I, A, D or T, **Traces to** the parent requirement IDs.
+In the markdown file, the attribute line sits directly under the requirement, indented two spaces:
+
+```
+- **SRS-BRK-021** On detection of an internal fault, the software shall revert the hydraulic unit to conventional braking within 20 ms.
+  Safety: SwCI 1 | Timing: 20 ms max | Verification: T | Traces to: SYS-BRK-004 | Basis: MIL-STD-882E 4.4.2
+```
+
+| Field | What goes in it | Checked against |
+|---|---|---|
+| **Safety** | The SwCI (`SwCI 1` … `SwCI 5`), only on safety requirements | MIL-STD-882E Table V; must equal the SwCI of the safety function it implements |
+| **Timing** | A value with units: `20 ms max`, `100 ms ± 10 ms`, `10 ms period` | Required when the text states a time or rate |
+| **Verification** | I, A, D or T (several allowed: `T, A`) | DI-IPSC-81433A section 4 (qualification provisions) |
+| **Traces to** | Parent IDs: a system requirement, a safety function from the brief (`SSF-ENG-01`), or a source document section (`ICD-ENG-001 §2.1`) | Each must exist; DI-IPSC-81433A 5.a |
+| **Basis** | The standard clauses the requirement rests on (`MIL-STD-882E 4.4.2`, `DI-IPSC-81433A 3.7`) | Each must exist in ESAM's standards library (§11.4) |
+
+ESAM reads these fields into the graph with the requirement, so "which SwCI 1 requirements are verified only by inspection?" becomes a lookup.
 
 ### 9.5 In an STD: fixed fields in every test case
 
@@ -593,3 +609,79 @@ Traceability is only as good as the documents' structure:
 - Consistent IDs (§9.6). A `Verifies:` line that says "SRS BRK 11" links to nothing.
 
 ---
+
+---
+
+## 11. Drafting a software requirements specification with ESAM
+
+ESAM can draft an SRS for a subsystem and check it against the standards it must follow. The result is a **candidate**: it enters the baseline only after an SE reviews and approves it, like any other document. **Certification remains the decision of the certifying authority.** ESAM provides the evidence, not the approval.
+
+### 11.1 What you provide: the authoring brief
+
+A short YAML file that says what to write and on what basis:
+
+```yaml
+document: { id: SRS-ENG-001, name: "Engine Control Module Software Requirements", revision: A, subsystem: SUB-ENG-ECM }
+sources:
+  - id: ICD-ENG-001                     # what the requirements derive from
+safety_assessment:
+  assessed_by: "SE + system safety engineer"
+  functions:
+    - id: SSF-ENG-01
+      name: "Inhibit the engine compression brake while ABS is active"
+      hazard: "Engine braking locks the driven wheels during an anti-lock stop"
+      severity: Critical                # MIL-STD-882E Table I
+      control_category: 2               # MIL-STD-882E Table IV
+```
+
+**ESAM never makes the safety assessment.** You and the system safety engineer decide each safety-significant function's severity and software control category. ESAM looks up the **SwCI** in MIL-STD-882E Table V (Critical × category 2 = SwCI 2) and the **level of rigor** that SwCI requires.
+
+### 11.2 What ESAM does
+
+| Step | Who | What |
+|---|---|---|
+| 1. Check the brief | ESAM | Computes each SwCI; reports where the brief and the baseline disagree (e.g. a Critical function on a subsystem the baseline calls not safety-critical, which MIL-STD-882E 3.2.31 says is safety-critical) |
+| 2. Gather the basis | Triage agent | The safety functions, the source document's sections, the subsystem's interfaces, the clauses that apply |
+| 3. Draft | Author agent | Every DI-IPSC-81433A paragraph, in order; each requirement with its attribute line (§9.4); values only from the sources, `TBD` where a value is missing |
+| 4. Verify | ESAM, then the reviewer agent | ESAM's checks (§11.3) after every save; then the reviewer confirms each value against the source, reads each cited clause to confirm it supports the requirement, and judges each requirement |
+| 5. Evidence pack | ESAM | The files in §11.5 |
+
+### 11.3 What is checked
+
+| Check | Rule | From |
+|---|---|---|
+| Every SRS paragraph present, in order; an empty one says so | Outline | DI-IPSC-81433A I.4d and 3 |
+| Each requirement has a qualification method | Verification attribute | DI-IPSC-81433A 4 |
+| Each requirement traces to a parent that exists | Traces to | DI-IPSC-81433A 5.a |
+| Every safety function is implemented, at its SwCI | Safety attribute | MIL-STD-882E Table V, B.2.2.1 |
+| Every safety requirement rests on MIL-STD-882E | Basis attribute | MIL-STD-882E 4.4 |
+| Every cited clause exists | Basis attribute | The standards library |
+| Every source section and every interface is accounted for | Coverage | DI-IPSC-81433A 5.b, 3.3.1 |
+| One "shall", no vague words, no TBDs | Heuristics named after ISO/IEC/IEEE 29148's characteristics (singular, unambiguous, complete) | ESAM's own rules; the standard's text is not held |
+
+Errors must be fixed. Warnings are for the SE to judge.
+
+### 11.4 The standards library
+
+ESAM cites only clauses it holds. It holds public US Government documents as text: the **MIL-STD-882E** extract (definitions, section 4 with Tables I–VI, Appendix B on software system safety) and the **DI-IPSC-81433A** SRS data item description. Each records the SHA-256 of its source PDF, so anyone can check the text against the original. **ISO/IEC/IEEE 29148** is copyrighted: ESAM names its requirement characteristics but holds none of its text. MIL-STD-882E **Change 1** (2023) is not held. A programme that cites Change 1 must check the extract against it.
+
+A citation that isn't in the library is an error, never a near miss: `MIL-STD-882E 4.4.9` does not exist, and ESAM says so.
+
+### 11.5 The evidence pack
+
+Written to `work/drafts/<document>_<date>/`:
+
+| File | Shows |
+|---|---|
+| `<document>.md` | The candidate SRS |
+| `compliance_matrix.md` | Each DI-IPSC-81433A paragraph (present, states none, or tailored out); each safety function with its severity, control category, SwCI, the requirements that implement it and their verification; the level of rigor required; every cited clause resolved to its title |
+| `traceability_matrix.csv` | Every requirement with its section, text, verification, SwCI, timing, parents and basis; *verified by* stays empty until a test description exists |
+| `lint.md` | Every finding, with the rule and clause it applies |
+| `evidence_pack.md` | The index: provenance (brief, draft and standards fingerprints, model, run), what remains open, and the next step |
+
+The level-of-rigor tasks (analysis of requirements, architecture, design and code; safety-specific testing) are programme activities. The pack says what they are; it is not evidence that they were done. If they are incomplete, MIL-STD-882E Table VI says how the software's contribution to risk must be documented (SwCI 2: **serious**).
+
+### 11.6 After the draft
+
+Review the draft and the evidence pack, then put the draft through the normal document review: the ontology check, the content review and **your approval** before it enters the baseline. Fix the baseline findings from §11.2 step 1 (for example, mark the subsystem safety-critical) as baseline changes in their own right.
+

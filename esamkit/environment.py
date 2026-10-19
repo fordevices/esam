@@ -50,6 +50,13 @@ TOOL_NEEDS = {
     "health_report": ["graph", "database"],
     "ingest_document": ["vector", "embeddings", "graph", "database"],
     "verify_ingestion": ["vector", "embeddings", "graph", "database"],
+    "read_brief": ["files"],
+    "read_source": ["files"],
+    "standard_clause": ["files"],
+    "search_standards": ["files"],
+    "save_draft": ["files", "graph"],
+    "check_draft": ["files", "graph"],
+    "build_evidence_pack": ["files", "graph"],
 }
 
 
@@ -164,11 +171,18 @@ def probe_files(s: Settings) -> Probe:
     findings = onto.check_self() + check_baseline(onto, yaml.safe_load(s.baseline_yaml.read_text()), s.documents_dir)
     errors = sum(f.level == "error" for f in findings)
     docs = len(list(s.documents_dir.glob("*.md")))
-    data = {"ontology_errors": errors, "ontology_warnings": len(findings) - errors, "documents": docs}
-    status = "ok" if not errors else "warning"
+    try:
+        from .standards import Library
+        lib = Library()
+        held = {sid: len(lib.clauses(sid)) for sid, v in lib.standards.items() if v.get("text")}
+        standards = ", ".join(f"{k} {n} clauses" for k, n in held.items())
+    except (OSError, KeyError, ValueError) as e:
+        held, standards = {}, f"standards library unreadable ({type(e).__name__})"
+    data = {"ontology_errors": errors, "ontology_warnings": len(findings) - errors, "documents": docs, "standards": held}
+    status = "ok" if not errors and held and all(held.values()) else "warning"
     return Probe("files", status, f"baseline, ontology v{onto.data.get('metadata', {}).get('version', '?')}, "
                                   f"{docs} documents; baseline vs ontology: {errors} errors, "
-                                  f"{len(findings) - errors} warnings", data)
+                                  f"{len(findings) - errors} warnings; standards: {standards}", data)
 
 
 def probe_database(profile: dict, r: dict) -> Probe:

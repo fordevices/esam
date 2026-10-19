@@ -40,6 +40,17 @@ value_sets:
   os_class:
     rtos: "Real-time operating system: deterministic, bounded worst-case latency (hard real-time)"
     gpos: "General-purpose operating system, e.g. Linux (soft real-time at best)"
+  severity_category:               # MIL-STD-882E Table I (mishap result criteria, verbatim)
+    Catastrophic: "Could result in one or more of the following: death, permanent total disability, irreversible significant environmental impact, or monetary loss equal to or exceeding $10M."
+    Critical: "Could result in one or more of the following: permanent partial disability, injuries or occupational illness that may result in hospitalization of at least three personnel, reversible significant environmental impact, or monetary loss equal to or exceeding $1M but less than $10M."
+    Marginal: "Could result in one or more of the following: injury or occupational illness resulting in one or more lost work day(s), reversible moderate environmental impact, or monetary loss equal to or exceeding $100K but less than $1M."
+    Negligible: "Could result in one or more of the following: injury or occupational illness not resulting in a lost work day, minimal environmental impact, or monetary loss less than $100K."
+  software_control_category:       # MIL-STD-882E Table IV
+    "1": "Autonomous (AT)"
+    "2": "Semi-Autonomous (SAT)"
+    "3": "Redundant Fault Tolerant (RFT)"
+    "4": "Influential"
+    "5": "No Safety Impact (NSI)"
   software_criticality:            # MIL-STD-882E Software Criticality Index
     "SwCI 1": "Highest: software failure can directly cause a catastrophic or critical hazard"
     "SwCI 2": "High"
@@ -136,6 +147,12 @@ classes:
       section: { type: text }
       subsystem: { type: ref, class: Subsystem }
       source_artifact: { type: ref, class: DesignArtifact, required: true }
+      # From the attribute line under the requirement (SE manual §9.4), when present:
+      verification: { type: text_list, values: verification_method, description: "Verification: I, A, D or T (DI-IPSC-81433A 4)" }
+      safety: { type: enum, values: software_criticality, description: "Safety: the SwCI, MIL-STD-882E Table V" }
+      timing: { type: text, description: "Timing: a value with units, e.g. '20 ms max'" }
+      traces_to: { type: text_list, description: "Traces to: parent ids (DI-IPSC-81433A 5.a)" }
+      basis: { type: text_list, description: "Basis: standard clauses from the standards library" }
   TestCase:
     description: "One test case in an STD, read from its 'TC-…' heading and fixed fields."
     id_pattern: '^TC-[A-Z0-9]+-\d{3}$'

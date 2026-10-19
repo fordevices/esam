@@ -120,3 +120,95 @@ ask_review:
     The final answer in markdown, then a line "Checked:" listing what you
     re-ran, and a MISSING section (or "MISSING: none").
   agent: se_reviewer
+
+# ── Pipeline B: an SRS from an SE's brief, verified, with an evidence pack ──
+# The output is a CANDIDATE draft in work/drafts/. It enters the baseline only
+# through Pipeline A (review, SE approval). Certification is the certifying
+# authority's decision; the evidence pack supports it and claims nothing.
+
+b1_gather_basis:
+  description: >
+    Gather the basis for {document} (run {run_id}). Run read_brief: report the
+    document to write, the subsystem, every safety-significant function (SSF)
+    with its severity, control category, SwCI and level-of-rigor text exactly as
+    the tool gives them, and every finding on the brief. Run read_source for each
+    source and list its numbered sections: each must be traced by a requirement
+    or explained. Run check_coverage and walk_graph (direction impact and up) for
+    the subsystem: list its interfaces and their messages and status. Use
+    search_standards and standard_clause to find the clauses a software
+    requirements specification for this subsystem must follow (the
+    DI-IPSC-81433A outline, MIL-STD-882E 4.4 and Appendix B) and quote their
+    citations exactly. Do not write requirements.
+  expected_output: >
+    A markdown basis: the document, the SSF table with SwCI, the source
+    sections to account for, the interfaces, the applicable clause citations,
+    and the brief's findings for the SE.
+  agent: triage
+
+b2_draft_srs:
+  description: >
+    Write {document} as a complete SRS and save it with save_draft. Use only the
+    basis, read_source and the tools: every value (time, rate, signal, state)
+    comes from a source section or the brief; if a value you need is not there,
+    write TBD rather than invent one.
+
+    FORMAT (the lint enforces it):
+    1. Title line "# <ID> — <name>", then the table
+       "| Document | Type | Revision | Subsystem |" with one row (Type SRS).
+    2. Every paragraph of the DI-IPSC-81433A outline as a numbered heading, in
+       order: "## 1 Scope", "### 1.1 Identification", "### 1.2 System overview",
+       "### 1.3 Document overview", "## 2 Referenced documents", "## 3 Requirements",
+       "### 3.1 Required states and modes" … "### 3.18 Precedence and criticality of
+       requirements" (3.3.1 and 3.10.1–3.10.4 as "####"), "## 4 Qualification
+       provisions", "## 5 Requirements traceability", "## 6 Notes". A paragraph with
+       no requirements says "No requirements." or "This paragraph has been tailored out."
+    3. Each requirement on one line "- **<id>** <one sentence with one 'shall'>", ids
+       numbered from 010 in steps of 1 or 10 (SRS-ENG-010, SRS-ENG-011, … SRS-ENG-099;
+       never SRS-ENG-001 to -009, which are document numbers), with its attribute line
+       under it, indented two spaces, for example:
+         - **SRS-ENG-020** While ABS active is 01 in EBC1, the software shall inhibit the engine compression brake.
+           Safety: SwCI 2 | Verification: T | Traces to: SSF-ENG-01, ICD-ENG-001 §2.1 | Basis: MIL-STD-882E 4.4.2
+       Fields: Safety (SwCI n), Timing (value with units), Verification, Traces to, Basis.
+       Safety only for safety requirements (all of 3.7), and equal to the SwCI of the
+       SSF it traces to. Verification is I, A, D or T. Traces to lists SSF ids and/or
+       source sections written "ICD-ENG-001 §2.1". Basis lists ONLY standard
+       clauses that standard_clause returns (never a source document); every
+       safety requirement cites MIL-STD-882E.
+    4. Every SSF is implemented by at least one requirement; every source section
+       is traced; every interface message is addressed in 3.3; 3.18 names the
+       safety requirements.
+    Read every finding save_draft returns, fix all ERRORS and save again (at most
+    four saves). Warnings may remain if you say why.
+  expected_output: >
+    A short note: saves made, the final error and warning counts, each remaining
+    warning with the reason, and every TBD with what is missing.
+  agent: researcher
+
+b3_verify_srs:
+  description: >
+    Verify the draft of {document} as the SE who signs off (run {run_id}). Run
+    check_draft. For every requirement: (1) confirm each value against the
+    source with read_source, quoting both; (2) open each Basis citation with
+    standard_clause and say whether the clause really supports the
+    requirement, not merely exists; (3) judge it against the ISO/IEC/IEEE 29148
+    characteristics by name (necessary, unambiguous, singular, verifiable,
+    feasible, correct): these are names only, the standard's text is not held.
+    Where a requirement is wrong, uncited or unsupported, correct it or remove
+    it with save_draft (never add content without a source), then run
+    check_draft again. Flag any hazard the requirements create or leave open.
+  expected_output: >
+    A markdown review: a table per requirement (value check, basis check,
+    characteristics, verdict), the changes you made, open issues for the SE,
+    and a last line: VERDICT: READY FOR SE REVIEW or VERDICT: NOT READY.
+  agent: se_reviewer
+
+b4_evidence_pack:
+  description: >
+    Run build_evidence_pack for {document} (run {run_id}) and summarise for the
+    SE: the files and what each shows, the CSCI SwCI and its level of rigor,
+    the lint counts, and every open item. State plainly that the draft is a
+    candidate, that the pack is supporting evidence and not a certification,
+    and that the next step is Pipeline A review and SE approval.
+  expected_output: >
+    A one-page markdown summary of the evidence pack.
+  agent: se_reviewer

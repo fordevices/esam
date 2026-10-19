@@ -1,0 +1,51 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SE AUTHORING BRIEF for Pipeline B:  python -m crew.main author data/briefs/SRS-ENG-001.yaml
+#
+# The SE writes this. It says which document to draft, what it derives from,
+# and the SAFETY ASSESSMENT, which ESAM never makes itself: for each
+# safety-significant function (SSF), the severity (MIL-STD-882E Table I) and
+# the software control category (Table IV) assessed by the SE and the system
+# safety engineer. ESAM computes the SwCI from Table V and checks that every
+# SSF is implemented by a requirement at that SwCI.
+#
+# SYNTHETIC LEARNING EXAMPLE. Programme SYNTH-LTV is fictional, and so is
+# this assessment.
+# ─────────────────────────────────────────────────────────────────────────────
+document:
+  id: SRS-ENG-001
+  name: "Engine Control Module Software Requirements"
+  revision: A
+  subsystem: SUB-ENG-ECM
+
+operating_system: rtos            # not in the baseline yet; see the brief check
+
+sources:                          # what the requirements derive from
+  - id: ICD-ENG-001
+    # Used from this file while the ICD is not ingested (Pipeline A ingests it).
+    file: lessons/06_missing_document/staged/ICD-ENG-001.md
+
+safety_assessment:
+  assessed_by: "SYNTHETIC example (SE + system safety engineer); not a real assessment"
+  functions:
+    - id: SSF-ENG-01
+      name: "Inhibit the engine compression brake while ABS is active"
+      hazard: "Engine braking locks the driven wheels during an anti-lock stop: loss of directional control"
+      severity: Critical
+      control_category: 2          # the brake ECU's ABS is an independent mechanism that partly mitigates
+      rationale: "ICD-ENG-001 §2.1 (ABS active)"
+    - id: SSF-ENG-02
+      name: "Reduce engine torque on a traction-control request"
+      hazard: "Torque not reduced: driven wheels keep spinning on loose ground, degraded traction"
+      severity: Marginal
+      control_category: 2
+      rationale: "ICD-ENG-001 §2.1 (ASR engine control active)"
+    - id: SSF-ENG-03
+      name: "Detect loss of EBC1 and fall back"
+      hazard: "Stale EBC1 data held after the brake ECU stops transmitting"
+      severity: Critical
+      control_category: 2
+      rationale: "ICD-ENG-001 §2.1 (300 ms timeout)"
+
+notes: >
+  The ECM transmits EEC1 every 10 ms (ICD-ENG-001 §3.1). The candidate interface
+  SUB-J1939-BB → SUB-ENG-ECM (EBC1) is unconfirmed in the baseline.

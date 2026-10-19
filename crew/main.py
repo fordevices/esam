@@ -12,10 +12,13 @@ ESAM crew runner.
     python -m crew.main reject <run> --note "why"
     python -m crew.main undo <run>                      # reverse an ingest
 
+    # Pipeline B: an SRS from an SE's brief → candidate draft + evidence pack in work/drafts/
+    python -m crew.main author data/briefs/SRS-ENG-001.yaml
+
     # Interactive: a question answered by the three agents
     python -m crew.main ask "Which brake requirements have no test?"
 
-(Pipeline B and the task-list worker are added in later steps; crew/README.md.)
+(The task-list worker is added in a later step; crew/README.md.)
 
 Every run gets a folder work/runs/<timestamp>_<name>/ with the environment
 report (JSON), the agents' output (markdown) and a usage summary, and every
@@ -33,6 +36,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
@@ -41,6 +46,7 @@ from esamkit.usage import UsageLedger  # noqa: E402
 
 RUNS = ROOT / "work" / "runs"
 INBOX = ROOT / "work" / "inbox"
+DRAFTS = ROOT / "work" / "drafts"
 
 
 def new_run(name: str, environment: str) -> tuple[str, Path, UsageLedger]:
@@ -210,7 +216,7 @@ def cmd_runs(args) -> int:
     if not rows:
         print("No pipeline runs yet.")
     for s in rows:
-        print(f"  {s['run_id']:<40} {s['state']:<20} {s['entry'].get('id', ''):<13} "
+        print(f"  {s['run_id']:<44} {s['state']:<20} {s.get('entry', {}).get('id', ''):<13} "
               f"recommendation: {s.get('recommendation', '-')}")
     return 0
 
@@ -277,6 +283,56 @@ def cmd_undo(args) -> int:
     return 0
 
 
+def cmd_author(args) -> int:
+    from crew.custom_tools import _authoring, build_pack
+
+    brief_path = Path(args.brief).resolve()
+    if not brief_path.is_file():
+        sys.exit(f"no such brief: {brief_path}")
+    doc = (yaml.safe_load(brief_path.read_text()) or {}).get("document") or {}
+    if not doc.get("id"):
+        sys.exit(f"{brief_path.name}: the brief needs document.id")
+    profile, report, EsamCrew = prepare(args.env, "author")
+    run_id, folder, ledger = new_run(f"author_{doc['id']}", profile["name"])
+    crew = EsamCrew(profile["name"], ledger, report)
+    check_tools(crew, "author")
+    shutil.copy2(brief_path, folder / "brief.yaml")
+    state = {"run_id": run_id, "kind": "author", "state": "drafting", "created": _now(), "environment": profile["name"],
+             "brief": str(folder / "brief.yaml"), "entry": {"id": doc["id"]}, "model": crew.llm.model,
+             "drafts": str(DRAFTS / f"{doc['id']}_{run_id.split('_author')[0]}")}
+    wb = _workbench(profile, folder, state)
+    wb.save()
+    _, assessment, _, _ = _authoring(wb)
+    print(f"Run {run_id}: drafting {doc['id']} (CSCI {assessment['csci_swci'] or 'no SSFs'}; usage → {ledger.sink})")
+    for f in assessment["findings"]:
+        print(f"  brief {f['level']}: {f['where']}: {f['message']}")
+    if not assessment["ok"]:
+        state["state"] = "brief_rejected"
+        wb.save()
+        print("The brief has errors; fix them before drafting.")
+        return 1
+    out = kickoff(crew, "author", wb, folder, ledger,
+                  {"document": f"{doc['id']} ({doc.get('name', '')})", "run_id": run_id,
+                   "request": f"draft {doc['id']} for {doc.get('subsystem')}", "environment": profile["name"]})
+    if not (folder / "draft.md").exists():
+        state["state"] = "no_draft"
+        wb.save()
+        print(f"\n{out}\n\nNo draft was saved.")
+        return 1
+    files = build_pack(wb)                      # always from the final draft
+    review = folder / "b3_verify_srs.md"
+    if review.exists():
+        shutil.copy2(review, Path(state["drafts"]) / "se_reviewer_memo.md")
+    m = re.search(r"VERDICT:\s*(READY FOR SE REVIEW|NOT READY)", review.read_text() if review.exists() else "")
+    state.update(state="candidate", verdict=m[1] if m else "none given", recommendation=m[1] if m else "-")
+    wb.save()
+    lint = state["final_lint"]
+    print(f"\n{out}\n\nCandidate draft: {files['draft']}\nEvidence pack:   {files['evidence_pack']}\n"
+          f"Lint: {lint['errors']} errors, {lint['warnings']} warnings. Reviewer verdict: {state['verdict']}.\n"
+          f"Next: python -m crew.main review {files['draft']}")
+    return 0 if lint["errors"] == 0 else 1
+
+
 def cmd_ask(args) -> int:
     profile, report, EsamCrew = prepare(args.env, "ask")
     run_id, folder, ledger = new_run("ask", profile["name"])
@@ -319,6 +375,8 @@ def main() -> None:
         p.add_argument("--note", default="", required=(name == "reject"))
         if name == "approve":
             p.add_argument("--against-recommendation", action="store_true")
+    b = add("author", cmd_author, "Pipeline B: draft an SRS from an SE's brief, verified, with an evidence pack")
+    b.add_argument("brief")
     a = add("ask", cmd_ask, "answer a question with the three agents")
     a.add_argument("question")
     args = ap.parse_args()

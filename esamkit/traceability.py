@@ -39,6 +39,23 @@ _SECTION = re.compile(r"^#{2,6}\s+(?P<title>.+)$")
 _TC_HEAD = re.compile(r"^#{2,6}\s+(?P<id>TC-[A-Z0-9]+-\d{3})\s*[—–-]\s*(?P<title>.+)$")
 _FIELD = re.compile(r"^(?P<key>Verifies|Method|Steps|Pass criteria):\s*(?P<value>.*)$", re.I)
 _ID = re.compile(r"\b[A-Z]+-[A-Z0-9]+-\d{3}\b")
+# The attribute line under a requirement (SE manual §9.4):
+#   Safety: SwCI 2 | Timing: 20 ms max | Verification: T | Traces to: SSF-ENG-01 | Basis: MIL-STD-882E 4.4.2
+_ATTR = re.compile(r"^(?P<key>Safety|Timing|Verification|Traces to|Basis):\s*(?P<value>.*)$", re.I)
+_LISTS = {"traces_to", "basis", "verification"}
+
+
+def read_attributes(line: str) -> dict | None:
+    """The attributes on one attribute line, or None if it isn't one."""
+    parts = [p.strip() for p in line.strip().split("|")]
+    found = [_ATTR.match(p) for p in parts]
+    if not parts or not all(found):
+        return None
+    out = {}
+    for m in found:
+        key, value = m["key"].lower().replace(" ", "_"), m["value"].strip().rstrip(".")
+        out[key] = [v.strip() for v in re.split(r"[,;]", value) if v.strip()] if key in _LISTS else value
+    return out
 
 
 @dataclass
@@ -60,7 +77,7 @@ def read_requirements(text: str, artifact_id: str, subsystem: str) -> Extracted:
             body = " ".join(cur["lines"]).strip()
             out.vertices.append(Vertex("Requirement", {
                 "id": cur["id"], "name": _short(body), "text": body, "section": cur["section"],
-                "source_artifact": artifact_id, "subsystem": subsystem}))
+                "source_artifact": artifact_id, "subsystem": subsystem, **cur["attrs"]}))
             out.edges += [Edge(cur["id"], artifact_id, "SPECIFIED_IN"), Edge(cur["id"], subsystem, "ALLOCATED_TO")]
 
     for line in text.splitlines():
@@ -69,9 +86,13 @@ def read_requirements(text: str, artifact_id: str, subsystem: str) -> Extracted:
             section = m["title"].strip()
         elif m := _REQ_LINE.match(line):
             close()
-            cur = {"id": m["id"], "lines": [m["text"]], "section": section}
+            cur = {"id": m["id"], "lines": [m["text"]], "section": section, "attrs": {}}
         elif cur and line.startswith("  ") and line.strip():
-            cur["lines"].append(line.strip())
+            attrs = read_attributes(line)
+            if attrs is not None:
+                cur["attrs"].update(attrs)
+            else:
+                cur["lines"].append(line.strip())
         elif cur and not line.strip():
             close(); cur = None
     close()

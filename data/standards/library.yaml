@@ -1,0 +1,83 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# ESAM standards library: what ESAM may cite, and where each text came from.
+#
+# Held as text: public US Government documents only (freely released works).
+# Held by name only: copyrighted standards. ESAM names their concepts but
+# never reproduces their text.
+#
+# Each source PDF is identified by its SHA-256, so anyone can check the text
+# here against the document it came from. Look up and search with:
+#   python -m esamkit.standards [show "<citation>" | search "<words>"]
+# ─────────────────────────────────────────────────────────────────────────────
+version: "0.1"
+
+standards:
+  MIL-STD-882E:
+    title: "Department of Defense Standard Practice: System Safety"
+    date: 2012-05-11
+    distribution: "Public: a US Government work, freely available (ASSIST, EverySpec). This copy's cover carries no distribution statement."
+    text: MIL-STD-882E.md
+    holding: "Extract: 3.2 definitions, section 4 (Tables I–VI), Appendix B (software system safety)"
+    source:
+      url: "https://everyspec.com/MIL-STD/MIL-STD-0800-0899/MIL-STD-882E_41682/"
+      file: docs/MIL-STD-882E.pdf          # the copy the text was built from
+      pages: 104
+      sha256: ff1345eb99276646b2f0673b1d588b2f5fe382acd62ac74b21b09b5ed513718f
+      method: "pdftotext -layout; python -m esamkit.standards extract-882e"
+    not_included: "Change 1 (27 Sep 2023, adds autonomy/AI and civilian harm content): not held; check it before relying on this extract for a programme that cites Change 1."
+
+  DI-IPSC-81433A:
+    title: "Data Item Description: Software Requirements Specification (SRS)"
+    date: 1999-12-15
+    distribution: "Public (DID, ASSIST); MIL-STD-498 / J-STD-016 family"
+    text: DI-IPSC-81433A.md
+    holding: "Full text (11 pages), transcribed from the scanned PDF"
+    source:
+      url: "https://everyspec.com/DATA-ITEM-DESC-DIDs/DI-IPSC/DI-IPSC-81433A_3709/"
+      file: docs/DI-IPSC-81433A.pdf        # the copy the text was transcribed from
+      pages: 11
+      sha256: d3de3241ac5633e7aee5237d1bf620f2c20574ba6c0629ed4ba01b4e197b5143
+      method: "Scanned images (no text layer), transcribed by reading each page; obvious typing errors in the scan kept as printed"
+    notes: "NOTICE 1 (2013) confirmed the DID valid for use in acquisition."
+
+  ISO/IEC/IEEE-29148:
+    title: "Systems and software engineering — Life cycle processes — Requirements engineering"
+    date: 2018
+    distribution: "Copyrighted (ISO/IEC/IEEE). Not held as text."
+    text: null
+    holding: "By name only: the characteristics of individual requirements are named, not quoted"
+    characteristics: [necessary, appropriate, unambiguous, complete, singular, feasible, verifiable, correct, conforming]
+    notes: "ESAM's checks for these are heuristics it defines itself (lint), not the standard's text. Cite the standard without a clause."
+
+# Tables from MIL-STD-882E section 4.4, as data, so ESAM can compute rather
+# than guess. tests/test_standards.py checks every cell against the extracted text.
+tables:
+  MIL-STD-882E Table I:
+    severity_categories: {Catastrophic: 1, Critical: 2, Marginal: 3, Negligible: 4}
+  MIL-STD-882E Table IV:
+    software_control_categories:
+      1: "Autonomous (AT)"
+      2: "Semi-Autonomous (SAT)"
+      3: "Redundant Fault Tolerant (RFT)"
+      4: "Influential"
+      5: "No Safety Impact (NSI)"
+  MIL-STD-882E Table V:
+    severity_columns: [Catastrophic, Critical, Marginal, Negligible]
+    matrix:                       # row = software control category
+      1: ["SwCI 1", "SwCI 1", "SwCI 3", "SwCI 4"]
+      2: ["SwCI 1", "SwCI 2", "SwCI 3", "SwCI 4"]
+      3: ["SwCI 2", "SwCI 3", "SwCI 4", "SwCI 4"]
+      4: ["SwCI 3", "SwCI 4", "SwCI 4", "SwCI 4"]
+      5: ["SwCI 5", "SwCI 5", "SwCI 5", "SwCI 5"]
+    level_of_rigor:
+      "SwCI 1": "Program shall perform analysis of requirements, architecture, design, and code; and conduct in-depth safety-specific testing."
+      "SwCI 2": "Program shall perform analysis of requirements, architecture, and design; and conduct in-depth safety-specific testing."
+      "SwCI 3": "Program shall perform analysis of requirements and architecture; and conduct in-depth safety-specific testing."
+      "SwCI 4": "Program shall conduct safety-specific testing."
+      "SwCI 5": "Once assessed by safety engineering as Not Safety, then no safety specific analysis or verification is required."
+  MIL-STD-882E Table VI:
+    "SwCI 1": "High"
+    "SwCI 2": "Serious"
+    "SwCI 3": "Medium"
+    "SwCI 4": "Low"
+    "SwCI 5": "Not Safety"

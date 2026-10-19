@@ -18,13 +18,17 @@ python -m crew.main approve <run>                   # the SE's decision: A3 inge
 python -m crew.main reject <run> --note "why"
 python -m crew.main undo <run>                      # reverse an ingest exactly
 python -m crew.main ask "Which brake requirements have no test?"
+
+python -m esamkit.standards                         # the standards library
+python -m esamkit.standards show "MIL-STD-882E 4.4.2"
+python -m crew.main author data/briefs/SRS-ENG-001.yaml   # Pipeline B → work/drafts/
 ```
 
 | Step | Status |
 |---|---|
 | 0. Environment: profiles, probes, capabilities, usage ledger, Environment Engineer | ✅ |
 | 1. Pipeline A (ontology → document review → **stop for SE approval** → ingest → verify), interactive + inbox modes | ✅ |
-| 2. Standards library (MIL-STD-882E) + Pipeline B (SRS authoring, verified, certification evidence pack) | planned |
+| 2. Standards library (MIL-STD-882E) + Pipeline B (SRS authoring, verified, certification evidence pack) | ✅ |
 | 3. Task list in the database + worker | planned |
 | 4. Cockpit Tasks tab | planned |
 
@@ -90,3 +94,34 @@ verification), `incoming/<doc>`, one `.md` per task, `approval_request.md`, `man
 **Interactive** (`ask`): Triage pins down the entities and the documents that would answer (present or
 MISSING), the Researcher answers from tools only with citations, the SE Reviewer re-runs the coverage and
 traceability checks and keeps the MISSING section. Read-only: `ask` never changes anything.
+
+## Step 2: standards library and Pipeline B (an SRS from an SE's brief)
+
+**Standards library** (`data/standards/`, `esamkit/standards.py`): only clauses ESAM holds can be cited.
+
+| Standard | Held | From |
+|---|---|---|
+| MIL-STD-882E (2012) | 74 clauses: 3.2 definitions, section 4 with Tables I–VI, Appendix B | `pdftotext` of the public PDF; `python -m esamkit.standards extract-882e <pdf>` rebuilds it and refuses a PDF with a different SHA-256 |
+| DI-IPSC-81433A (1999) | Full text, 39 clauses (the SRS outline + the DID's instructions as I.0–I.4) | Transcribed from the scanned PDF (no text layer) |
+| ISO/IEC/IEEE 29148 (2018) | Name and its requirement characteristics only | Copyrighted: no text |
+
+Tables I, IV, V and VI are also held as data (`library.yaml`), and `tests/test_standards.py` checks every Table V
+cell against the extracted text. `resolve("<standard> <clause>")` never returns a near miss. Change 1 of 882E (2023)
+is not held.
+
+**Pipeline B** (`python -m crew.main author <brief.yaml>`): the SE's brief names the document, its sources and the
+safety assessment (severity and control category per safety-significant function). ESAM computes the SwCI and never
+assesses safety itself.
+
+| Step | Agent | Tools | Decides |
+|---|---|---|---|
+| brief check | (none) | `esamkit.srs.check_brief` | SwCI per SSF (Table V); brief vs baseline (e.g. 882E 3.2.31) |
+| B1 gather basis | Triage | `read_brief`, `read_source`, `check_coverage`, `walk_graph`, `search_standards`, `standard_clause`, `ontology_lookup` | |
+| B2 draft | Researcher | `read_brief`, `read_source`, `standard_clause`, `search_standards`, `save_draft`, `check_draft` | every save is linted at once (`esamkit.srs.check_srs`); errors must reach 0 |
+| B3 verify | SE Reviewer | `check_draft`, `read_source`, `standard_clause`, `save_draft` | the lint; the agent confirms values against sources and that each cited clause *supports* the requirement; VERDICT |
+| B4 evidence pack | SE Reviewer | `build_evidence_pack` | the pack; the runner rebuilds it from the final draft regardless |
+
+Output in `work/drafts/<doc>_<timestamp>/`: the candidate SRS, `compliance_matrix.md`, `traceability_matrix.csv`,
+`lint.md`/`lint.json`, `evidence_pack.md` (provenance and open items) and `se_reviewer_memo.md`. The draft enters
+the baseline only through Pipeline A (`review` → SE `approve`). The pack is supporting evidence; certification is
+the certifying authority's decision.
