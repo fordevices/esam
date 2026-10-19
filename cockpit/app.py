@@ -9,6 +9,9 @@ grows it one tab at a time, on top of esamkit instead of its own SQL:
                 the last run of each check (e.g. lesson 06's confidence test)
     Graph       the baseline as a tree, a tree with interface arcs, a network
     Ontology    what's in the SE vocabulary file, and whether the baseline passes it
+    Tasks       the crew's task list (esam_tasks), reviews waiting for an SE's
+                decision, recent runs with their logs and reports, and a form
+                to queue work. A worker (python -m crew.main worker) does it.
 
 Still to come (see notes/): the health report (Dashboard), the query tab
 (lesson 05 hybrid), and baseline diff / approve.
@@ -28,12 +31,13 @@ from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException, Query
-from fastapi.responses import HTMLResponse
+from fastapi import Body, Depends, FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
 
 import yaml
 
 from esamkit import runlog
+from esamkit import runs as crew_runs
 from esamkit.config import PROJECT_ROOT, settings
 from esamkit.factory import get_graph_store
 from esamkit.graphstores.base import GraphStore
@@ -138,7 +142,20 @@ def collect(graph: GraphStore, doc_types: list[str], runs: list[dict] | None = N
         "ontology": ontology_payload(),
         "health": health_of(graph, dsn or settings.pg_dsn),
         "runs": runs or [],
+        "tasks": tasks_payload(dsn or settings.pg_dsn),
     }
+
+
+def tasks_payload(dsn: str) -> dict:
+    """The Tasks tab: the queue (if the database has one), runs, and what can be queued."""
+    out = {"runs": crew_runs.list_runs(), "choices": crew_runs.choices(), "tasks": [], "queue": None}
+    try:
+        from esamkit.tasks import TaskQueue
+        out["tasks"] = TaskQueue(dsn).list(limit=50)
+        out["queue"] = "ok"
+    except Exception as e:  # no database: runs still show
+        out["queue"] = f"{type(e).__name__}: {e}"
+    return out
 
 
 def render_page(data: dict | None = None, source: str = "live") -> str:
@@ -183,3 +200,95 @@ def cockpit(types: str = Query(",".join(DOC_TYPES), description="comma-separated
             graph: GraphStore = Depends(get_graph), runs_dsn: str = Depends(get_runs_dsn)) -> dict:
     doc_types = [t.strip().lower() for t in types.split(",") if t.strip()]
     return collect(graph, doc_types, last_runs(runs_dsn), runs_dsn)
+
+
+# ── Tasks tab ───────────────────────────────────────────────────────────────
+# The Cockpit listens on 127.0.0.1 in this build. Before it is reachable by
+# others (the pilot), these endpoints need the pilot's sign-on: an approval
+# records the name the SE types, and nothing here checks who they are.
+
+def _queue(dsn: str):
+    from esamkit.tasks import TaskQueue
+    try:
+        return TaskQueue(dsn)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"the task list needs the database: {e}") from e
+
+
+@app.get("/api/tasks")
+def tasks_api(runs_dsn: str = Depends(get_runs_dsn)) -> dict:
+    return tasks_payload(runs_dsn)
+
+
+@app.post("/api/tasks")
+def add_task(kind: str = Body(...), arg: str = Body(""), by: str = Body(...), note: str = Body(""),
+             against_recommendation: bool = Body(False), priority: int = Body(0),
+             runs_dsn: str = Depends(get_runs_dsn)) -> dict:
+    by, arg = by.strip(), arg.strip()
+    if not by:
+        raise HTTPException(422, "say who is adding the task")
+    if kind in ("review", "author"):
+        allowed = crew_runs.choices()["documents" if kind == "review" else "briefs"]
+        if arg not in allowed:
+            raise HTTPException(422, f"{arg!r} is not one of the files the Cockpit offers for {kind}")
+        payload = {"file": arg, "set": []} if kind == "review" else {"brief": arg}
+    elif kind == "ask":
+        if not arg:
+            raise HTTPException(422, "type the question")
+        payload = {"question": arg}
+    elif kind == "env":
+        payload = {}
+    elif kind == "approve":
+        if not crew_runs.valid_run_id(arg):
+            raise HTTPException(404, f"no run {arg!r}")
+        state = crew_runs.read_state(crew_runs.RUNS / arg)
+        if state.get("state") != "awaiting_approval":
+            raise HTTPException(409, f"{arg} is {state.get('state')}, not awaiting approval")
+        if state.get("recommendation") != "INGEST" and not (against_recommendation and note.strip()):
+            raise HTTPException(409, f"the SE Reviewer recommended {state.get('recommendation')!r}: approving anyway "
+                                     "needs 'against the recommendation' and a note saying why")
+        payload = {"run": arg, "note": note.strip(), "against_recommendation": against_recommendation}
+    else:
+        raise HTTPException(422, f"unknown task kind {kind!r}")
+    tid = _queue(runs_dsn).add(kind, payload, created_by=by, priority=priority)
+    return {"id": tid, "kind": kind, "payload": payload}
+
+
+@app.post("/api/tasks/{task_id}/cancel")
+def cancel_task(task_id: int, runs_dsn: str = Depends(get_runs_dsn)) -> dict:
+    if not _queue(runs_dsn).cancel(task_id):
+        raise HTTPException(409, f"task {task_id} is not queued (only a queued task can be cancelled)")
+    return {"id": task_id, "status": "cancelled"}
+
+
+@app.post("/api/runs/{run_id}/reject")
+def reject_run(run_id: str, by: str = Body(...), note: str = Body(...)) -> dict:
+    try:
+        state = crew_runs.reject(run_id, by, note)
+    except LookupError as e:
+        raise HTTPException(404, str(e)) from e
+    except ValueError as e:
+        raise HTTPException(409, str(e)) from e
+    return {"run_id": run_id, "state": state["state"], "approval": state["approval"]}
+
+
+def _served(base: Path, *parts: str) -> Path:
+    """A file under `base`, by plain names only (no '..', no hidden files)."""
+    if any(not p or p.startswith(".") or "/" in p or "\\" in p for p in parts):
+        raise HTTPException(404, "not found")
+    f = base.joinpath(*parts).resolve()
+    if not f.is_relative_to(base.resolve()) or not f.is_file() or f.suffix not in crew_runs.SHOWN:
+        raise HTTPException(404, "not found")
+    return f
+
+
+@app.get("/runs/{run_id}/{name}")
+def run_file(run_id: str, name: str):
+    f = _served(crew_runs.RUNS, run_id, name)
+    return FileResponse(f, media_type="text/html") if f.suffix == ".html" else PlainTextResponse(f.read_text(errors="replace"))
+
+
+@app.get("/drafts/{folder}/{name}")
+def draft_file(folder: str, name: str):
+    f = _served(crew_runs.DRAFTS, folder, name)
+    return PlainTextResponse(f.read_text(errors="replace"))

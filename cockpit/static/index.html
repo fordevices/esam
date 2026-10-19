@@ -270,6 +270,42 @@ footer { color: var(--ink-2); font-size: 12px; }
 .phase summary { cursor: pointer; color: var(--accent); }
 .answer { white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0 0; padding: 8px 10px; background: var(--paper);
           border-radius: 4px; font-size: 12.5px; line-height: 1.55; max-height: 320px; overflow-y: auto; }
+/* Tasks tab */
+.tab .count { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; font: 600 11px/18px var(--f-mono);
+              background: var(--signal); color: var(--sheet); text-align: center; }
+.tasks-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .tasks-grid { grid-template-columns: minmax(0, 1fr); } }
+.st { display: inline-block; font: 600 11px/1.7 var(--f-mono); letter-spacing: 0.03em; padding: 0 7px; border-radius: 4px;
+      text-transform: uppercase; white-space: nowrap; color: var(--ink-2); border: 1px solid var(--rule); }
+.st.queued { color: var(--accent); border-color: var(--accent); }
+.st.running { color: var(--signal); background: var(--signal-bg); border-color: transparent; }
+.st.done, .st.verified, .st.candidate { color: var(--ok); background: var(--ok-bg); border-color: transparent; }
+.st.failed, .st.verification_failed, .st.ingest_refused { color: var(--crit); background: var(--crit-bg); border-color: transparent; }
+.st.awaiting_approval { color: var(--sheet); background: var(--signal); border-color: transparent; }
+.st.cancelled, .st.rejected, .st.undone { text-decoration: line-through; }
+.decide { border: 1px solid var(--signal); background: var(--signal-bg); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; }
+.decide + .decide { margin-top: 10px; }
+.decide h3 { margin: 0; font: 600 14px var(--f-display); letter-spacing: 0.02em; }
+.decide .meta { color: var(--ink-2); font-size: 12.5px; }
+.links { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; }
+.links a { color: var(--accent); }
+.form { display: grid; gap: 10px; }
+.form label { display: grid; gap: 4px; font-size: 12.5px; color: var(--ink-2); }
+.form input[type=text], .form select, .form textarea { font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule);
+       border-radius: 6px; padding: 6px 8px; width: 100%; min-width: 0; }
+.form textarea { min-height: 64px; resize: vertical; }
+.row2 { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.outcome a { color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--sheet); }
+.btn.primary:hover { color: var(--sheet); filter: brightness(1.1); }
+.btn.danger:hover { border-color: var(--crit); color: var(--crit); }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.msg { font-size: 12.5px; min-height: 1.2em; }
+.msg.bad { color: var(--crit); }
+.msg.good { color: var(--ok); }
+.outcome { max-width: 46ch; min-width: 24ch; overflow-wrap: anywhere; }
+.cmd { font-family: var(--f-mono); font-size: 12px; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 6px 8px;
+       overflow-x: auto; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
@@ -285,6 +321,7 @@ footer { color: var(--ink-2); font-size: 12px; }
       <button class="tab" role="tab" id="tab-dashboard" aria-controls="dashboard" aria-selected="true" type="button">Dashboard</button>
       <button class="tab" role="tab" id="tab-graph" aria-controls="graph" aria-selected="false" type="button">Graph</button>
       <button class="tab" role="tab" id="tab-ontology" aria-controls="ontology" aria-selected="false" type="button">Ontology</button>
+      <button class="tab" role="tab" id="tab-tasks" aria-controls="tasks" aria-selected="false" type="button">Tasks <span class="count" id="tasks-count" hidden></span></button>
     </nav>
   </div>
 </header>
@@ -357,6 +394,56 @@ footer { color: var(--ink-2); font-size: 12px; }
       </div>
       <nav class="onto-nav" aria-label="Ontology sections" id="onto-nav"></nav>
       <div id="onto-body"></div>
+    </section>
+
+    <section id="tasks" role="tabpanel" aria-labelledby="tab-tasks" hidden>
+      <div id="tasks-banner" class="banner" hidden></div>
+      <div class="tasks-grid">
+        <div>
+          <div class="panel">
+            <h2>Waiting for your decision</h2>
+            <p class="sub">Documents the crew reviewed and stopped on. Nothing enters the baseline until an SE approves it. Approving
+              queues the ingest and verification under your name; a worker does it.</p>
+            <div id="awaiting"></div>
+          </div>
+          <div class="panel">
+            <h2>Task list</h2>
+            <p class="sub">Work queued for the crew, newest first. A worker takes the highest-priority, oldest queued task.</p>
+            <div class="scroll"><table id="task-table"></table></div>
+          </div>
+          <div class="panel">
+            <h2>Recent runs</h2>
+            <p class="sub">Every crew run keeps its folder: the reports, and the full terminal log of the agents and their tools.</p>
+            <div class="scroll"><table id="run-table"></table></div>
+          </div>
+        </div>
+        <aside>
+          <div class="panel">
+            <h2>Add a task</h2>
+            <form class="form" id="task-form">
+              <label>What
+                <select id="tf-kind">
+                  <option value="ask">Ask a question</option>
+                  <option value="review">Review a document for ingestion</option>
+                  <option value="author">Draft an SRS from a brief</option>
+                  <option value="env">Check the environment</option>
+                </select></label>
+              <label id="tf-arg-label"><span id="tf-arg-name">Question</span>
+                <textarea id="tf-question" placeholder="Which brake requirements have no test?"></textarea>
+                <select id="tf-file" hidden></select></label>
+              <label>Your name <input type="text" id="tf-by" autocomplete="name" placeholder="e.g. A. Engineer"></label>
+              <div class="row2"><button class="btn primary" type="submit" id="tf-submit">Queue task</button>
+                <span class="msg" id="tf-msg" role="status"></span></div>
+            </form>
+          </div>
+          <div class="panel">
+            <h2>Worker</h2>
+            <p class="sub" id="worker-note">Queued tasks are done by a worker. Start one on the ESAM machine:</p>
+            <div class="cmd">python -m crew.main worker</div>
+            <p class="note" style="margin:8px 0 0">Or one task at a time: <span class="mono">--once</span>. Until the list is empty: <span class="mono">--drain</span>.</p>
+          </div>
+        </aside>
+      </div>
     </section>
 
     <footer id="footer"></footer>
@@ -907,6 +994,152 @@ function renderDetails() {
   box.replaceChildren(...parts);
 }
 
+// ── Tasks tab ────────────────────────────────────────────────────────────────
+let TASKS = null, SNAPSHOT = false, tasksTimer = null;
+const KIND_NAME = { ask: "Question", review: "Review", intake: "Review", approve: "Approval", author: "SRS draft", env: "Environment" };
+const stamp = (iso) => { const d = new Date(iso); return isNaN(d) ? (iso || "") : d.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" }); };
+const st = (s) => h("span.st." + (s || "none"), {}, (s || "—").replace(/_/g, " "));
+const runHref = (run, file) => `runs/${encodeURIComponent(run)}/${encodeURIComponent(file)}`;
+const fileLinks = (r) => {
+  const want = ["terminal.html", "approval_request.md", "verification_report.md", "answer.md", "environment_report.md", "error.log"];
+  const names = { "terminal.html": "terminal log", "approval_request.md": "approval request", "verification_report.md": "verification",
+                  "answer.md": "answer", "environment_report.md": "report", "error.log": "error" };
+  const links = r.files.filter((f) => want.includes(f) || /^terminal_.*\.html$/.test(f))
+    .map((f) => SNAPSHOT ? h("span.mono", {}, names[f] || f) : h("a", { href: runHref(r.run_id, f), target: "_blank", rel: "noopener" }, names[f] || f.replace(".html", "")));
+  if (r.evidence_pack) {
+    const [, , folder] = r.evidence_pack.split("/");
+    links.push(SNAPSHOT ? h("span.mono", {}, "evidence pack") : h("a", { href: `drafts/${encodeURIComponent(folder)}/evidence_pack.md`, target: "_blank", rel: "noopener" }, "evidence pack"));
+  }
+  return h("span.links", {}, links);
+};
+const whoIs = () => ($("#tf-by").value || "").trim();
+
+async function post(url, body) {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || `${r.status} ${r.statusText}`);
+  return j;
+}
+
+function decisionCard(r) {
+  const note = h("input", { type: "text", placeholder: "Note (required to reject, or to approve against the recommendation)", "aria-label": "Decision note" });
+  const against = h("input", { type: "checkbox" });
+  const msg = h("span.msg", { role: "status" });
+  const recommended = r.recommendation === "INGEST";
+  const act = async (what) => {
+    const by = whoIs();
+    if (!by) { msg.className = "msg bad"; msg.textContent = "Type your name in “Add a task” first: decisions are recorded under it."; $("#tf-by").focus(); return; }
+    try {
+      if (what === "approve") await post("api/tasks", { kind: "approve", arg: r.run_id, by, note: note.value, against_recommendation: against.checked });
+      else await post(`api/runs/${encodeURIComponent(r.run_id)}/reject`, { by, note: note.value });
+      msg.className = "msg good"; msg.textContent = what === "approve" ? "Approval queued: a worker will ingest and verify." : "Rejected. Nothing was ingested.";
+      refreshTasks();
+    } catch (e) { msg.className = "msg bad"; msg.textContent = e.message; }
+  };
+  const disabled = SNAPSHOT;
+  return h("div.decide", {},
+    h("h3", {}, r.document || r.run_id),
+    h("div.meta", {}, "Reviewed ", stamp(r.created), " · SE Reviewer recommends ", h("strong", {}, r.recommendation || "—"), " · run ", h("span.mono", {}, r.run_id)),
+    fileLinks(r),
+    disabled ? h("p.note", {}, "Snapshot: decide in the live Cockpit or with crew.main approve / reject.") : [
+      h("div.form", {}, note,
+        recommended ? null : h("label", { style: "display:flex;gap:6px;align-items:center" }, against, "Approve against the recommendation (needs a note)")),
+      h("div.row2", {},
+        h("button.btn.primary", { type: "button", on: { click: () => act("approve") } }, "Approve: ingest + verify"),
+        h("button.btn.danger", { type: "button", on: { click: () => act("reject") } }, "Reject"), msg)]);
+}
+
+function renderTasks() {
+  const T = TASKS;
+  const banner = $("#tasks-banner");
+  banner.hidden = true;
+  if (!T) { $("#awaiting").replaceChildren(h("p.note", {}, "No task data.")); return; }
+  if (T.queue !== "ok") {
+    banner.replaceChildren(h("strong", {}, "The task list is not available. "), String(T.queue || ""), " Runs below still show.");
+    banner.hidden = false;
+  }
+  const waiting = T.runs.filter((r) => r.state === "awaiting_approval");
+  const count = $("#tasks-count");
+  count.textContent = String(waiting.length); count.hidden = !waiting.length;
+  count.title = `${waiting.length} awaiting your decision`;
+  $("#awaiting").replaceChildren(...(waiting.length ? waiting.map(decisionCard) : [h("p.note", {}, "Nothing is waiting for a decision.")]));
+
+  const hasLog = (id) => !!id && T.runs.some((r) => r.run_id === id && r.files.includes("terminal.html"));
+  const what = (t) => t.payload.question || t.payload.file || t.payload.brief || t.payload.run || "";
+  $("#task-table").replaceChildren(
+    h("thead", {}, h("tr", {}, ...["#", "Status", "Task", "", "Added", "Outcome", ""].map((c) => h("th", {}, c)))),
+    h("tbody", {}, T.tasks.length ? T.tasks.map((t) => h("tr", {},
+      h("td.mono", {}, t.id), h("td", {}, st(t.status)),
+      h("td", {}, h("div.who", {}, h("strong", {}, KIND_NAME[t.kind] || t.kind), h("small", { title: what(t) }, fit(String(what(t)), 60)))),
+      h("td", {}, t.priority ? h("span.chip", { title: "priority" }, "P" + t.priority) : ""),
+      h("td", {}, h("div.who", {}, stamp(t.created_at), h("small", {}, "by " + (t.created_by || "—")))),
+      h("td.outcome", {}, t.outcome || (t.status === "running" ? `running on ${t.worker}` : ""),
+        hasLog(t.run_id) && !SNAPSHOT ? [" ", h("a", { href: runHref(t.run_id, "terminal.html"), target: "_blank", rel: "noopener" }, "log")] : null),
+      h("td", {}, t.status === "queued" && !SNAPSHOT ? h("button.btn", { type: "button", on: { click: async () => {
+        try { await post(`api/tasks/${t.id}/cancel`, {}); refreshTasks(); } catch (e) { alertRow(e); } } } }, "Cancel") : "")))
+      : [h("tr", {}, h("td", { colspan: 7 }, h("span.note", {}, "No tasks yet. Add one on the right.")))]));
+
+  $("#run-table").replaceChildren(
+    h("thead", {}, h("tr", {}, ...["Run", "Kind", "State", "Document", "Files"].map((c) => h("th", {}, c)))),
+    h("tbody", {}, T.runs.slice(0, 25).map((r) => h("tr", {},
+      h("td", {}, h("div.who", {}, stamp(r.created), h("small.mono", {}, r.run_id))),
+      h("td", {}, KIND_NAME[r.kind] || r.kind),
+      h("td", {}, r.state ? st(r.state) : "", r.verdict ? h("div.note", {}, "reviewer: " + r.verdict) : null,
+        r.lint ? h("div.note", {}, `lint ${r.lint.errors} errors / ${r.lint.warnings} warnings`) : null,
+        r.approval ? h("div.note", {}, `${r.approval.decision} by ${r.approval.by}`) : null),
+      h("td.mono", {}, r.document || ""),
+      h("td", {}, fileLinks(r))))));
+
+  const queued = T.tasks.filter((t) => t.status === "queued");
+  const oldest = queued.length ? Math.min(...queued.map((t) => new Date(t.created_at).getTime())) : null;
+  $("#worker-note").textContent = oldest && Date.now() - oldest > 120000 && !T.tasks.some((t) => t.status === "running")
+    ? `${queued.length} task(s) have waited over two minutes and none is running: is a worker started? On the ESAM machine:`
+    : "Queued tasks are done by a worker. Start one on the ESAM machine:";
+
+  const kindSel = $("#tf-kind");
+  for (const el of $("#task-form").querySelectorAll("input, select, textarea, button")) el.disabled = SNAPSHOT;
+  if (SNAPSHOT) $("#tf-msg").textContent = "Snapshot: read-only.";
+  fillFiles(kindSel.value);
+}
+function alertRow(e) { const m = $("#tf-msg"); m.className = "msg bad"; m.textContent = e.message; }
+
+function fillFiles(kind) {
+  const isFile = kind === "review" || kind === "author";
+  $("#tf-question").hidden = kind !== "ask";
+  $("#tf-file").hidden = !isFile;
+  $("#tf-arg-label").hidden = kind === "env";
+  $("#tf-arg-name").textContent = kind === "ask" ? "Question" : kind === "review" ? "Document (inbox or staged)" : "Brief";
+  if (isFile && TASKS) {
+    const list = TASKS.choices[kind === "review" ? "documents" : "briefs"] || [];
+    $("#tf-file").replaceChildren(...(list.length ? list.map((f) => h("option", { value: f }, f)) : [h("option", { value: "" }, "none available")]));
+  }
+}
+$("#tf-kind").addEventListener("change", (e) => fillFiles(e.target.value));
+$("#tf-by").value = store.get("by") || "";
+$("#tf-by").addEventListener("change", (e) => store.set("by", e.target.value.trim()));
+$("#task-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const kind = $("#tf-kind").value, msg = $("#tf-msg");
+  const arg = kind === "ask" ? $("#tf-question").value : kind === "env" ? "" : $("#tf-file").value;
+  try {
+    const r = await post("api/tasks", { kind, arg, by: whoIs() });
+    msg.className = "msg good"; msg.textContent = `Task ${r.id} queued.`;
+    if (kind === "ask") $("#tf-question").value = "";
+    refreshTasks();
+  } catch (err) { msg.className = "msg bad"; msg.textContent = err.message; }
+});
+
+async function refreshTasks() {
+  if (SNAPSHOT) return;
+  try {
+    const r = await fetch("api/tasks");
+    if (r.ok) { TASKS = await r.json(); renderTasks(); }
+  } catch { /* the main loader reports connection problems */ }
+  clearTimeout(tasksTimer);
+  const busy = TASKS && TASKS.tasks.some((t) => t.status === "queued" || t.status === "running");
+  if (!$("#tasks").hidden) tasksTimer = setTimeout(refreshTasks, busy ? 5000 : 30000);
+}
+
 // ── Views, tabs, legend ──────────────────────────────────────────────────────
 const HELP = {
   tree: "The baseline as an outline: vehicle down to functions and documents. Click ▸ to fold a branch; click a row for its details.",
@@ -932,7 +1165,7 @@ function renderLegend() {
 }
 
 function showTab(name) {
-  for (const id of ["dashboard", "graph", "ontology"]) {
+  for (const id of ["dashboard", "graph", "ontology", "tasks"]) {
     $("#" + id).hidden = id !== name;
     $("#tab-" + id).setAttribute("aria-selected", String(id === name));
   }
@@ -941,6 +1174,7 @@ function showTab(name) {
 $("#tab-dashboard").addEventListener("click", () => showTab("dashboard"));
 $("#tab-graph").addEventListener("click", () => showTab("graph"));
 $("#tab-ontology").addEventListener("click", () => showTab("ontology"));
+$("#tab-tasks").addEventListener("click", () => { showTab("tasks"); refreshTasks(); });
 
 // ── Load: baked-in snapshot, or the live API ─────────────────────────────────
 function render(data) {
@@ -957,7 +1191,8 @@ function render(data) {
   $("#footer").textContent = snap
     ? "Snapshot: the data is baked into this page and does not update. Re-export after each ingest."
     : "Live: data comes from the graph database each time the page loads or you press Refresh.";
-  renderDashboard(); renderChecks(); renderOntology(); renderLegend(); renderView();
+  SNAPSHOT = snap; TASKS = data.tasks || null;
+  renderDashboard(); renderChecks(); renderOntology(); renderTasks(); renderLegend(); renderView();
   if (!selected || !M.byId.has(selected)) selected = M.byId.has("SUB-BRK-ECU") ? "SUB-BRK-ECU" : M.roots[0];
   select(selected);
 }
@@ -978,7 +1213,7 @@ async function loadLive() {
 $("#refresh").addEventListener("click", loadLive);
 
 const baked = JSON.parse(document.getElementById("esam-data").textContent);
-showTab(["#graph", "#ontology"].includes(location.hash) ? location.hash.slice(1) : "dashboard");
+showTab(["#graph", "#ontology", "#tasks"].includes(location.hash) ? location.hash.slice(1) : "dashboard");
 if (baked) render(baked); else loadLive();
 })();
 </script>

@@ -57,3 +57,11 @@ New dependencies: `fastapi` and `uvicorn` (pure Python wheels, a few MB); add th
    (`e.from_id AS parent_id` where `from_id` is the child).
 3. **Approve will require authentication** and won't `git push` straight from a web request.
 4. **One code path for queries:** the Cockpit calls `esamkit`, so the lessons, the tests and the Cockpit run the same SQL.
+
+## Tasks tab
+
+The crew's task list (`esam_tasks`), reviews waiting for an SE's decision (approve queues the ingest under the SE's
+name; reject records the note), recent runs with links to their terminal logs, reports and evidence packs, and a form
+to queue a question, a document review, an SRS draft or an environment check. A worker does the work:
+`python -m crew.main worker`. Details: `crew/README.md`, step 4. Local only (127.0.0.1) until the pilot's sign-on
+protects these endpoints.

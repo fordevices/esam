@@ -52,12 +52,13 @@ sys.path.insert(0, str(ROOT))
 from esamkit.environment import apply_telemetry, inspect, load_profile, resolve  # noqa: E402
 from esamkit.usage import UsageLedger  # noqa: E402
 
+from crew.terminal_log import logged  # noqa: E402
+
 RUNS = ROOT / "work" / "runs"
+LOGS = ROOT / "work" / "logs"            # a command's log before its run folder exists
+LAST_RUN: dict = {}      # the run the current command made (its log goes there; the worker records it)
 INBOX = ROOT / "work" / "inbox"
 DRAFTS = ROOT / "work" / "drafts"
-
-
-LAST_RUN: dict = {}      # the run the last command made (the worker records it on the task)
 
 
 def new_run(name: str, environment: str) -> tuple[str, Path, UsageLedger]:
@@ -81,6 +82,7 @@ def record_crew_usage(ledger: UsageLedger, result, model: str, agent: str) -> di
     return usage
 
 
+@logged("env", LAST_RUN, LOGS)
 def cmd_env(args) -> int:
     profile = load_profile(args.env)
     apply_telemetry(profile)
@@ -169,6 +171,7 @@ def _parse_sets(pairs: list[str]) -> dict:
     return out
 
 
+@logged("review", LAST_RUN, LOGS)
 def review_one(path: Path, args) -> int:
     from esamkit.intake import read_header
 
@@ -233,8 +236,10 @@ def cmd_runs(args) -> int:
     return 0
 
 
+@logged("approve", LAST_RUN, LOGS)
 def cmd_approve(args) -> int:
     folder = find_run(args.run)
+    LAST_RUN.update(run_id=folder.name, folder=folder)
     state = json.loads((folder / "state.json").read_text())
     if state["state"] != "awaiting_approval":
         sys.exit(f"{state['run_id']} is {state['state']}, not awaiting approval.")
@@ -269,20 +274,22 @@ def new_run_ledger(state: dict, profile: dict) -> UsageLedger:
 
 
 def cmd_reject(args) -> int:
-    folder = find_run(args.run)
-    state = json.loads((folder / "state.json").read_text())
-    if state["state"] != "awaiting_approval":
-        sys.exit(f"{state['run_id']} is {state['state']}, not awaiting approval.")
-    state.update(state="rejected", approval={"decision": "rejected", "by": args.by, "at": _now(), "note": args.note})
-    (folder / "state.json").write_text(json.dumps(state, indent=1, default=str))
+    from esamkit.runs import reject
+
+    try:
+        state = reject(find_run(args.run).name, args.by, args.note)
+    except (LookupError, ValueError) as e:
+        sys.exit(str(e))
     print(f"Rejected {state['run_id']}. Nothing was ingested.")
     return 0
 
 
+@logged("undo", LAST_RUN, LOGS)
 def cmd_undo(args) -> int:
     from esamkit.intake import undo
 
     folder = find_run(args.run)
+    LAST_RUN.update(run_id=folder.name, folder=folder)
     state = json.loads((folder / "state.json").read_text())
     if not (folder / "manifest.json").exists() or state["state"] == "undone":
         sys.exit(f"{state['run_id']} is {state['state']}: nothing to undo.")
@@ -296,6 +303,7 @@ def cmd_undo(args) -> int:
     return 0
 
 
+@logged("author", LAST_RUN, LOGS)
 def cmd_author(args) -> int:
     from crew.custom_tools import _authoring, build_pack
 
@@ -346,6 +354,7 @@ def cmd_author(args) -> int:
     return 0 if lint["errors"] == 0 else 1
 
 
+@logged("ask", LAST_RUN, LOGS)
 def cmd_ask(args) -> int:
     profile, report, EsamCrew = prepare(args.env, "ask")
     run_id, folder, ledger = new_run("ask", profile["name"])
@@ -396,11 +405,9 @@ def _handlers() -> dict:
     ns = argparse.Namespace
 
     def run(fn, task, **kw):
-        LAST_RUN.clear()
         return _outcome(fn(ns(env=task["environment"] or None, **kw)))
 
     def review(task):
-        LAST_RUN.clear()
         path = Path(task["payload"]["file"])
         return _outcome(review_one(path if path.is_absolute() else ROOT / path,
                                    ns(env=task["environment"] or None, set=task["payload"].get("set") or [])))

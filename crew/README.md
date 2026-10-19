@@ -34,7 +34,7 @@ python -m crew.main worker [--once | --drain]                     # process the 
 | 1. Pipeline A (ontology → document review → **stop for SE approval** → ingest → verify), interactive + inbox modes | ✅ |
 | 2. Standards library (MIL-STD-882E) + Pipeline B (SRS authoring, verified, certification evidence pack) | ✅ |
 | 3. Task list in the database + worker | ✅ |
-| 4. Cockpit Tasks tab | planned |
+| 4. Cockpit Tasks tab | ✅ |
 
 ## Step 0: environments
 
@@ -153,3 +153,38 @@ hold the detail), a one-line outcome, and on failure the reason and traceback. A
 command, e.g. "NOT READY: this environment disables save_draft") fails the task with that reason; the worker
 carries on. `tasks cancel <id>` removes a queued task; `tasks requeue <id>` puts back a failed one, or one left
 `running` by a worker that was stopped.
+
+## Run logs (same mechanism as the aidev RTOS crew)
+
+Every command that runs agents or changes the stores (`env`, `review`/`inbox`, `approve`, `undo`, `author`, `ask`,
+and the same commands run by the worker) captures everything it prints, CrewAI's agent and tool panels included:
+
+| File (in the run folder) | What |
+|---|---|
+| `terminal.log` | the raw output, ANSI colour codes kept (`TeeLogger`, as in `aidev/crew/main.py`) |
+| `terminal.html` | the same rendered by `ansi2html` (dark background); the Cockpit links to it |
+| `error.log` | on a failure: the traceback, or the reason a command stopped |
+| `terminal_<command>.log/.html` | a second command on the same run (`approve`, `undo`) |
+
+Capture starts in `work/logs/` and moves into the run folder when the command ends (the folder is named after the
+run, so it exists only part-way through). A command that stops before making a run keeps its log in `work/logs/`.
+Colours appear when run from a terminal; output piped to a file is plain, as in the aidev crew.
+
+## Step 4: the Cockpit Tasks tab
+
+`uvicorn cockpit.app:app --port 8080`, tab **Tasks**:
+
+- **Waiting for your decision**: reviews stopped for SE approval (the count shows on the tab), with the approval
+  request and the run log. *Approve* queues an `approve` task under the name the SE typed (a worker ingests and
+  verifies); *Reject* needs a note and records it at once. Approving against the reviewer's recommendation needs the
+  box ticked and a note, as on the command line.
+- **Task list**: every task with its status, who added it, the outcome, a link to its run log, and *Cancel* while queued.
+- **Recent runs**: each run folder with its state, reviewer verdict, lint counts, decision, and links to the terminal
+  log, the reports and the evidence pack.
+- **Add a task**: ask a question, review a document (from `work/inbox/` or lesson 06's staged files), draft an SRS
+  from a brief in `data/briefs/`, check the environment. Only files the Cockpit lists can be queued; run files are
+  served only from `work/runs/` and `work/drafts/` (no `..`, only `.html .md .json .log .csv`).
+- In a snapshot the tab is read-only.
+
+The Cockpit listens on 127.0.0.1 here. Before others can reach it (the pilot), these endpoints need the pilot's
+sign-on: a decision records the name typed, and nothing checks who the person is.

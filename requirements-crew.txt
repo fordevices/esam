@@ -10,3 +10,5 @@
 -r requirements.txt
 crewai==1.15.28
 huggingface-hub>=1.31,<3
+# Run logs: terminal.log -> terminal.html, as in the aidev RTOS crew (crew/terminal_log.py).
+ansi2html==1.9.2
