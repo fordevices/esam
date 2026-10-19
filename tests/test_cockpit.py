@@ -75,3 +75,11 @@ def test_ontology_tab_payload(client):
     assert o["check"] == []                                        # the committed baseline passes
     assert {"document_types", "rules", "classes", "relationships", "value_sets", "placement"} <= set(o["data"])
     assert client.get("/api/cockpit").json()["ontology"]["path"] == o["path"]   # snapshots carry it too
+
+
+def test_health_report_blocks_when_nothing_is_searchable(client):
+    # The test database has no ingested chunks, so integrity must block.
+    rep = client.get("/api/health-report").json()
+    assert rep["blocked"] and [c["status"] for c in rep["checks"]][4] == "blocks"
+    assert any("no searchable chunks" in f["message"] for f in rep["checks"][4]["findings"])
+    assert client.get("/api/cockpit").json()["health"]["blocked"] is True

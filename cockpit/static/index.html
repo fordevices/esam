@@ -225,6 +225,29 @@ footer { color: var(--ink-2); font-size: 12px; }
 .place ul { margin: 0; padding-left: 18px; font-size: 13px; display: grid; gap: 2px; }
 .mono-cell { font-family: var(--f-mono); font-size: 12px; overflow-wrap: anywhere; }
 
+/* health report */
+.hrow { border-top: 1px solid var(--rule); }
+.hrow:first-child { border-top: 0; }
+.hrow > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 10px;
+                  align-items: center; padding: 9px 2px; }
+.hrow > summary::-webkit-details-marker { display: none; }
+.hrow .num { font: 600 13px var(--f-mono); color: var(--ink-2); }
+.hrow .ttl { font-weight: 600; }
+.hrow .ttl small { font-weight: 400; color: var(--ink-2); margin-left: 8px; }
+.hstat { font-size: 12.5px; font-weight: 600; padding: 1px 9px; border-radius: 4px; white-space: nowrap; }
+.hstat.pass { color: var(--ok); background: var(--ok-bg); }
+.hstat.findings { color: var(--ink-2); border: 1px solid var(--rule); }
+.hstat.findings.crit { color: var(--crit); border-color: var(--crit); }
+.hstat.blocks { color: var(--sheet); background: var(--crit); }
+.hrow ul { margin: 0 0 10px 36px; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 13px; }
+.hrow li.crit::before { content: "⚠ "; color: var(--crit); }
+.hrow li .w { font-family: var(--f-mono); font-size: 12px; color: var(--ink-2); margin-right: 6px; }
+.blockbar { border: 1px solid var(--crit); background: var(--crit-bg); border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; font-weight: 600; }
+.rollup { margin: 2px 0 12px 36px; display: grid; gap: 4px; font-size: 13px; }
+.rollup div { display: grid; grid-template-columns: minmax(0, 1fr) 130px 70px; gap: 10px; align-items: center; }
+.rollup .nm2 { overflow-wrap: anywhere; }
+.rollup .pct { font-variant-numeric: tabular-nums; text-align: right; color: var(--ink-2); }
+
 /* checks (run log) */
 .runhead { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin-bottom: 12px; font-size: 13px; color: var(--ink-2); }
 .verdict { font: 700 12px var(--f-mono); letter-spacing: 0.06em; padding: 1px 8px; border-radius: 4px; }
@@ -272,6 +295,12 @@ footer { color: var(--ink-2); font-size: 12px; }
 
     <section id="dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
       <div class="summary" id="summary"></div>
+      <div class="panel" id="health-panel">
+        <h2>Health report</h2>
+        <p class="sub">Six checks on the baseline, its documents and the graph. Gaps are normal mid-programme and are reported;
+          only an integrity problem blocks approval. ⚠ marks findings on safety-critical items.</p>
+        <div id="health"></div>
+      </div>
       <div class="panel">
         <h2>Document coverage</h2>
         <p class="sub">The documents each subsystem must have under the ontology's rules (listed below the table), and whether it has them.
@@ -485,6 +514,7 @@ function renderDashboard() {
       " → ", h("b", {}, r.require.map((t) => t.toUpperCase()).join(", ")), r.why ? ` · ${r.why}` : "")))] : []));
 
   renderTrace();
+  renderHealth();
   const ihead = h("tr", {}, ["From", "To", "Message", "Status", "Source document", "Notes"].map((x) => h("th", {}, x)));
   const irows = M.ifaces.map((e) => h("tr", {},
     h("td", {}, h("div.who", {}, h("span", {}, byId.get(e.from_eid).props.name), nodeLink(e.from_eid))),
@@ -494,6 +524,30 @@ function renderDashboard() {
     h("td.cell", {}, e.props.source_artifact && byId.has(e.props.source_artifact) ? nodeLink(e.props.source_artifact) : h("span.note", {}, "none")),
     h("td", {}, h("span.note", {}, e.props.notes || ""))));
   $("#interfaces").replaceChildren(h("thead", {}, ihead), h("tbody", {}, irows));
+}
+
+// ── Dashboard: health report ─────────────────────────────────────────────────
+function renderHealth() {
+  const rep = M.data.health, box = $("#health");
+  if (!rep) { box.replaceChildren(h("p.note", {}, "Not available in this snapshot.")); return; }
+  const rows = rep.checks.map((c) => {
+    const crit = c.findings.filter((f) => f.critical).length;
+    const label = c.status === "pass" ? "pass" : c.status === "blocks" ? `blocks approval · ${c.findings.length}`
+      : `${c.findings.length} finding${c.findings.length === 1 ? "" : "s"}${crit ? ` · ${crit} ⚠` : ""}`;
+    const body = [];
+    if (c.findings.length) body.push(h("ul", {}, c.findings.map((f) => h("li" + (f.critical ? ".crit" : ""), {},
+      h("span.w", {}, f.where), f.message))));
+    if ((c.warnings || []).length) body.push(h("ul", {}, c.warnings.map((w) => h("li", {}, h("span.w", {}, "warning · " + w.where), w.message))));
+    if (c.rollup) body.push(h("div.rollup", {}, c.rollup.map((r) => h("div", {},
+      h("span.nm2", { style: `padding-left:${r.depth * 14}px` }, h("span.mono", {}, (r.wbs_code || "") + " "), r.name),
+      h("span.bar", { role: "img", "aria-label": `${r.percent}%` }, h("i", { style: `width:${r.percent}%` })),
+      h("span.pct", {}, `${r.present}/${r.required} · ${r.percent}%`)))));
+    if (!body.length) body.push(h("ul", {}, h("li", {}, "Nothing to report.")));
+    return h("details.hrow", { open: c.status === "blocks" || c.id === 6 },
+      h("summary", {}, h("span.num", {}, c.id), h("span.ttl", {}, c.title, c.blocks_approval ? h("small", {}, "blocks approval if it fails") : null),
+        h("span.hstat." + c.status + (crit && c.status === "findings" ? ".crit" : ""), {}, label)), ...body);
+  });
+  box.replaceChildren(rep.blocked ? h("div.blockbar", {}, "Blocked: the integrity check failed. Fix it before approving the baseline.") : "", ...rows);
 }
 
 // ── Dashboard: requirement coverage (traceability) ───────────────────────────

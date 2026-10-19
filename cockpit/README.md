@@ -10,7 +10,7 @@ graph and vector stores) rather than its own SQL, and is grown one tab at a time
 | **Graph** | The baseline three ways: **Tree** (collapsible outline), **Tree + interfaces** (left-to-right tree with the J1939 links drawn as arcs across it), **Network** (force-directed, draggable). Click any node for where it sits, its properties, what it contains, its interfaces and its document gaps. | ✅ |
 | **Requirement coverage** (Dashboard) | Requirements read from each SRS, test cases from each STD; per subsystem how many are verified (a test case's `Verifies:` line), and the untested list. Requirements and test cases also appear in the Graph tab | ✅ |
 | **Ontology** | The SE vocabulary file: its path (with a copy button), version, owner, whether the baseline passes it, and its document types, rules, classes, links, allowed values and placement. Warns when the file has changed since the Cockpit loaded it | ✅ |
-| Health report | The six checks in the SE manual §5.2 | planned (B6) |
+| **Health report** (Dashboard, top) | The six checks in SE manual §5.2: required documents (rules), interfaces, awaiting review, traceability, integrity (blocks approval), roll-up up the tree | ✅ |
 | Query | Natural-language questions via the lesson 05 hybrid | planned |
 | Baseline | Diff Matrix, Approve and Lock | planned |
 
@@ -39,6 +39,7 @@ or network, and it does not update: re-export after each ingest.
 | Route | Returns |
 |---|---|
 | `GET /` | The page |
+| `GET /api/health-report` | The six-check health report (also `python -m esamkit.health`) |
 | `GET /api/ontology` | The ontology as loaded, its file path, and the baseline checked against it |
 | `GET /api/health` | `{"status": "ok", "vertices": n, "edges": m}`, or 503 if the database is unreachable |
 | `GET /api/cockpit?types=icd,sdd,srs,std` | Everything the page draws: the whole graph by entity id, which subsystems lack each document type, and the latest run of each check (`esam_runs` table) |

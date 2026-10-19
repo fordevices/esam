@@ -4,7 +4,8 @@ ESAM SE Cockpit (learning build) — the web front end SEs use.
 The Phase 0 Execution Guide (Step 12) sketches the pilot Cockpit. This build
 grows it one tab at a time, on top of esamkit instead of its own SQL:
 
-    Dashboard   graph counts, document coverage per subsystem, interfaces,
+    Dashboard   health report (six checks), graph counts, document coverage
+                per subsystem, requirement coverage, interfaces,
                 the last run of each check (e.g. lesson 06's confidence test)
     Graph       the baseline as a tree, a tree with interface arcs, a network
     Ontology    what's in the SE vocabulary file, and whether the baseline passes it
@@ -36,6 +37,7 @@ from esamkit import runlog
 from esamkit.config import PROJECT_ROOT, settings
 from esamkit.factory import get_graph_store
 from esamkit.graphstores.base import GraphStore
+from esamkit.health import health_report
 from esamkit.ontology import check_baseline, default_ontology
 
 PAGE = Path(__file__).parent / "static" / "index.html"
@@ -64,7 +66,7 @@ def get_graph() -> GraphStore:
 
 
 def get_runs_dsn() -> str:
-    # The run log lives in the main database; tests point this elsewhere.
+    # The main database: run log and chunk counts. Tests point this elsewhere.
     return settings.pg_dsn
 
 
@@ -106,7 +108,21 @@ def ontology_payload() -> dict:
     }
 
 
-def collect(graph: GraphStore, doc_types: list[str], runs: list[dict] | None = None) -> dict:
+def health_of(graph: GraphStore, dsn: str) -> dict:
+    """The six-check health report (esamkit/health.py). Chunk counts come
+    straight from the database: no embedding model is loaded."""
+    from esamkit.vectorstores.pgvector_store import chunk_counts
+
+    try:
+        chunks = chunk_counts(dsn, settings.collection)
+    except Exception:
+        chunks = {}
+    return health_report(graph, default_ontology(), yaml.safe_load(settings.baseline_yaml.read_text()),
+                         settings.documents_dir, chunks)
+
+
+def collect(graph: GraphStore, doc_types: list[str], runs: list[dict] | None = None,
+            dsn: str | None = None) -> dict:
     """Everything the page draws, in one payload (also what a snapshot embeds)."""
     snapshot = graph.snapshot()
     onto = default_ontology()
@@ -120,6 +136,7 @@ def collect(graph: GraphStore, doc_types: list[str], runs: list[dict] | None = N
         "trace": {"summary": graph.trace_summary(), "untested": graph.untested_requirements()},
         "rules": onto.rules.get("required_documents", []),
         "ontology": ontology_payload(),
+        "health": health_of(graph, dsn or settings.pg_dsn),
         "runs": runs or [],
     }
 
@@ -151,6 +168,11 @@ def health(graph: GraphStore = Depends(get_graph)) -> dict:
     return {"status": "ok", "vertices": len(snap["vertices"]), "edges": len(snap["edges"])}
 
 
+@app.get("/api/health-report")
+def health_report_api(graph: GraphStore = Depends(get_graph), runs_dsn: str = Depends(get_runs_dsn)) -> dict:
+    return health_of(graph, runs_dsn)
+
+
 @app.get("/api/ontology")
 def ontology() -> dict:
     return ontology_payload()
@@ -160,4 +182,4 @@ def ontology() -> dict:
 def cockpit(types: str = Query(",".join(DOC_TYPES), description="comma-separated document types"),
             graph: GraphStore = Depends(get_graph), runs_dsn: str = Depends(get_runs_dsn)) -> dict:
     doc_types = [t.strip().lower() for t in types.split(",") if t.strip()]
-    return collect(graph, doc_types, last_runs(runs_dsn))
+    return collect(graph, doc_types, last_runs(runs_dsn), runs_dsn)

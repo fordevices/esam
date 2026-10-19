@@ -141,3 +141,18 @@ class PgVectorStore(VectorStore):
         self._conn.execute(f"DROP TABLE IF EXISTS {self._table}")
         self._conn.execute("DELETE FROM esam_collections WHERE name = %s", (self._name,))
         self._open()
+
+
+def chunk_counts(dsn: str, collection: str) -> dict[str, int]:
+    """{artifact_id: chunks stored} for a collection, without loading any
+    embedding model (the health report's integrity check uses this). An
+    absent collection counts as empty."""
+    if not _SAFE_NAME.match(collection):
+        raise ValueError(f"collection name must match {_SAFE_NAME.pattern}")
+    import psycopg
+
+    with psycopg.connect(dsn, autocommit=True) as conn:
+        if conn.execute("SELECT to_regclass(%s)", (f"{collection}_chunks",)).fetchone()[0] is None:
+            return {}
+        rows = conn.execute(f"SELECT artifact_id, count(*) FROM {collection}_chunks GROUP BY artifact_id").fetchall()
+    return {a: n for a, n in rows}

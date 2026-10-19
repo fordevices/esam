@@ -55,6 +55,9 @@ def main() -> None:
     for u in t["unresolved"]:
         print(f"  ! {u['test_case']} verifies {u['cites']}, which no SRS defines")
 
+    from esamkit.health import report_for, summary_line
+    print("\n" + summary_line(report_for(graph)))
+
 
 if __name__ == "__main__":
     main()

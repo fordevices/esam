@@ -281,24 +281,30 @@ The key finding: **the safety-critical Brake ECU has no test description.**
 
 ### 5.2 The baseline health report
 
-After every ingest, ESAM produces a health report alongside the Diff Matrix, so you see both *what is changing* and *what is still missing* before you approve.
+ESAM checks the baseline, its documents and the graph, and shows the result at the top of the SE Cockpit Dashboard. It runs again every time the page loads, and a one-line summary is printed at the end of every document ingest and graph load. You see both *what is changing* (the Diff Matrix) and *what is still missing* before you approve.
 
-| # | Check | Example finding | Effect |
+| # | Check | What it finds (SYNTH-LTV today) | Effect |
 |---|---|---|---|
-| 1 | **Required documents per subsystem**, from a rule table the SE team owns | "Safety-critical ⇒ SRS, SDD, STD, hazard analysis required: Brake ECU missing STD" | Reported |
-| 2 | **Dangling interfaces** | "EBC1 consumed by Engine ECM, but that link is unconfirmed" / "message sent with no consumer" | Reported |
-| 3 | **Items awaiting SE review** | All proposed (`candidate`) links and document placements | Reported |
-| 4 | **Traceability gaps** | "SRS-BRK-012 has no test that verifies it" / "test cites a requirement that doesn't exist" | Reported |
-| 5 | **Ingestion integrity** | "Baseline lists a document whose file is missing" / "file present but not in the baseline" / "document loaded but not searchable" | **Blocks approval** |
-| 6 | **Roll-up** (walks up the tree, §4) | "Suspension/Steering: 0 of 1 safety-critical subsystems complete" → "Lead Variant: 40% complete" | Reported |
+| 1 | **Required documents**, from the ontology's rules (§8.4) | Brake ECU has no STD; the J1939 backbone, the cluster and the engine ECM have no ICD | Reported |
+| 2 | **Interfaces** | A subsystem receives a message but has no interface document saying how it uses it; a confirmed link that cites no interface document; a message nobody originates | Reported |
+| 3 | **Awaiting SE review** | Candidate links: "EBC1 to the engine ECM is a candidate" | Reported |
+| 4 | **Traceability** (§10) | Requirements no test case verifies (16 today); a test case whose `Verifies:` line names a requirement that doesn't exist | Reported |
+| 5 | **Integrity** | The baseline breaks the ontology; a listed document file is missing; the graph is out of step with the baseline; a document has no searchable text, or searchable text exists for a document the baseline no longer lists | **Blocks approval** |
+| 6 | **Roll-up**, walking *up* the tree (§4) | Suspension/Steering 75%, Vehicle Electronics 50%, Power Pack/Drive Train 0%, the whole vehicle 56% of required documents | Reported |
 
-Gaps are normal mid-programme, so checks 1–4 and 6 inform you and never block. Check 5 means the load itself is broken, so it blocks approval.
+Gaps are normal mid-programme, so checks 1–4 and 6 inform you and never block. Check 5 means the load itself is broken (what ESAM searches no longer matches what the baseline says), so it blocks approval until fixed. Findings on safety-critical items are marked ⚠.
 
-**The rule table is yours.** Which document types each kind of subsystem needs (safety-critical, has interfaces, software-intensive, …) is SE policy, kept in the baseline and versioned in Git like everything else.
+**The rules are yours.** Which document types each kind of subsystem needs is SE policy, kept in the ontology (§8.4) and versioned in Git like the baseline. Change a rule and checks 1 and 6 change with it.
 
-### 5.3 Tooling status
+### 5.3 What to do with the findings
 
-The SE Cockpit Dashboard shows check 1 today, driven by the ontology's rules (§8.4), so the table above becomes "what each subsystem must have" rather than the same four types for every subsystem. The full health report is planned.
+| Finding | Usual action |
+|---|---|
+| Required document missing | Plan the document, or, if the rule doesn't fit this subsystem, change the rule |
+| Interface without a document at the receiving end | Get the receiving subsystem's ICD written, or confirm the link isn't real and remove it |
+| Candidate link | Review it: confirm it (cite the interface document) or remove it |
+| Untested requirement | Add a test case with a `Verifies:` line, or record why the requirement is verified another way |
+| Integrity problem | Re-run the ingest or the graph load, or fix the baseline; then check again before approving |
 
 ---
 
@@ -471,7 +477,7 @@ The SYNTH-LTV baseline currently passes with no errors and no warnings.
 
 | **Requirements and test cases** (§10) | The `Requirement` and `TestCase` classes and the *verifies*, *specified in* and *allocated to* links |
 
-Still to come: the health report (§5.2) will use the same rules.
+The health report (§5.2) uses the same rules.
 
 ---
 

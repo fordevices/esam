@@ -70,6 +70,10 @@ def main() -> None:
 
     print(f"\nIngested {total} chunks. Store now holds {store.count()}.")
 
+    from esamkit.factory import get_graph_store
+    from esamkit.health import report_for, summary_line
+    print(summary_line(report_for(get_graph_store())))
+
 
 if __name__ == "__main__":
     main()
