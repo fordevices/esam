@@ -17,6 +17,27 @@ Day-to-day restart steps for the user are in [`HOW_TO_START.md`](HOW_TO_START.md
    session to save resources; data is kept in volume `esam-pgdata`).
 3. Sanity check: `source .venv/bin/activate && pytest -q` (expect 131 passed).
 
+### Session 2026-10-19 (afternoon): HTML edition of the SE User Manual
+
+- `docs/ESAM_SE_User_Manual.html` is **generated** from `docs/ESAM_SE_User_Manual.md` by
+  `docs/build_manual_html.py` (commit `2d702c7`). Edit the Markdown, then rerun
+  `.venv/bin/python docs/build_manual_html.py`; never hand-edit the HTML.
+- Self-contained: no CDN or web fonts, air-gap safe. Uses markdown-it-py from the venv.
+  Same palette as `docs/how_esam_finds_answers.html`.
+- Features: sidebar contents and scrollspy, `/` search, light/dark theme, `§N.M` text auto-linked
+  (except `<DOC-ID> §N` and "Implementation §N"), tables reflow to labelled cards below 720 px.
+- 10 interactive figures, keyed by section number in the `FIGURES` dict (a missing section
+  prints a warning, not an error): 1.3 workflow, 2.2 rows, 2.3 chunking, 3 map of meaning
+  (illustrative), 4.4 graph walk, 5.2 coverage and roll-up, 7.2 gap decision, 10.3 traceability,
+  11.1 SwCI (Table V/VI from `data/standards/library.yaml`), 12.4 review pipeline, 12.9 cost.
+  A shared "STD-BRK-001 loaded" toggle drives 5.2, 7.2 and 10.3.
+- Figure data is **hard-coded in the script's JS** (baseline tree, requirement IDs, the STD's
+  `Verifies:` lines, Table V). If the baseline or documents change, update those arrays too.
+- Verified: all internal links resolve; no console errors on load; screenshots at 1400 px and 390 px.
+  The buttons/toggles were not click-tested in a browser.
+- Not pushed yet (`git push` from `esam/`).
+
+
 ---
 
 ## 1. Where things are
