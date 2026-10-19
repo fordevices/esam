@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How ESAM Finds Answers</title>
+<!--
+  For Systems Engineers and PMs. One self-contained file: no CDN, no web
+  fonts, no network, so it opens on the air-gapped side too. Uses the SE
+  Cockpit's colours and type. Answers quoted are real GPT-5.1 runs on the
+  synthetic SYNTH-LTV corpus (2026-10-19); timings were measured on the
+  ESAM learning stack (4-core laptop, PostgreSQL 16 + pgvector in Docker).
+-->
+<style>
+/* Layout: a briefing document. Summary scorecard first, then the vehicle
+   graph, then a working bench (question x approach), cost, evidence, verdict. */
+:root {
+  --paper: #f3f5f7;  --sheet: #ffffff;  --ink: #16202a;  --ink-2: #4c5a68;  --rule: #d3dae1;
+  --accent: #1f5f8b;  --signal: #b5630a;
+  --ok: #2e7a4c;  --ok-bg: #e6f2ea;  --part: #8a6a00;  --part-bg: #fbf3d9;
+  --crit: #b3261e;  --crit-bg: #fbe9e7;  --none: #5d6b78;  --none-bg: #eef1f4;
+  --t-top: #5d6b78;  --t-sys: #2b5d87;  --t-sub: #0d7584;  --t-doc: #7b4f8f;
+  --dim: 0.3;
+  --f-display: "Bahnschrift", "DIN Alternate", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --f-mono: ui-monospace, "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0f1418;  --sheet: #172028;  --ink: #e2e8ee;  --ink-2: #9aa8b5;  --rule: #2b3743;
+  --accent: #6aa8d8;  --signal: #eb9a3c;
+  --ok: #6cc28f;  --ok-bg: #16301f;  --part: #e3c14f;  --part-bg: #33290c;
+  --crit: #ff7b6f;  --crit-bg: #3a1d1a;  --none: #a3b0bc;  --none-bg: #222c35;
+  --t-top: #96a5b3;  --t-sys: #72a4d0;  --t-sub: #4fb7c5;  --t-doc: #c59bd8;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --paper: #0f1418;  --sheet: #172028;  --ink: #e2e8ee;  --ink-2: #9aa8b5;  --rule: #2b3743;
+  --accent: #6aa8d8;  --signal: #eb9a3c;
+  --ok: #6cc28f;  --ok-bg: #16301f;  --part: #e3c14f;  --part-bg: #33290c;
+  --crit: #ff7b6f;  --crit-bg: #3a1d1a;  --none: #a3b0bc;  --none-bg: #222c35;
+  --t-top: #96a5b3;  --t-sys: #72a4d0;  --t-sub: #4fb7c5;  --t-doc: #c59bd8;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.55 var(--f-body); }
+.wrap { max-width: 1180px; margin: 0 auto;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { font: inherit; color: inherit; }
+a { color: var(--accent); }
+.mono { font-family: var(--f-mono); font-size: 0.86em; }
+
+header.top { background: var(--sheet); border-bottom: 1px solid var(--rule); }
+header.top .wrap { padding-block: 28px 24px; display: grid; gap: 10px; }
+.eyebrow { font: 600 12px var(--f-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2); }
+h1 { font: 600 34px/1.1 var(--f-display); margin: 0; text-wrap: balance; }
+.lede { font-size: 17px; color: var(--ink-2); max-width: 68ch; margin: 0; }
+.lede strong { color: var(--ink); }
+
+section { padding-block: 34px 6px; }
+h2 { font: 600 22px/1.2 var(--f-display); margin: 0 0 6px; text-wrap: balance; }
+h2 .n { color: var(--ink-2); font-weight: 400; margin-right: 8px; }
+.intro { color: var(--ink-2); max-width: 70ch; margin: 0 0 18px; }
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 18px 20px; min-width: 0; }
+.scroll { overflow-x: auto; }
+
+/* verdict chips */
+.v { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 2px 9px; border-radius: 4px; white-space: nowrap; }
+.v::before { font-weight: 700; }
+.v.correct { color: var(--ok); background: var(--ok-bg); }      .v.correct::before { content: "✓"; }
+.v.partial { color: var(--part); background: var(--part-bg); }  .v.partial::before { content: "◐"; }
+.v.wrong   { color: var(--crit); background: var(--crit-bg); }  .v.wrong::before   { content: "✗"; }
+.v.cant    { color: var(--none); background: var(--none-bg); }  .v.cant::before    { content: "–"; }
+
+/* scorecard */
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font: 600 12px var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2);
+     padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: bottom; }
+td { padding: 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+.score td:first-child { min-width: 240px; }
+.score .qkind { display: block; font: 600 11.5px var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.cellbtn { border: 1px solid transparent; background: none; border-radius: 6px; padding: 4px; cursor: pointer; text-align: left; display: grid; gap: 4px; }
+.cellbtn:hover { border-color: var(--rule); }
+.cellbtn small { color: var(--ink-2); font-size: 12px; line-height: 1.35; max-width: 22ch; }
+th.hyb, td.hyb { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.legendrow { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; font-size: 13px; color: var(--ink-2); align-items: center; }
+
+/* graph explainer */
+.ve { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
+@media (max-width: 760px) { .ve { grid-template-columns: minmax(0, 1fr); } }
+.ve div { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; }
+.ve h3 { font: 600 15px var(--f-display); letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 4px; }
+.ve p { margin: 0; font-size: 14px; color: var(--ink-2); }
+.ve p b { color: var(--ink); font-weight: 600; }
+
+svg { display: block; width: 100%; height: auto; }
+svg text { font-family: var(--f-body); fill: var(--ink); }
+svg .lbl { font-size: 12.5px; font-weight: 600; }
+svg .sub { font-size: 10.5px; fill: var(--ink-2); }
+svg .mono { font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; }
+svg .box { fill: var(--sheet); stroke-width: 1.6; }
+svg .s-top { stroke: var(--t-top); } svg .s-sys { stroke: var(--t-sys); } svg .s-sub { stroke: var(--t-sub); } svg .s-doc { stroke: var(--t-doc); }
+svg .gap .box { stroke: var(--crit); stroke-dasharray: 5 4; fill: var(--crit-bg); }
+svg .gap text { fill: var(--crit); }
+svg .edge { fill: none; stroke: var(--ink-2); stroke-width: 1.3; opacity: 0.55; }
+svg .edge.doc { stroke-dasharray: 2 3; }
+svg .edge.iface { stroke: var(--signal); stroke-width: 2.4; opacity: 1; }
+svg .edge.iface.cand { stroke-dasharray: 7 5; }
+svg .elbl { font: 600 10.5px var(--f-mono); fill: var(--signal); }
+svg .halo { paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
+svg .arrow { fill: var(--signal); }
+svg .scdot { fill: var(--crit); }
+svg [data-id] { transition: opacity .25s; }
+svg.focus [data-id] { opacity: var(--dim); }
+svg.focus [data-id].hl { opacity: 1; }
+svg [data-id].hl .box { stroke: var(--accent); stroke-width: 3.2; }
+svg .gap.hl .box { stroke: var(--crit); stroke-width: 3; }
+svg .edge.hl { stroke: var(--accent); opacity: 1; stroke-width: 3; }
+svg .edge.iface.hl { stroke: var(--signal); stroke-width: 4; }
+svg .badge rect { fill: var(--accent); }
+svg .badge text { fill: var(--sheet); font: 700 10.5px var(--f-mono); }
+svg .stepno circle { fill: var(--signal); }
+svg .stepno text { fill: var(--sheet); font: 700 11px var(--f-mono); }
+.graphnote { font-size: 13px; color: var(--ink-2); margin: 8px 2px 0; }
+
+/* bench */
+.bench-controls { display: grid; gap: 12px; margin-bottom: 14px; }
+.ctl-label { font: 600 12px var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid var(--rule); background: var(--sheet); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-size: 14px; text-align: left; }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--sheet); }
+.tabs { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid var(--rule); }
+.tab { border: 0; background: none; padding: 10px 14px; cursor: pointer; color: var(--ink-2); border-bottom: 3px solid transparent;
+       font: 600 13.5px var(--f-display); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: -1px; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.bench { display: grid; gap: 16px; margin-top: 16px; }
+.bench-lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; align-items: start; }
+@media (max-width: 860px) { .bench-lower { grid-template-columns: minmax(0, 1fr); } }
+#graph { overflow-x: auto; }
+#graph svg { min-width: 640px; }
+.how h3, .result h3 { font: 600 12px var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 8px; }
+.approach-blurb { margin: 0 0 12px; font-size: 14.5px; }
+ol.steps { margin: 0; padding-left: 22px; display: grid; gap: 6px; font-size: 14px; }
+ol.steps li.now { font-weight: 600; }
+.replay { margin-top: 10px; border: 1px solid var(--rule); background: var(--sheet); border-radius: 6px; padding: 4px 12px; cursor: pointer; font-size: 13px; }
+.replay:hover { border-color: var(--accent); color: var(--accent); }
+.result .verdict { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.answer { white-space: pre-wrap; background: var(--paper); border-radius: 6px; padding: 12px 14px; font-size: 14px; margin: 0;
+          border: 1px solid var(--rule); overflow-wrap: anywhere; }
+.answer-src { font-size: 12px; color: var(--ink-2); margin: 6px 2px 12px; }
+.why { font-size: 14px; margin: 0; }
+.why b { font-weight: 600; }
+
+/* cost */
+.costgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+@media (max-width: 820px) { .costgrid { grid-template-columns: minmax(0, 1fr); } }
+.chart h3 { font: 600 14px var(--f-display); letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 2px; }
+.chart p { font-size: 13px; color: var(--ink-2); margin: 0 0 12px; }
+.bar { display: grid; grid-template-columns: 150px minmax(0, 1fr) 84px; gap: 10px; align-items: center; font-size: 13.5px; margin-bottom: 8px; }
+.bar .track { height: 16px; background: var(--paper); border-radius: 3px; position: relative; overflow: hidden; border: 1px solid var(--rule); }
+.bar .fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); }
+.bar .fill.hyb { background: var(--signal); }
+.bar .val { font-variant-numeric: tabular-nums; text-align: right; font-family: var(--f-mono); font-size: 12.5px; }
+.cost td { font-size: 13.5px; }
+.cost td:first-child { font-weight: 600; white-space: nowrap; }
+.cost .na { color: var(--ink-2); }
+
+/* evidence */
+.ev { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 820px) { .ev { grid-template-columns: minmax(0, 1fr); } }
+.ev article { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+.ev .who { font: 600 12px var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.ev h3 { font-size: 15.5px; margin: 0; line-height: 1.3; }
+.ev p { margin: 0; font-size: 14px; }
+.ev .tag { justify-self: start; }
+.ev .src { font-size: 12.5px; color: var(--ink-2); }
+.verdictbox { margin-top: 18px; border: 2px solid var(--accent); border-radius: 8px; padding: 18px 20px; background: var(--sheet); }
+.verdictbox h3 { font: 600 18px var(--f-display); margin: 0 0 8px; }
+.verdictbox ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+
+.pilot ul { margin: 0; padding-left: 20px; display: grid; gap: 8px; max-width: 80ch; }
+footer { padding-block: 34px 48px; font-size: 13px; color: var(--ink-2); }
+footer ol { padding-left: 20px; display: grid; gap: 4px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">ESAM pilot · briefing for Systems Engineers and PMs</div>
+    <h1>How ESAM Finds Answers</h1>
+    <p class="lede">Four real questions about the <strong>SYNTH-LTV</strong> vehicle, answered five ways: with no retrieval, with document
+      search, with a graph database (two query languages), and with ESAM's hybrid. Every answer quoted is a real GPT-5.1 run on the
+      same documents. <strong>The kind of question decides which method works.</strong></p>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="wrap">
+      <h2><span class="n">1</span>The scorecard</h2>
+      <p class="intro">Click any cell to see that approach working on that question.</p>
+      <div class="panel scroll"><table class="score" id="scorecard"></table>
+        <div class="legendrow" id="score-legend"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2><span class="n">2</span>The vehicle as a graph</h2>
+      <p class="intro">A graph stores <em>things</em> and the <em>relationships</em> between them. This is a simplified piece of the
+        SYNTH-LTV baseline: three systems, four subsystems, their documents, and the EBC1 brake-status message that crosses between them.</p>
+      <div class="ve">
+        <div><h3>Vertices</h3><p>The <b>things</b>: the vehicle, systems, subsystems, documents. Each box below is a vertex.</p></div>
+        <div><h3>Edges</h3><p>The <b>relationships</b>: <b>is part of</b>, <b>has document</b>, <b>sends EBC1 to</b>. Each line is an edge, and it has a direction.</p></div>
+        <div><h3>Properties</h3><p>The <b>facts</b> stored on them: WBS code, safety-critical (red dot), whether a link is <b>confirmed</b> or still a <b>candidate</b> (dashed).</p></div>
+      </div>
+      <p class="intro" style="margin-bottom:0">In ESAM the graph is built from the <b>SE-owned baseline</b>, not guessed by AI. That's why it can be trusted to say what is
+        connected, and what is missing (red dashed boxes).</p>
+    </div>
+  </section>
+
+  <section id="bench-section">
+    <div class="wrap">
+      <h2><span class="n">3</span>Watch each approach work</h2>
+      <p class="intro">Pick a question, then an approach. The graph shows what the approach looks at; below it are the steps it took and what came back.</p>
+      <div class="bench-controls">
+        <div><div class="ctl-label">Question</div><div class="chips" id="qchips" role="group" aria-label="Question"></div></div>
+      </div>
+      <div class="tabs" id="atabs" role="tablist" aria-label="Approach"></div>
+      <div class="bench">
+        <div class="panel how">
+          <p class="approach-blurb" id="blurb"></p>
+          <div id="graph"></div>
+          <p class="graphnote" id="graphnote"></p>
+        </div>
+        <div class="bench-lower">
+        <div class="panel how">
+          <h3>What it did</h3>
+          <ol class="steps" id="steps"></ol>
+          <button class="replay" id="replay" type="button" hidden>Replay the walk</button>
+        </div>
+        <div class="panel result">
+          <h3>What came back</h3>
+          <div class="verdict" id="verdict"></div>
+          <pre class="answer" id="answer"></pre>
+          <p class="answer-src" id="answersrc"></p>
+          <h3>Why</h3>
+          <p class="why" id="why"></p>
+        </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2><span class="n">4</span>What each approach costs</h2>
+      <p class="intro">Measured on the ESAM learning stack (a 4-core laptop; PostgreSQL with pgvector; the embedding model on CPU). Speed is not
+        the deciding cost. The deciding costs are <b>what must be built and kept current</b>, and <b>how much text goes to the model</b>.</p>
+      <div class="costgrid">
+        <div class="panel chart"><h3>Time to find the evidence</h3><p>Per question, before the model starts writing. The model's own answer takes several seconds more in every case.</p><div id="chart-time"></div></div>
+        <div class="panel chart"><h3>Text sent to the model</h3><p>Per question, in tokens (about ¾ of a word each). More text costs more and can dilute the answer. A graph walk sends nothing to a model unless one is asked to write up the result.</p><div id="chart-tokens"></div></div>
+      </div>
+      <div class="panel scroll"><table class="cost" id="costtable"></table></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2><span class="n">5</span>Is hybrid actually better? What others found</h2>
+      <p class="intro">Published results from industry and research, including where graphs and hybrids did <em>not</em> help.</p>
+      <div class="ev" id="evidence"></div>
+      <div class="verdictbox">
+        <h3>Our reading of the evidence</h3>
+        <ul>
+          <li><b>Document search wins on simple lookups.</b> It's as accurate as a graph and cheaper. A hybrid adds cost there for little gain.</li>
+          <li><b>Graphs win on connection and absence questions.</b> "Who is affected", "what is missing", "what verifies this": document search cannot answer these reliably.</li>
+          <li><b>Combining both gives the best answers, at a price.</b> More text goes to the model, and studies saw lower precision when everything is sent. Routing each question to the right source keeps the cost down.</li>
+          <li><b>The quality of the graph decides everything.</b> Graphs built automatically by AI miss about a third of the facts in one study. ESAM avoids this because the graph comes from the SE baseline.</li>
+          <li><b>SE work is mostly connection and absence questions.</b> That is why ESAM is hybrid. A hybrid would be over-engineering for a pure document library.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="pilot">
+    <div class="wrap">
+      <h2><span class="n">6</span>What this means for the pilot</h2>
+      <ul>
+        <li><b>The baseline is the asset.</b> The graph is only as good as the YAML baseline the SE team maintains. Budget SE time for it the way you would for any configuration-controlled artefact.</li>
+        <li><b>The pilot's graph runs in PostgreSQL</b> with the same walks shown in the Gremlin and Cypher tabs. JanusGraph (Gremlin) is the full-deployment target. Neo4j (Cypher) is not approved and is shown only because most published work uses it.</li>
+        <li><b>Treat "the document doesn't exist yet" as a finding.</b> Only the hybrid can say it with certainty, because only the graph knows what should exist.</li>
+        <li><b>Next steps:</b> route each question to the right source automatically (the planned Query tab in the SE Cockpit), and define the programme vocabulary (ontology) so routing and gap checks get sharper.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <strong>Sources</strong>
+    <ol id="sources"></ol>
+    <p>SYNTH-LTV is a synthetic programme created for training. Its WBS codes follow MIL-STD-881F Appendix G; everything below WBS Level 3 is invented.</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+"use strict";
+const $ = (s) => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+function h(spec, attrs, ...kids) {
+  const [tag, ...cls] = spec.split(".");
+  const n = document.createElement(tag);
+  if (cls.length) n.className = cls.join(" ");
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "on") for (const [e, f] of Object.entries(v)) n.addEventListener(e, f);
+    else n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const k of kids.flat(Infinity)) if (k != null && k !== false) n.append(k instanceof Node ? k : String(k));
+  return n;
+}
+function s(tag, attrs, text) {
+  const n = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) if (v != null) n.setAttribute(k, v);
+  if (text != null) n.textContent = text;
+  return n;
+}
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ── The vehicle graph (simplified SYNTH-LTV) ────────────────────────────────
+const W = 104, HB = 40;
+const NODES = [
+  { id: "V",    x: 520, y: 22,  t: "top", lbl: "SYNTH-LTV", sub: "Vehicle · WBS 1.0" },
+  { id: "SUSP", x: 200, y: 112, t: "sys", lbl: "Suspension/Steering", sub: "System · 1.1.1.5", w: 150 },
+  { id: "VETR", x: 575, y: 112, t: "sys", lbl: "Vehicle Electronics", sub: "System · 1.1.1.6", w: 150 },
+  { id: "PWR",  x: 900, y: 112, t: "sys", lbl: "Power Pack/Drivetrain", sub: "System · 1.1.1.7", w: 150 },
+  { id: "BRK",  x: 200, y: 232, t: "sub", lbl: "Brake ECU", sub: "Subsystem · RTOS", sc: true, w: 120 },
+  { id: "BB",   x: 470, y: 232, t: "sub", lbl: "J1939 backbone", sub: "Subsystem", sc: true, w: 120 },
+  { id: "DCL",  x: 685, y: 232, t: "sub", lbl: "Driver cluster", sub: "Subsystem · Linux", w: 120 },
+  { id: "ECM",  x: 900, y: 232, t: "sub", lbl: "Engine ECM", sub: "Subsystem", w: 120 },
+  { id: "ICD-BRK",  x: 60,  y: 362, t: "doc", lbl: "ICD-BRK-001", sub: "Interface doc" },
+  { id: "SSDD-BRK", x: 170, y: 362, t: "doc", lbl: "SSDD-BRK-001", sub: "Design" },
+  { id: "SSR-BRK",  x: 280, y: 362, t: "doc", lbl: "SSR-BRK-001", sub: "Requirements" },
+  { id: "STD-BRK",  x: 390, y: 362, t: "gap", lbl: "No STD", sub: "test description" },
+  { id: "BB-NONE",  x: 505, y: 362, t: "gap", lbl: "No documents", sub: "" },
+  { id: "SSDD-DCL", x: 630, y: 362, t: "doc", lbl: "SSDD-DCL-001", sub: "Design" },
+  { id: "SSR-DCL",  x: 740, y: 362, t: "doc", lbl: "SSR-DCL-001", sub: "Requirements" },
+  { id: "ECM-NONE", x: 900, y: 362, t: "gap", lbl: "No documents", sub: "" },
+];
+const N = Object.fromEntries(NODES.map((n) => [n.id, n]));
+const EDGES = [
+  ["e-susp", "SUSP", "V", "part"], ["e-vetr", "VETR", "V", "part"], ["e-pwr", "PWR", "V", "part"],
+  ["e-brk", "BRK", "SUSP", "part"], ["e-bb", "BB", "VETR", "part"], ["e-dcl", "DCL", "VETR", "part"], ["e-ecm", "ECM", "PWR", "part"],
+  ["d-icd", "BRK", "ICD-BRK", "doc"], ["d-ssdd", "BRK", "SSDD-BRK", "doc"], ["d-ssr", "BRK", "SSR-BRK", "doc"], ["d-std", "BRK", "STD-BRK", "gap"],
+  ["d-bb", "BB", "BB-NONE", "gap"], ["d-dssdd", "DCL", "SSDD-DCL", "doc"], ["d-dssr", "DCL", "SSR-DCL", "doc"], ["d-ecm", "ECM", "ECM-NONE", "gap"],
+  ["i-1", "BRK", "BB", "iface"], ["i-2", "BB", "DCL", "iface"], ["i-3", "BB", "ECM", "cand"],
+];
+const half = (n) => (n.w || W) / 2;
+
+function drawGraph(state) {
+  const svg = s("svg", { viewBox: "0 0 1000 420", role: "img", "aria-label": "Simplified SYNTH-LTV graph: systems, subsystems, documents and the EBC1 message",
+    class: state.hl ? "focus" : null });
+  const defs = s("defs");
+  const mk = s("marker", { id: "arw", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto" });
+  mk.append(s("path", { d: "M0,0 L10,5 L0,10 z", class: "arrow" })); defs.append(mk); svg.append(defs);
+  const on = (id) => state.hl && state.hl.has(id);
+  for (const [id, a, b, kind] of EDGES) {
+    const A = N[a], B = N[b]; let d;
+    if (kind === "iface" || kind === "cand") {
+      if (id === "i-3") d = `M${A.x},${A.y} C${A.x + 60},${A.y - 70} ${B.x - 60},${B.y - 70} ${B.x},${B.y}`;
+      else d = `M${A.x + half(A)},${A.y + HB / 2} L${B.x - half(B)},${B.y + HB / 2}`;
+    } else if (kind === "part") {
+      d = `M${A.x},${A.y} V${(A.y + B.y + HB) / 2 + 4} H${B.x} V${B.y + HB}`;
+    } else {
+      d = `M${A.x},${A.y + HB} V${(A.y + HB + B.y) / 2} H${B.x} V${B.y}`;
+    }
+    const cls = "edge" + (kind === "doc" || kind === "gap" ? " doc" : "") + (kind === "iface" || kind === "cand" ? " iface" : "")
+      + (kind === "cand" ? " cand" : "") + (on(id) ? " hl" : "");
+    svg.append(s("path", { d, class: cls, "data-id": id, "marker-end": kind === "iface" || kind === "cand" ? "url(#arw)" : null }));
+  }
+  // EBC1 labels
+  svg.append(s("text", { x: 335, y: 245, class: "elbl halo", "text-anchor": "middle" }, "EBC1"));
+  svg.append(s("text", { x: 578, y: 245, class: "elbl halo", "text-anchor": "middle" }, "EBC1"));
+  svg.append(s("text", { x: 685, y: 196, class: "elbl halo", "text-anchor": "middle" }, "EBC1 · candidate"));
+  for (const n of NODES) {
+    const g = s("g", { "data-id": n.id, class: (n.t === "gap" ? "gap" : "") + (on(n.id) ? " hl" : "") });
+    const w = n.w || W;
+    g.append(s("rect", { class: "box s-" + (n.t === "gap" ? "doc" : n.t), x: n.x - w / 2, y: n.y, width: w, height: HB, rx: 5 }));
+    g.append(s("text", { class: n.t === "doc" ? "mono" : "lbl", x: n.x, y: n.y + 17, "text-anchor": "middle" }, n.lbl));
+    if (n.sub) g.append(s("text", { class: "sub", x: n.x, y: n.y + 31, "text-anchor": "middle" }, n.sub));
+    if (n.sc) g.append(s("circle", { class: "scdot", cx: n.x + w / 2 - 8, cy: n.y + 8, r: 4 }, null));
+    svg.append(g);
+  }
+  for (const [id, label] of Object.entries(state.badges || {})) {
+    const n = N[id]; if (!n) continue;
+    const g = s("g", { class: "badge" });
+    const w = 8 + label.length * 6.6;
+    g.append(s("rect", { x: n.x - w / 2, y: n.y - 18, width: w, height: 15, rx: 3 }));
+    g.append(s("text", { x: n.x, y: n.y - 7, "text-anchor": "middle" }, label));
+    svg.append(g);
+  }
+  (state.numbers || []).forEach(([id, num]) => {
+    const n = N[id]; const w = n.w || W;
+    const g = s("g", { class: "stepno" });
+    g.append(s("circle", { cx: n.x - w / 2 + 2, cy: n.y + 2, r: 9 }));
+    g.append(s("text", { x: n.x - w / 2 + 2, y: n.y + 6, "text-anchor": "middle" }, String(num)));
+    svg.append(g);
+  });
+  return svg;
+}
+
+// ── Questions, approaches, and what happened (real runs, abridged) ─────────
+const Q = [
+  { id: "lookup",  kind: "Look up a fact",          text: "How often does the brake ECU transmit the EBC1 message?" },
+  { id: "impact",  kind: "Follow connections",      text: "Which subsystems are affected if we change the EBC1 message period?" },
+  { id: "gaps",    kind: "Find what's missing",     text: "Which safety-critical subsystems have no test description?" },
+  { id: "missing", kind: "Ask about a missing document", text: "How is SRS-BRK-011 verified? Give the test steps and pass criteria." },
+];
+const A = [
+  { id: "none",    name: "No retrieval",    blurb: "The model answers from what it learned in training. It never sees your documents or your baseline." },
+  { id: "rag",     name: "Document search", blurb: "Your documents are cut into passages. The question is matched to the most similar passages by meaning, and only those are given to the model (often called RAG)." },
+  { id: "gremlin", name: "Graph · Gremlin", blurb: "Gremlin describes a WALK: start at a vertex, follow edges of a given kind, keep going. It is the language of JanusGraph, ESAM's full-deployment target." },
+  { id: "cypher",  name: "Graph · Cypher",  blurb: "Cypher describes a SHAPE: draw the pattern you're looking for and the database finds every match. It is the language of Neo4j (not approved for this programme), used in most published GraphRAG work." },
+  { id: "hybrid",  name: "ESAM hybrid",     blurb: "Document search finds the way in, the graph finds the reach and anything missing, and the model writes the answer from both, citing documents." },
+];
+const SRC_REAL = "Real GPT-5.1 answer on the SYNTH-LTV documents, abridged.";
+const SRC_GRAPH = "Graph result (no model involved). The pilot runs the same walk in PostgreSQL in about 1–2 ms.";
+const R = {
+  lookup: {
+    none: { v: "wrong", short: "Says 10 ms; the ICD says 100 ms", answer: "The brake ECU transmits the EBC1 (Electronic Brake Controller 1) message every 10 ms (i.e., at 100 Hz) on the SYNTH-LTV vehicle CAN.",
+      src: SRC_REAL, why: "<b>Confident and wrong.</b> The model has never seen the SYNTH-LTV ICD, so it fills in a plausible number. Nothing in the answer warns you." },
+    rag: { v: "correct", short: "100 ms ± 10 ms, cited", hl: ["ICD-BRK", "SSR-BRK", "SSDD-DCL"], badges: { "ICD-BRK": "0.80", "SSDD-DCL": "0.73", "SSR-BRK": "0.71" },
+      steps: ["Turn the question into a meaning fingerprint (vector).", "Find the 5 most similar passages: ICD-BRK-001 scores 0.80.", "Give those passages to the model with the rule: answer only from them."],
+      answer: "The brake ECU transmits the EBC1 message every 100 ms (with a tolerance of ±10 ms). [ICD-BRK-001] [SSR-BRK-001]",
+      src: SRC_REAL, why: "<b>This is what document search is for.</b> The answer sits in one passage, and the passage matches the question's meaning closely." },
+    gremlin: { v: "partial", short: "Knows the link, not the period", walk: [["BRK"], ["BRK", "i-1", "BB"], ["BRK", "d-icd", "ICD-BRK"]],
+      steps: ["Start at the Brake ECU.", "Follow the outgoing EBC1 link: it goes to the J1939 backbone.", "Follow 'has document' to the interface document: ICD-BRK-001."],
+      answer: "Brake ECU —sends EBC1→ J1939 backbone.\nThe interface is defined in ICD-BRK-001.\n(The period is not stored in the graph.)",
+      src: SRC_GRAPH, why: "<b>The graph knows that EBC1 exists and where it is defined, but not what the document says.</b> Values like 100 ms live in document text. A graph could store them as properties, but then someone has to keep them in step with the ICD." },
+    cypher: { v: "partial", short: "Same as Gremlin", hl: ["BRK", "i-1", "BB", "d-icd", "ICD-BRK"],
+      steps: ["Describe the shape: Brake ECU —sends EBC1→ something, and Brake ECU —has document→ an interface document.", "The database returns every match at once."],
+      answer: "Brake ECU —sends EBC1→ J1939 backbone.\nThe interface is defined in ICD-BRK-001.\n(The period is not stored in the graph.)",
+      src: SRC_GRAPH, why: "<b>Same answer as Gremlin; only the way of asking differs.</b> Cypher states the pattern; Gremlin walks to it." },
+    hybrid: { v: "correct", short: "100 ms, cited twice", hl: ["ICD-BRK", "SSR-BRK", "BRK", "i-1", "BB"], badges: { "ICD-BRK": "0.80" },
+      steps: ["Document search lands on ICD-BRK-001 (score 0.80).", "The graph says that document belongs to the Brake ECU and finds who receives EBC1.", "Coverage check: the interface document this question needs exists.", "The model answers from the best passage of each relevant document."],
+      answer: "The brake ECU transmits the EBC1 message every 100 ms. This is stated both in the ICD and in the software requirements:\n- EBC1 is \"broadcast every 100 ms\" [ICD-BRK-001].\n- The software \"shall transmit EBC1 (PGN 61441) every 100 ms ± 10 ms\" [SSR-BRK-001].",
+      src: SRC_REAL, why: "<b>Correct, but no better than document search here</b>, and it sent nearly twice as much text to the model. For a pure lookup the graph adds cost, not accuracy." },
+  },
+  impact: {
+    none: { v: "wrong", short: "Generic list; not this vehicle", answer: "Changing the EBC1 message period will affect every subsystem that consumes EBC1 [...] On SYNTH-LTV this typically includes:\n1. Brake System Control & Diagnostics [...]\n2. Vehicle Dynamics & Stability Functions [...]\n3. Powertrain & Driveline: Engine Control Unit, Transmission Control Unit, Transfer case [...]\n4. ADAS / Autonomy: ACC / AEB / platooning controllers [...]\n5. Chassis & Ride Control [...]",
+      src: SRC_REAL, why: "<b>A textbook answer about vehicles in general.</b> It lists units SYNTH-LTV doesn't have (ACC, platooning) and can't tell you which ones are actually wired to EBC1." },
+    rag: { v: "partial", short: "Finds the cluster only", hl: ["ICD-BRK", "SSR-BRK", "SSDD-DCL"], badges: { "ICD-BRK": "0.71", "SSR-BRK": "0.60", "SSDD-DCL": "0.58" },
+      steps: ["Find the 5 passages most similar to the question.", "Four come from the brake documents; one from the cluster design (0.58).", "The model answers from those five passages only."],
+      answer: "Any change to the EBC1 message period is a Class I interface change and must be reviewed by every consuming subsystem listed in the vehicle baseline. The complete list of those subsystems is not given here. [ICD-BRK-001]\nFrom the excerpts, we can identify at least one specific consuming subsystem: the Driver Digital Cluster. [SSDD-DCL-001]",
+      src: SRC_REAL, why: "<b>Similarity can't follow a chain.</b> The backbone and the engine ECM have no documents, so no passage about them exists to be found. The model is honest that the list is incomplete, but it can't complete it." },
+    gremlin: { v: "correct", short: "Backbone, cluster, ECM (unconfirmed)", walk: [["BRK"], ["BRK", "i-1", "BB"], ["BRK", "i-1", "BB", "i-2", "DCL", "i-3", "ECM"]],
+      steps: ["Start at the Brake ECU.", "Follow EBC1 links: the J1939 backbone (1 hop).", "Keep following from the backbone: the driver cluster, and the engine ECM over a candidate link (2 hops).", "No more EBC1 links: stop."],
+      answer: "1 hop: J1939 backbone (safety-critical, confirmed)\n2 hops: Driver cluster (confirmed)\n2 hops: Engine ECM (CANDIDATE: link not yet confirmed by an SE)",
+      src: SRC_GRAPH, why: "<b>Exactly the question graphs exist for.</b> The walk finds every subsystem the change reaches, however many hops away, and keeps the confirmed/candidate status of each link." },
+    cypher: { v: "correct", short: "Same three, as one pattern", hl: ["BRK", "i-1", "BB", "i-2", "DCL", "i-3", "ECM"],
+      steps: ["Describe the shape: Brake ECU —sends EBC1→ (one or more hops) → any subsystem.", "The database returns every subsystem that fits: backbone, cluster, engine ECM."],
+      answer: "1 hop: J1939 backbone (safety-critical, confirmed)\n2 hops: Driver cluster (confirmed)\n2 hops: Engine ECM (CANDIDATE: link not yet confirmed by an SE)",
+      src: SRC_GRAPH, why: "<b>Same result as the Gremlin walk.</b> \"One or more hops\" is written in a few characters. The graph lists <em>who</em> is affected, but not <em>why</em>: that's in the documents." },
+    hybrid: { v: "correct", short: "All four, with reasons and citations", hl: ["ICD-BRK", "BRK", "i-1", "BB", "i-2", "DCL", "i-3", "ECM", "SSDD-DCL", "SSR-DCL", "SSR-BRK", "BB-NONE", "ECM-NONE"], badges: { "ICD-BRK": "0.71" },
+      steps: ["Document search lands on ICD-BRK-001: the Brake ECU.", "The graph walks EBC1 from the Brake ECU: backbone, cluster, engine ECM (candidate).", "For every subsystem reached, fetch its most relevant passage. The backbone and ECM have no documents, and the model is told so.", "The model answers from the graph result and the passages."],
+      answer: "1. SUB-BRK-ECU – directly affected: must send EBC1 every 100 ms ± 10 ms [SSR-BRK-001]; any change is a Class I interface change [ICD-BRK-001].\n2. SUB-J1939-BB – impact cannot be assessed from documents: the graph shows it is a confirmed, safety-critical link, but it has no documents.\n3. SUB-DCL – confirmed affected: if no EBC1 frame arrives for 300 ms it lights the ABS warning [SSDD-DCL-001] [SSR-DCL-001].\n4. SUB-ENG-ECM – candidate impact, unconfirmed: no documents; requires SE review.",
+      src: SRC_REAL + " Note: the model opened with an over-cautious sentence about the backbone having no ICD; the list itself is complete.",
+      why: "<b>Who is affected comes from the graph; why comes from the documents.</b> It's the only approach that names all four, says which are certain, and shows its sources." },
+  },
+  gaps: {
+    none: { v: "cant", short: "Says it can't know", answer: "I don't have access to your project's specific test database or documentation set, so I can't list the actual subsystems from your environment. To identify which safety-critical subsystems lack test descriptions, you'd typically: 1. Start from the safety assessment [...] 2. Map to the verification database [...] 3. Run a coverage or traceability report [...]",
+      src: SRC_REAL, why: "<b>Honest, and no help.</b> The model correctly refuses, then explains how you'd find out yourself." },
+    rag: { v: "cant", short: "Absence has no passage", hl: ["SSR-BRK", "ICD-BRK", "SSR-DCL"], badges: { "SSR-BRK": "0.58", "ICD-BRK": "0.55", "SSR-DCL": "0.53" },
+      steps: ["Find the passages most similar to the question. The best match is weak (0.58).", "None of them is about a missing test description, because a missing document has no text.", "The model answers from what it was given."],
+      answer: "The context does not mention any safety-critical subsystems or their test descriptions, so it is not possible to determine which safety-critical subsystems have no test description from the provided information.",
+      src: SRC_REAL, why: "<b>Document search can only find what exists.</b> \"What is missing\" is a question about structure, so no amount of better search fixes it." },
+    gremlin: { v: "correct", short: "Brake ECU and backbone", walk: [["BRK", "BB"], ["BRK", "BB", "d-icd", "d-ssdd", "d-ssr", "ICD-BRK", "SSDD-BRK", "SSR-BRK", "d-bb"], ["BRK", "BB", "STD-BRK", "d-std", "BB-NONE", "d-bb"]],
+      steps: ["Start at every subsystem marked safety-critical: the Brake ECU and the J1939 backbone.", "Follow each one's 'has document' links and look at the document types.", "Keep the subsystems where no test description (STD) turns up."],
+      answer: "Safety-critical subsystems with no test description:\n- Brake ECU (has ICD, SSDD and SSR; no STD)\n- J1939 backbone (no documents at all)",
+      src: SRC_GRAPH, why: "<b>The graph knows what each subsystem has, so it can report what it lacks.</b> This is the same check behind the SE Cockpit's document coverage table." },
+    cypher: { v: "correct", short: "Same two", hl: ["BRK", "BB", "STD-BRK", "d-std", "BB-NONE", "d-bb"],
+      steps: ["Describe the shape: a safety-critical subsystem with NO 'has document' link to a test description.", "The database returns every subsystem that fits."],
+      answer: "Safety-critical subsystems with no test description:\n- Brake ECU (has ICD, SSDD and SSR; no STD)\n- J1939 backbone (no documents at all)",
+      src: SRC_GRAPH, why: "<b>Same result.</b> Patterns with a NOT in them (\"no such link\") are natural in a graph query and impossible in document search." },
+    hybrid: { v: "correct", short: "Routed to the graph", hl: ["BRK", "BB", "STD-BRK", "d-std", "BB-NONE", "d-bb"],
+      steps: ["Recognise a structure question: it's about what exists, not what a document says.", "Answer it from the graph's coverage check, the one the SE Cockpit Dashboard shows.", "No documents are needed, so none are sent to the model."],
+      answer: "Safety-critical subsystems with no test description:\n- Brake ECU (has ICD, SSDD and SSR; no STD)\n- J1939 backbone (no documents at all)",
+      src: "From the graph's coverage check (SE Cockpit Dashboard). A single question box that routes automatically is planned (Cockpit Query tab).",
+      why: "<b>Part of being hybrid is knowing when not to search documents.</b> Research calls this routing (\"selection\"): send each question to the source that can answer it." },
+  },
+  missing: {
+    none: { v: "wrong", short: "Invents a generic test", answer: "I don't have the content of SRS-BRK-011 in front of me, so I'll outline a typical verification pattern [...] Assuming SRS-BRK-011 is a system-level braking requirement such as: \"The service brake shall bring a fully laden vehicle from 80 km/h to 0 km/h within X m\" [...]\nVerification Method: Test (Vehicle-Level, Instrumented Brake Performance Test) [...]\n1. Pre-Test Inspection & Setup [...]",
+      src: SRC_REAL, why: "<b>The most dangerous answer on this page.</b> It guesses the requirement is about stopping distance (it's about a 15 ms pressure release) and writes a full, professional-looking test procedure for the wrong thing." },
+    rag: { v: "partial", short: "Honest, but can't say why", hl: ["SSR-BRK", "ICD-BRK", "SSR-DCL"], badges: { "SSR-BRK": "0.63", "ICD-BRK": "0.53", "SSR-DCL": "0.53" },
+      steps: ["Find the passages most similar to the question: the requirement itself (0.63).", "The model gets the requirement text, but no test passage, because none exists."],
+      answer: "The context only states the requirement itself:\n- SRS-BRK-011: \"The software shall release brake pressure on a wheel within 15 ms of detecting incipient lock-up on that wheel.\" [SSR-BRK-001]\nThere is no information in the provided context about how SRS-BRK-011 is to be verified [...]",
+      src: SRC_REAL, why: "<b>Good behaviour from a well-instructed model, but it can't tell you <em>why</em>.</b> \"Not in the passages I was given\" could mean the test was missed by the search or that it was never written. Those lead to very different actions." },
+    gremlin: { v: "partial", short: "Knows the STD is missing", walk: [["BRK"], ["BRK", "d-icd", "d-ssdd", "d-ssr", "ICD-BRK", "SSDD-BRK", "SSR-BRK"], ["BRK", "STD-BRK", "d-std"]],
+      steps: ["Start at the Brake ECU (SRS-BRK requirements belong to it).", "Follow 'has document': ICD, SSDD, SSR.", "Look for a test description (STD): there is none."],
+      answer: "The Brake ECU has no test description (STD).\nSo no document in the baseline can say how SRS-BRK-011 is verified.",
+      src: SRC_GRAPH, why: "<b>The graph can say the test description doesn't exist</b>, which is the key fact. But it can't quote the requirement or explain it: that text lives in the SSR." },
+    cypher: { v: "partial", short: "Same as Gremlin", hl: ["BRK", "STD-BRK", "d-std"],
+      steps: ["Describe the shape: the Brake ECU with NO 'has document' link to a test description.", "The database confirms the shape matches: the STD is missing."],
+      answer: "The Brake ECU has no test description (STD).\nSo no document in the baseline can say how SRS-BRK-011 is verified.",
+      src: SRC_GRAPH, why: "<b>Same result.</b> Certain about the gap, silent about the content." },
+    hybrid: { v: "correct", short: "Says it doesn't exist; quotes the requirement", hl: ["SSR-BRK", "BRK", "STD-BRK", "d-std"], badges: { "SSR-BRK": "0.63" },
+      steps: ["Document search lands on SSR-BRK-001: the Brake ECU.", "Coverage check: a verification question needs a test description (STD). The graph says the Brake ECU has none.", "The model is told plainly: MISSING, do not fill the gap.", "It answers with what exists (the requirement) and names what doesn't."],
+      answer: "This question cannot be fully answered because the required test description (STD) for the Brake Control ECU (SUB-BRK-ECU) does not exist in the baseline yet.\nFrom the existing evidence:\n- SRS-BRK-011 states: \"The software shall release brake pressure on a wheel within 15 ms of detecting incipient lock-up on that wheel.\" [SSR-BRK-001]\n[...] Those test steps and pass/fail conditions must be obtained from, or defined in, the missing SUB-BRK-ECU STD, which has not yet been created in the baseline.",
+      src: SRC_REAL + " Once STD-BRK-001 is added, the same question returns test case TC-BRK-011 with its steps and pass criteria.",
+      why: "<b>Certain about the gap and accurate about the content.</b> \"Doesn't exist yet\" is now a finding you can act on: write the test description." },
+  },
+};
+const VLABEL = { correct: "Correct", partial: "Partial", wrong: "Wrong", cant: "Can't answer" };
+const vchip = (v) => h("span.v." + v, {}, VLABEL[v]);
+
+// ── 1. Scorecard ────────────────────────────────────────────────────────────
+function renderScorecard() {
+  const head = h("tr", {}, h("th", {}, "Question"), A.map((a) => h("th" + (a.id === "hybrid" ? ".hyb" : ""), {}, a.name)));
+  const rows = Q.map((q) => h("tr", {},
+    h("td", {}, h("span.qkind", {}, q.kind), q.text),
+    A.map((a) => { const r = R[q.id][a.id];
+      return h("td" + (a.id === "hybrid" ? ".hyb" : ""), {}, h("button.cellbtn", { type: "button", "aria-label": `${a.name} on: ${q.text}`,
+        on: { click: () => { pick(q.id, a.id); document.getElementById("bench-section").scrollIntoView({ behavior: reduced ? "auto" : "smooth" }); } } },
+        vchip(r.v), h("small", {}, r.short))); })));
+  $("#scorecard").replaceChildren(h("thead", {}, head), h("tbody", {}, rows));
+  $("#score-legend").replaceChildren(...["correct", "partial", "wrong", "cant"].map((v) => vchip(v)),
+    h("span", {}, "Wrong = a confident answer that is false or about the wrong thing."));
+}
+
+// ── 3. Bench ────────────────────────────────────────────────────────────────
+let cur = { q: "impact", a: "gremlin" }, timer = null;
+function pick(q, a) { cur = { q: q || cur.q, a: a || cur.a }; renderBench(); }
+function renderControls() {
+  $("#qchips").replaceChildren(...Q.map((q) => h("button.chip", { type: "button", "aria-pressed": String(q.id === cur.q), on: { click: () => pick(q.id) } }, q.text)));
+  $("#atabs").replaceChildren(...A.map((a) => h("button.tab", { type: "button", role: "tab", "aria-selected": String(a.id === cur.a), on: { click: () => pick(null, a.id) } }, a.name)));
+}
+function showGraph(hl, badges, numbers) {
+  $("#graph").replaceChildren(drawGraph({ hl: hl ? new Set(hl) : null, badges, numbers }));
+}
+function renderBench() {
+  clearInterval(timer); timer = null;
+  renderControls();
+  const a = A.find((x) => x.id === cur.a), r = R[cur.q][cur.a];
+  $("#blurb").textContent = a.blurb;
+  const stepsEl = $("#steps");
+  const steps = r.steps || ["Send the question to the model. Nothing else."];
+  stepsEl.replaceChildren(...steps.map((t) => h("li", {}, t)));
+  $("#replay").hidden = !r.walk;
+  if (cur.a === "none") {
+    showGraph([], null); $("#graphnote").textContent = "The model sees none of this.";
+  } else if (r.walk) {
+    $("#graphnote").textContent = "Gremlin walks one hop at a time. Numbers show the order.";
+    playWalk(r);
+  } else {
+    showGraph(r.hl, r.badges);
+    $("#graphnote").textContent = cur.a === "rag" ? "Badges show how closely each document's best passage matched the question (1.0 = identical meaning)."
+      : cur.a === "cypher" ? "Cypher matches the whole pattern at once." : "Highlighted: what the hybrid used, from both the graph and the documents.";
+  }
+  $("#verdict").replaceChildren(vchip(r.v), h("span", { style: "font-size:14px" }, r.short));
+  $("#answer").textContent = r.answer;
+  $("#answersrc").textContent = r.src;
+  $("#why").innerHTML = r.why;   // authored text above, not user input
+}
+function playWalk(r) {
+  const frames = r.walk, lis = [...$("#steps").children];
+  const numbers = (i) => frames.slice(0, i + 1).map((f, k) => [f.find((id) => N[id]), k + 1]).filter(([id]) => id);
+  const show = (i) => {
+    showGraph(frames[i], null, numbers(i));
+    lis.forEach((li, k) => li.classList.toggle("now", k === Math.min(i, lis.length - 1)));
+  };
+  clearInterval(timer);
+  if (reduced) { show(frames.length - 1); return; }
+  let i = 0; show(0);
+  timer = setInterval(() => { i++; if (i >= frames.length) { clearInterval(timer); timer = null; return; } show(i); }, 1100);
+}
+$("#replay").addEventListener("click", () => { const r = R[cur.q][cur.a]; if (r.walk) playWalk(r); });
+
+// ── 4. Cost (measured on the ESAM learning stack, 2026-10-19) ───────────────
+function bars(el, rows, unit, max) {
+  el.replaceChildren(...rows.map(([name, val, label, hyb]) => h("div.bar", {},
+    h("span", {}, name),
+    h("span.track", { role: "img", "aria-label": `${name}: ${label}` }, h("span.fill" + (hyb ? ".hyb" : ""), { style: `width:${Math.max(0.6, (val / max) * 100)}%` })),
+    h("span.val", {}, label))));
+}
+function renderCost() {
+  // retrieval time in ms; tokens = question + passages + rules
+  bars($("#chart-time"), [
+    ["No retrieval", 0, "none"],
+    ["Document search", 222, "0.22 s"],
+    ["Graph walk", 1.5, "0.002 s"],
+    ["ESAM hybrid", 251, "0.25 s", true],
+  ], "ms", 260);
+  bars($("#chart-tokens"), [
+    ["No retrieval", 40, "~40"],
+    ["Document search", 550, "~550"],
+    ["ESAM hybrid", 1000, "~1,000", true],
+  ], "tokens", 1050);
+  const rows = [
+    ["What you build", "Nothing", "Cut documents into passages and index them", "A graph of the vehicle", "Both"],
+    ["What you maintain", "Nothing", "Re-index each new document revision (automatic)", "The SE baseline: the main ongoing cost, and SE time not IT time", "Both"],
+    ["Infrastructure", "Model access only", "PostgreSQL + pgvector; a 440 MB embedding model on CPU", "Pilot: same PostgreSQL. Full: JanusGraph cluster (new product to accredit). Neo4j: not approved", "PostgreSQL + embedding model (pilot)"],
+    ["Storage for SYNTH-LTV", "None", "640 kB for 28 passages (a 1,000-page SSDD: ~15–25 MB)", "144 kB for 20 vertices, 22 edges", "~0.8 MB"],
+    ["Main risk", "Confident, wrong, uncited answers", "Misses connections; can't see what's missing", "Can't read document content; only as good as the baseline", "More text to the model; needs routing to stay efficient"],
+  ];
+  $("#costtable").replaceChildren(
+    h("thead", {}, h("tr", {}, h("th", {}, ""), ["No retrieval", "Document search", "Graph (Gremlin / Cypher)", "ESAM hybrid"].map((x) => h("th", {}, x)))),
+    h("tbody", {}, rows.map((r) => h("tr", {}, r.map((c, i) => h("td", {}, c)))))
+  );
+}
+
+// ── 5. Evidence ─────────────────────────────────────────────────────────────
+const SOURCES = [
+  ["han", "Han et al., “RAG vs. GraphRAG: A Systematic Evaluation and Key Insights”, arXiv 2502.11371 (2025)", "https://arxiv.org/abs/2502.11371"],
+  ["xiang", "Xiang et al., “When to use Graphs in RAG: A Comprehensive Analysis for Graph Retrieval-Augmented Generation” (GraphRAG-Bench), arXiv 2506.05690 (2025)", "https://arxiv.org/abs/2506.05690"],
+  ["sarmah", "Sarmah et al. (BlackRock, NVIDIA), “HybridRAG: Integrating Knowledge Graphs and Vector Retrieval Augmented Generation for Efficient Information Extraction”, arXiv 2408.04948 (2024)", "https://arxiv.org/abs/2408.04948"],
+  ["xu", "Xu et al. (LinkedIn), “Retrieval-Augmented Generation with Knowledge Graphs for Customer Service Question Answering”, SIGIR 2024, arXiv 2404.17723", "https://arxiv.org/abs/2404.17723"],
+  ["edge", "Edge et al. (Microsoft), “From Local to Global: A Graph RAG Approach to Query-Focused Summarization”, arXiv 2404.16130 (2024)", "https://arxiv.org/abs/2404.16130"],
+  ["msdocs", "Microsoft GraphRAG documentation, “Getting Started”", "https://microsoft.github.io/graphrag/get_started/"],
+  ["nasa", "Neo4j blog, “How NASA finds critical data through a knowledge graph” (D. Meza, NASA)", "https://neo4j.com/blog/knowledge-graph/nasa-critical-data-knowledge-graph/"],
+  ["masoud", "Masoudifard et al., “Leveraging Graph-RAG and Prompt Engineering to Enhance LLM-Based Automated Requirement Traceability and Compliance Checks”, arXiv 2412.08593 (2024)", "https://arxiv.org/abs/2412.08593"],
+  ["chethan", "Chethan, “Beyond Vector Similarity: A Structural Analysis of Graph-Augmented Retrieval for Industrial Knowledge Graphs”, arXiv 2606.06003 (2026, preprint)", "https://arxiv.org/abs/2606.06003"],
+];
+const EVIDENCE = [
+  { who: "Independent benchmark · 2025", title: "Neither wins everywhere; combining them helps most", ref: "han", tag: ["partial", "Hybrid helps, at a cost"],
+    text: "Document search did better on single-hop and detail questions; graph retrieval did better on multi-hop reasoning. Sending both kinds of evidence to the model raised accuracy on a multi-hop benchmark from 71.2% to 77.6%, at the cost of more tokens and time. Graphs built automatically by AI were missing about a third of the answer entities." },
+  { who: "Independent benchmark · 2025", title: "Graphs often lose on everyday questions", ref: "xiang", tag: ["partial", "Graphs are not a default"],
+    text: "Built to find when graphs pay off, this benchmark reports that graph-based retrieval “frequently underperforms vanilla RAG on many real-world tasks”, and helps mainly where questions need reasoning across connections." },
+  { who: "BlackRock and NVIDIA · finance · 2024", title: "Hybrid gave the best answers, with less precise context", ref: "sarmah", tag: ["correct", "Hybrid best overall"],
+    text: "On earnings-call transcripts, the hybrid scored highest on faithfulness (0.96) and answer relevance (0.96), ahead of document search (0.94, 0.91) and graph alone (0.96, 0.89). Its context precision was the lowest (0.79), because it sends the model more material." },
+  { who: "LinkedIn · deployed in production · 2024", title: "28.6% faster issue resolution", ref: "xu", tag: ["correct", "Measured in production"],
+    text: "A knowledge graph built from past support tickets, combined with document retrieval, ran for about six months in LinkedIn's customer service team. It cut median per-issue resolution time by 28.6% and improved retrieval ranking (MRR) by 77.6% over the baseline." },
+  { who: "Microsoft Research · 2024", title: "Graphs answer “what are the themes?” questions", ref: "edge", tag: ["partial", "Strong, but costly to build"],
+    text: "GraphRAG beat a conventional RAG baseline on whole-collection questions such as “what are the main themes?”, on collections of about a million tokens. Its own documentation warns it “can consume a lot of LLM resources”, because the AI builds the graph.", ref2: "msdocs" },
+  { who: "NASA · engineering lessons learned", title: "Engineers like connecting the dots", ref: "nasa", tag: ["cant", "Adoption, not a benchmark"],
+    text: "NASA's chief knowledge architect turned the lessons-learned database into a graph after a 22-term keyword search returned over 1,100 documents. His reason for a graph: engineers “think more visually, they like connecting dots.” No accuracy figures are published." },
+  { who: "Requirements engineering · 2024", title: "Graph-RAG for requirement compliance", ref: "masoud", tag: ["correct", "Relevant to SE"],
+    text: "Graph-RAG with structured prompting checked software requirements against higher-level standards, reaching an F1 score of up to 87.9% at flagging non-compliant requirements." },
+  { who: "Aerospace supply chain · 2026 preprint", title: "Some questions are out of reach for document search", ref: "chethan", tag: ["cant", "Small study, not peer-reviewed"],
+    text: "On a 46-node aerospace supply-chain graph, five classes of question could not be answered by document search at all. A single-author preprint with 23 test questions, so read it as a signal rather than proof." },
+];
+function renderEvidence() {
+  const num = Object.fromEntries(SOURCES.map(([id], i) => [id, i + 1]));
+  $("#evidence").replaceChildren(...EVIDENCE.map((e) => h("article", {},
+    h("span.who", {}, e.who), h("h3", {}, e.title), h("span.v.tag." + e.tag[0], {}, e.tag[1]), h("p", {}, e.text),
+    h("span.src", {}, "Source ", [e.ref, e.ref2].filter(Boolean).map((r, i) => [i ? ", " : "", h("a", { href: "#src-" + r }, "[" + num[r] + "]")])))));
+  $("#sources").replaceChildren(...SOURCES.map(([id, text, url]) => h("li", { id: "src-" + id }, text, ". ", h("a", { href: url, target: "_blank", rel: "noopener" }, url))));
+}
+
+renderScorecard(); renderBench(); renderCost(); renderEvidence();
+})();
+</script>
+</body>
+</html>
