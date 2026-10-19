@@ -22,8 +22,8 @@ from .graphstores.base import GraphStore
 DOC_TYPE_CUES = {
     "std": ("test", "verif", "pass criteria", "pass/fail", "acceptance"),
     "icd": ("interface", "message", "pgn", "signal", "j1939", "transmit", "receive", "consume"),
-    "ssdd": ("design", "architecture", "task set", "scheduler", "implement"),
-    "ssr": ("requirement", "shall"),
+    "sdd": ("design", "architecture", "task set", "scheduler", "implement"),
+    "srs": ("requirement", "shall"),
 }
 
 

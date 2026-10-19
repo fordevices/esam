@@ -36,7 +36,7 @@ Answer ONLY from the EVIDENCE provided. Rules:
 - If the evidence does not answer the question, say so. Never invent requirements or values."""
 
 DOC_TYPE_NAMES = {"std": "test description (STD)", "icd": "interface control document (ICD)",
-                  "ssdd": "software design (SSDD)", "ssr": "software requirements (SSR)"}
+                  "sdd": "software design description (SDD)", "srs": "software requirements specification (SRS)"}
 
 
 def message_in_question(question: str, messages: set[str]) -> str | None:

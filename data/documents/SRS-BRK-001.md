@@ -1,4 +1,4 @@
-# SSR-BRK-001 — Brake Control ECU Software Requirements
+# SRS-BRK-001 — Brake Control ECU Software Requirements
 
 > SYNTHETIC LEARNING DOCUMENT. Programme SYNTH-LTV is fictional.
 

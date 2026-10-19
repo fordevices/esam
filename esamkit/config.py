@@ -91,6 +91,8 @@ class Settings:
     # ── Data ────────────────────────────────────────────────────────────────
     baseline_yaml: Path = _path("ESAM_BASELINE_YAML", "data/baseline/vehicle_decomposition.yaml")
     documents_dir: Path = _path("ESAM_DOCUMENTS_DIR", "data/documents")
+    # The SE-owned vocabulary the baseline is checked against (esamkit/ontology.py).
+    ontology_yaml: Path = _path("ESAM_ONTOLOGY_YAML", "data/ontology/esam_ontology.yaml")
 
     # ── Chunking ────────────────────────────────────────────────────────────
     chunk_size: int = int(os.getenv("ESAM_CHUNK_SIZE", "600"))       # characters

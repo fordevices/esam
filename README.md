@@ -48,7 +48,7 @@ esam/
 │       └── postgres_cte.py   pilot graph schema + recursive-CTE queries (commented SQL)
 ├── data/
 │   ├── baseline/vehicle_decomposition.yaml   SE-owned structure (ESAM YAML format)
-│   └── documents/*.md                        synthetic ICD / SSDD / SSR documents
+│   └── documents/*.md                        synthetic ICD / SDD / SRS documents (MIL-STD-498 names)
 ├── docs/reference/           MIL-STD-881F Appendix G excerpt (source of the WBS codes)
 ├── lessons/
 │   ├── 00_setup/             install, stage the model, air-gap transfer bundle

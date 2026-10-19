@@ -31,7 +31,7 @@ class Embedder(ABC):
 
     @abstractmethod
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        """Embed text that will be STORED (chunks of ICDs, SSDDs, SSRs...)."""
+        """Embed text that will be STORED (chunks of ICDs, SDDs, SRSs...)."""
 
     @abstractmethod
     def embed_query(self, text: str) -> list[float]:

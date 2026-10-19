@@ -31,8 +31,8 @@ def test_subsystems_have_no_invented_wbs_code(baseline):
 def test_artifact_index_links_documents_to_wbs(baseline):
     idx = baseline.artifact_index()
     assert idx["ICD-BRK-001.md"]["wbs_code"] == "1.1.1.5"
-    assert idx["SSR-DCL-001.md"]["subsystem_id"] == "SUB-DCL"
-    assert idx["SSR-DCL-001.md"]["wbs_code"] == "1.1.1.6"
+    assert idx["SRS-DCL-001.md"]["subsystem_id"] == "SUB-DCL"
+    assert idx["SRS-DCL-001.md"]["wbs_code"] == "1.1.1.6"
     # every listed document exists on disk
     for f in idx:
         assert (settings.documents_dir / f).exists(), f
@@ -49,10 +49,10 @@ def test_dangling_edge_is_rejected(tmp_path):
 # ── chunking ────────────────────────────────────────────────────────────────
 
 def test_chunks_carry_document_and_section_label():
-    text = (settings.documents_dir / "SSDD-BRK-001.md").read_text()
+    text = (settings.documents_dir / "SDD-BRK-001.md").read_text()
     chunks = chunk_markdown(text, 600, 80)
     task_set = next(c for c in chunks if "Task set" in c.splitlines()[0])
-    assert task_set.startswith("[SSDD-BRK-001 — Brake Control ECU Software Design › 2. Task set]")
+    assert task_set.startswith("[SDD-BRK-001 — Brake Control ECU Software Design › 2. Task set]")
 
 
 def test_chunks_respect_size_and_never_split_words():

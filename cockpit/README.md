@@ -38,7 +38,7 @@ or network, and it does not update: re-export after each ingest.
 |---|---|
 | `GET /` | The page |
 | `GET /api/health` | `{"status": "ok", "vertices": n, "edges": m}`, or 503 if the database is unreachable |
-| `GET /api/cockpit?types=icd,ssdd,ssr,std` | Everything the page draws: the whole graph by entity id, which subsystems lack each document type, and the latest run of each check (`esam_runs` table) |
+| `GET /api/cockpit?types=icd,sdd,srs,std` | Everything the page draws: the whole graph by entity id, which subsystems lack each document type, and the latest run of each check (`esam_runs` table) |
 
 ## Air-gap notes
 

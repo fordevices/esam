@@ -24,7 +24,7 @@ still there; it lives in the `esam-pgdata` volume, which survives reboots.
 ## 3. Check everything works (optional, 15 s)
 
 ```bash
-pytest -q                          # expect: 39 passed
+pytest -q                          # expect: 45 passed
 ```
 
 ## 4. Study
@@ -46,6 +46,12 @@ To see the baseline in the SE Cockpit (Dashboard + Graph tabs; details in `cockp
 
 ```bash
 uvicorn cockpit.app:app --port 8080        # open http://127.0.0.1:8080, Ctrl+C to stop
+```
+
+To check the baseline against the ontology (the SE vocabulary in `data/ontology/`):
+
+```bash
+python -m esamkit.ontology                 # expect: 0 errors, 0 warnings
 ```
 
 To look inside the database directly:

@@ -30,7 +30,7 @@ def test_health(client):
 def test_cockpit_payload(client):
     data = client.get("/api/cockpit").json()
     assert len(data["graph"]["vertices"]) == 20 and len(data["graph"]["edges"]) == 22
-    assert data["doc_types"] == ["icd", "ssdd", "ssr", "std"]
+    assert data["doc_types"] == ["icd", "sdd", "srs", "std"]
     # the headline finding: the safety-critical brake ECU has no test description
     assert "SUB-BRK-ECU" in data["gaps"]["std"]
     assert "SUB-BRK-ECU" not in data["gaps"]["icd"]
@@ -44,8 +44,8 @@ def test_cockpit_shows_latest_run(client, pg_dsn):
 
 
 def test_cockpit_types_param(client):
-    data = client.get("/api/cockpit", params={"types": "ICD, ssr"}).json()
-    assert data["doc_types"] == ["icd", "ssr"] and set(data["gaps"]) == {"icd", "ssr"}
+    data = client.get("/api/cockpit", params={"types": "ICD, srs"}).json()
+    assert data["doc_types"] == ["icd", "srs"] and set(data["gaps"]) == {"icd", "srs"}
 
 
 def test_index_is_live_page(client):

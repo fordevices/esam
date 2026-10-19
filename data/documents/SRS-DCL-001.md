@@ -1,4 +1,4 @@
-# SSR-DCL-001 — Driver Digital Cluster Software Requirements
+# SRS-DCL-001 — Driver Digital Cluster Software Requirements
 
 > SYNTHETIC LEARNING DOCUMENT. Programme SYNTH-LTV is fictional.
 

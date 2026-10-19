@@ -121,7 +121,7 @@ interfaces:
 # script guessed links from file names).
 artifacts:
   - { id: ICD-BRK-001,  name: "Brake ECU J1939 Interface Control Document", type: icd,  revision: A, attached_to: SUB-BRK-ECU, file: ICD-BRK-001.md }
-  - { id: SSDD-BRK-001, name: "Brake Control ECU Software Design",          type: ssdd, revision: A, attached_to: SUB-BRK-ECU, file: SSDD-BRK-001.md }
-  - { id: SSR-BRK-001,  name: "Brake Control ECU Software Requirements",    type: ssr,  revision: A, attached_to: SUB-BRK-ECU, file: SSR-BRK-001.md }
-  - { id: SSDD-DCL-001, name: "Driver Digital Cluster Software Design",     type: ssdd, revision: A, attached_to: SUB-DCL,     file: SSDD-DCL-001.md }
-  - { id: SSR-DCL-001,  name: "Driver Digital Cluster Software Requirements", type: ssr, revision: A, attached_to: SUB-DCL,    file: SSR-DCL-001.md }
+  - { id: SDD-BRK-001, name: "Brake Control ECU Software Design",          type: sdd, revision: A, attached_to: SUB-BRK-ECU, file: SDD-BRK-001.md }
+  - { id: SRS-BRK-001,  name: "Brake Control ECU Software Requirements",    type: srs,  revision: A, attached_to: SUB-BRK-ECU, file: SRS-BRK-001.md }
+  - { id: SDD-DCL-001, name: "Driver Digital Cluster Software Design",     type: sdd, revision: A, attached_to: SUB-DCL,     file: SDD-DCL-001.md }
+  - { id: SRS-DCL-001,  name: "Driver Digital Cluster Software Requirements", type: srs, revision: A, attached_to: SUB-DCL,    file: SRS-DCL-001.md }

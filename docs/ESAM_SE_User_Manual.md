@@ -13,6 +13,8 @@
 | 5 | [Finding gaps after ingestion](#5-finding-gaps-after-ingestion) |
 | 6 | [When to move to a dedicated graph database](#6-when-to-move-to-a-dedicated-graph-database) |
 | 7 | [When ESAM says "that document doesn't exist yet"](#7-when-esam-says-that-document-doesnt-exist-yet) |
+| 8 | [The ESAM ontology: the programme's vocabulary](#8-the-esam-ontology-the-programmes-vocabulary) |
+| 9 | [Where attributes go, and writing documents ESAM can read](#9-where-attributes-go-and-writing-documents-esam-can-read) |
 
 ---
 
@@ -33,7 +35,7 @@ You rarely start from a blank page. There are three practical sources, and most 
 |---|---|---|---|
 | **A. The programme's contract WBS** *(start here)* | Systems and subsystems, WBS codes, names, nesting (MIL-STD-881F Levels 1–3, often 4) | Export from wherever the WBS lives (Excel, MS Project, cost tool) and run a converter script | High: the WBS is already contractually reviewed |
 | **B. The MBSE model** (e.g. Cameo / SysML), if one exists | Block hierarchy, ports, interfaces between blocks | Export the model's blocks and connectors and run a converter | Medium: only as good as how current the model is. Check first. |
-| **C. AI-drafted proposals from documents** | Functions, messages, interfaces and document-to-subsystem links that no WBS carries | ESAM reads your SSDDs/ICDs and **proposes** additions | Low until reviewed: every proposal is marked `candidate` |
+| **C. AI-drafted proposals from documents** | Functions, messages, interfaces and document-to-subsystem links that no WBS carries | ESAM reads your design documents and ICDs and **proposes** additions | Low until reviewed: every proposal is marked `candidate` |
 
 **Rule:** sources A and B give you the skeleton. Source C helps fill in detail. **You** decide what becomes `confirmed`.
 
@@ -94,10 +96,10 @@ Each chunk is stored as **exactly one row** in the database, and a row is never 
 | Document | Rows |
 |---|---|
 | ICD-BRK-001 | 8 |
-| SSDD-BRK-001 | 6 |
-| SSDD-DCL-001 | 6 |
-| SSR-BRK-001 | 4 |
-| SSR-DCL-001 | 4 |
+| SDD-BRK-001 | 6 |
+| SDD-DCL-001 | 6 |
+| SRS-BRK-001 | 4 |
+| SRS-DCL-001 | 4 |
 
 What one row holds:
 
@@ -131,11 +133,11 @@ Size is not the problem. **How cleanly the document splits is.**
 |---|---|---|
 | Convert | Reads the .docx and turns Word heading styles (Heading 1/2/3) into a section tree | The section tree is how every chunk knows where it sits |
 | Clean | Drops the table of contents, revision history, lists of figures, and repeated headers and footers; accepts tracked changes | Otherwise the table of contents matches every search |
-| Split on structure | Cuts at section numbers first, then at **requirement IDs** (SSDD) or **test case IDs** (test documents); only splits by length inside a long section | One chunk per requirement or test case is far more useful than an arbitrary slice |
-| Label | Prefixes every chunk with its full path, e.g. `SSDD-BRK-001 › 3.2 Wheel-slip control › 3.2.4 Pressure modulation` | On page 600, "the rate shall be 100 ms" means nothing without its label |
-| Tag | Records the IDs a chunk mentions, e.g. `verifies: SSR-BRK-012` | These become links in the graph: this test *verifies* that requirement |
+| Split on structure | Cuts at section numbers first, then at **requirement IDs** (SRS, SDD) or **test case IDs** (test documents); only splits by length inside a long section | One chunk per requirement or test case is far more useful than an arbitrary slice |
+| Label | Prefixes every chunk with its full path, e.g. `SDD-BRK-001 › 3.2 Wheel-slip control › 3.2.4 Pressure modulation` | On page 600, "the rate shall be 100 ms" means nothing without its label |
+| Tag | Records the IDs a chunk mentions, e.g. `verifies: SRS-BRK-012` | These become links in the graph: this test *verifies* that requirement |
 
-**Design documents (SSDD)** are mostly prose and requirements. They split by section, then by requirement.
+**Requirements and design documents (SRS, SDD, SSDD)** are mostly prose and requirements. They split by section, then by requirement.
 
 **Test documents (STD/STP)** are mostly tables. ESAM keeps **one test case per chunk** where possible: ID, objective, requirements verified, setup, steps and expected results together. A very long step table is split by step, and every piece repeats the test case ID and the table header. Table rows are rewritten as sentences ("Step 4: Apply 50% pedal → Expected: EBC1 ABS-active flag = 1") because search models read sentences better than grids.
 
@@ -145,7 +147,7 @@ Size is not the problem. **How cleanly the document splits is.**
 |---|---|
 | Use real Word **heading styles** for every section | Bold or enlarged text used as fake headings |
 | Number sections consistently (`3.2.4`) | Unnumbered or hand-renumbered sections |
-| Write requirement and test IDs in one consistent format (`SSR-BRK-012`) | Mixed formats (`SSR BRK 12`, `Req 12`) |
+| Write requirement and test IDs in one consistent format (`SRS-BRK-012`) | Mixed formats (`SRS BRK 12`, `Req 12`) |
 | Give each test case a fixed **"Verifies:"** field | Traceability buried in free text |
 | Put each requirement in its own paragraph | Several "shall" statements in one paragraph |
 | Keep tables as real Word tables | Tables pasted in as images |
@@ -270,8 +272,8 @@ Searching documents can only find what exists. **A missing document has no text,
 | Missing type | Subsystems without one |
 |---|---|
 | ICD | Driver Cluster, **J1939 Backbone (safety-critical)**, Engine ECM |
-| SSDD | **J1939 Backbone (safety-critical)**, Engine ECM |
-| SSR | **J1939 Backbone (safety-critical)**, Engine ECM |
+| SDD | **J1939 Backbone (safety-critical)**, Engine ECM |
+| SRS | **J1939 Backbone (safety-critical)**, Engine ECM |
 | STD (test description) | **Brake ECU (safety-critical)**, Driver Cluster, **J1939 Backbone (safety-critical)**, Engine ECM |
 
 The key finding: **the safety-critical Brake ECU has no test description.**
@@ -282,10 +284,10 @@ After every ingest, ESAM produces a health report alongside the Diff Matrix, so 
 
 | # | Check | Example finding | Effect |
 |---|---|---|---|
-| 1 | **Required documents per subsystem**, from a rule table the SE team owns | "Safety-critical ⇒ SSR, SSDD, STD, hazard analysis required: Brake ECU missing STD" | Reported |
+| 1 | **Required documents per subsystem**, from a rule table the SE team owns | "Safety-critical ⇒ SRS, SDD, STD, hazard analysis required: Brake ECU missing STD" | Reported |
 | 2 | **Dangling interfaces** | "EBC1 consumed by Engine ECM, but that link is unconfirmed" / "message sent with no consumer" | Reported |
 | 3 | **Items awaiting SE review** | All proposed (`candidate`) links and document placements | Reported |
-| 4 | **Traceability gaps** | "SSR-BRK-012 has no test that verifies it" / "test cites a requirement that doesn't exist" | Reported |
+| 4 | **Traceability gaps** | "SRS-BRK-012 has no test that verifies it" / "test cites a requirement that doesn't exist" | Reported |
 | 5 | **Ingestion integrity** | "Baseline lists a document whose file is missing" / "file present but not in the baseline" / "document loaded but not searchable" | **Blocks approval** |
 | 6 | **Roll-up** (walks up the tree, §4) | "Suspension/Steering: 0 of 1 safety-critical subsystems complete" → "Lead Variant: 40% complete" | Reported |
 
@@ -354,7 +356,7 @@ ESAM prevents this by checking the **baseline** before it answers. The baseline 
 
 ### 7.2 What ESAM does with each question
 
-1. **Works out which document type would answer it.** Questions about testing or verification need a test description (STD); questions about messages or interfaces need an ICD; design questions need an SSDD; requirement questions need an SSR.
+1. **Works out which document type would answer it.** Questions about testing or verification need a test description (STD); questions about messages or interfaces need an ICD; design questions need an SDD; requirement questions need an SRS.
 2. **Works out which subsystem it's about**: the one you name, or else the one whose documents best match the question.
 3. **Checks the baseline.** If that subsystem has no document of that type, ESAM tells you first and plainly, then reports only what the existing documents say, without filling the gap.
 
@@ -362,7 +364,7 @@ ESAM prevents this by checking the **baseline** before it answers. The baseline 
 
 Asked how SRS-BRK-011 is verified, before a test description exists:
 
-> *This question cannot be answered as requested because the Brake ECU test description (STD) for subsystem SUB-BRK-ECU does not exist in the baseline yet. … SRS-BRK-011 is defined as: "The software shall release brake pressure on a wheel within 15 ms of detecting incipient lock-up on that wheel." [SSR-BRK-001] … until that document exists, any detailed test sequence or thresholds would be an invention and must not be assumed.*
+> *This question cannot be answered as requested because the Brake ECU test description (STD) for subsystem SUB-BRK-ECU does not exist in the baseline yet. … SRS-BRK-011 is defined as: "The software shall release brake pressure on a wheel within 15 ms of detecting incipient lock-up on that wheel." [SRS-BRK-001] … until that document exists, any detailed test sequence or thresholds would be an invention and must not be assumed.*
 
 The same question after STD-BRK-001 is added to the baseline and loaded:
 
@@ -384,5 +386,155 @@ The SE Cockpit Dashboard shows the latest run under **Checks**: date, pass or fa
 - **"Doesn't exist yet" is a finding, not a failure.** It usually points at the same gap the Dashboard's document coverage table shows in red.
 - **A new document doesn't confirm a link by itself.** When an ICD shows that a subsystem really does use a message, ESAM will cite it, but still calls a *candidate* interface unconfirmed. Changing it to confirmed is your decision, made in the baseline.
 - **ESAM can only check document types it knows how to recognise in a question.** The matching is deliberately simple today and will improve once the programme's vocabulary (ontology) is defined.
+
+---
+
+## 8. The ESAM ontology: the programme's vocabulary
+
+### 8.1 What it is
+
+The baseline (§1) says **what this vehicle is made of**. The ontology says **what kinds of things, links, values and documents are allowed to exist at all**, and what each kind of subsystem must have. It is the programme's agreed vocabulary, written down so a machine can check it.
+
+Like the baseline, it is a YAML file owned by the SE team and kept in Git (`data/ontology/esam_ontology.yaml`). It builds on the standards the programme already uses:
+
+| Standard | What the ontology takes from it |
+|---|---|
+| MIL-STD-881F Appendix G | The WBS levels (Vehicle, Family, Variant, System) and their codes |
+| MIL-STD-498 / J-STD-016 | Document type names: SRS, SDD, SSDD, STD, STP, STR |
+| MIL-STD-882E | Software criticality index, SwCI 1 to 5 |
+| SAE J1939 | Message names and PGNs on interfaces |
+
+### 8.2 What it contains
+
+| Part | Example |
+|---|---|
+| **Kinds of things** (classes), each with an ID form | Subsystem IDs look like `SUB-BRK-ECU`; document IDs like `SRS-BRK-001` |
+| **Kinds of links** | *is part of*, *has document*, *interfaces with*; planned: *verifies*, *specified in*, *allocated to* |
+| **Allowed values** | `os_class`: `rtos` or `gpos`. Interface status: `candidate` or `confirmed`. Verification method: I, A, D or T |
+| **Document types**, with standard names and synonyms | **STD** = Software Test Description; also known as "test description", "test procedure" |
+| **Placement**: where each kind of fact belongs | See §9 |
+| **Rules**: what each kind of subsystem must have | See §8.4 |
+
+### 8.3 Document names follow MIL-STD-498
+
+The example documents were originally named SSR (requirements) and SSDD (software design). Neither matches the standard: MIL-STD-498 calls a software requirements document an **SRS** and a software design document an **SDD**, and uses **SSDD** for a different document, the *System/Subsystem* Design Description. The documents were renamed to the standard names. The old names are kept in the ontology as **synonyms**, so a question that says "SSR" still finds the SRS, but a baseline that lists a document as type `ssr` is rejected.
+
+"ICD" is not a MIL-STD-498 name. It is kept as the programme's term, and the ontology records that it covers the standard's IRS (Interface Requirements Specification) and IDD (Interface Design Description).
+
+### 8.4 Rules: what each subsystem must have
+
+Instead of checking every subsystem for the same list of documents, the ontology states rules. A subsystem must have every document required by every rule that applies to it:
+
+| When the subsystem… | It must have | Why |
+|---|---|---|
+| is software (has an `os_class`) | SRS, SDD | Software is specified and designed |
+| is software **and** safety-critical | STD | Safety-critical software needs a documented test description |
+| has any interface | ICD | Every interface is defined in a controlled document |
+
+For SYNTH-LTV, these rules give:
+
+| Subsystem | Must have | Has | Missing |
+|---|---|---|---|
+| Brake ECU (software, safety-critical, interfaces) | SRS, SDD, STD, ICD | SRS, SDD, ICD | **STD** |
+| J1939 backbone (safety-critical, interfaces, not software) | ICD | none | **ICD** |
+| Driver cluster (software, interfaces) | SRS, SDD, ICD | SRS, SDD | ICD |
+| Engine ECM (interfaces) | ICD | none | ICD |
+
+That's 9 required documents, 5 present and 4 missing, 2 of them on safety-critical subsystems. A fixed checklist of four types for every subsystem would report 16 required and 11 missing, most of them documents nobody needs (an SDD for a CAN backbone).
+
+The rules are SE policy. Change them in the ontology and every check that uses them changes with it.
+
+### 8.5 Checking the baseline against the ontology
+
+ESAM checks the baseline against the ontology and reports:
+
+| Error (must fix) | Warning (probably a mistake) |
+|---|---|
+| A value outside the vocabulary (`os_class: hard-real-time`) | An attribute the ontology doesn't know (`safty_critical`), which would otherwise be silently ignored |
+| An ID in the wrong form, or used twice | A confirmed interface that cites no interface document |
+| A WBS code that doesn't sit under its parent's | A document file in the folder that the baseline doesn't list |
+| A document whose ID and type disagree (`SRS-…` listed as type `ssr`) | |
+| A document listed in the baseline whose file is missing | |
+
+The SYNTH-LTV baseline currently passes with no errors and no warnings.
+
+### 8.6 Tooling status
+
+The ontology file and the baseline check exist. Using the ontology's synonyms to understand questions, and its rules in the Dashboard and the health report (§5.2), is the next step.
+
+---
+
+## 9. Where attributes go, and writing documents ESAM can read
+
+### 9.1 One question decides it
+
+*Is this a fact about the **thing**, or about one **requirement**?*
+
+| It describes… | It goes in… | Examples |
+|---|---|---|
+| The subsystem or function itself | **The baseline** | Safety-critical, MIL-STD-882E SwCI, `os_class: rtos`, J1939 source address |
+| The document as a whole | **The document's header table** | Document ID, type, revision, owning subsystem, classification |
+| One requirement | **An attribute line under that requirement** | Safety-related, timing, verification method, parent requirement |
+| One test case | **The fixed fields of that test case** | Which requirements it verifies, method |
+
+The baseline says what the system **is**; the requirement attributes say what each requirement **demands**. The document ID ties them together. Because both use the same vocabulary, ESAM can cross-check them: for example, a subsystem listed as SwCI 1 whose SRS contains no safety-related requirement.
+
+### 9.2 In the baseline
+
+Use only the attributes and values the ontology allows (§8):
+
+```yaml
+- id: SUB-BRK-ECU
+  name: "Brake Control ECU (ABS)"
+  safety_critical: true
+  safety_classification: "MIL-STD-882E SwCI 1"
+  os_class: rtos
+```
+
+### 9.3 In every document: a header table
+
+The first thing in every document, so ESAM can place it without guessing:
+
+| Document | Type | Revision | Subsystem |
+|---|---|---|---|
+| STD-BRK-001 | STD | A | SUB-BRK-ECU |
+
+### 9.4 In an SRS: an attribute line under each requirement
+
+Today a requirement reads:
+
+> **SRS-BRK-021** On detection of an internal fault, the software shall revert the hydraulic unit to conventional braking within 20 ms.
+
+A person can see it's safety-related and has a 20 ms deadline. ESAM can't do so reliably. Written for ESAM:
+
+> **SRS-BRK-021** On detection of an internal fault, the software shall revert the hydraulic unit to conventional braking within 20 ms.
+> Safety: SwCI 1 | Timing: 20 ms max | Verification: T | Traces to: SYS-BRK-004
+
+Each field uses the ontology's values: **Safety** a SwCI from MIL-STD-882E (only if the requirement is safety-related), **Timing** a value with units (`20 ms max`, `100 ms ± 10 ms`), **Verification** I, A, D or T, **Traces to** the parent requirement IDs.
+
+### 9.5 In an STD: fixed fields in every test case
+
+```
+TC-BRK-011 — Pressure release time on incipient wheel lock-up
+Verifies: SRS-BRK-011.
+Method: Test.
+Steps: …
+Pass criteria: …
+```
+
+`Verifies:` is what lets ESAM answer "which requirements have no test?" and "what does this test cover?".
+
+### 9.6 Checklist, in priority order
+
+| # | Change | Why |
+|---|---|---|
+| 1 | A header table on every document | ESAM places and checks the document without guessing |
+| 2 | One requirement ID format per document type (`SRS-BRK-021`) | Traceability breaks on mixed formats |
+| 3 | An attribute line under every requirement, using the ontology's values | Turns prose into facts ESAM can check and link |
+| 4 | Refer to things by ID ("per ICD-BRK-001 §3"), not by description ("per the brake interface document") | Every ID mention can become a link automatically |
+| 5 | A `Verifies:` field in every test case | Powers the traceability check (§5.2, check 4) |
+| 6 | Real heading styles, one "shall" per paragraph, consistent units (`ms`, not `msec`) | Clean chunking (§2.4) |
+
+A Word template with the header table and a styled attribute line makes items 1 and 3 a matter of filling in fields.
 
 ---

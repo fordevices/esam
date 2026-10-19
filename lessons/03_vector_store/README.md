@@ -1,10 +1,12 @@
 # Lesson 03: Vector store: chunk, embed, store, search
 
+> **Renamed 2026-10-19:** documents now use MIL-STD-498 names (SSR→SRS, SSDD→SDD). IDs in the captured output below were updated to match; the scores were recorded under the old names and may differ slightly on a re-run.
+
 ```bash
 docker compose up -d --wait
 python lessons/03_vector_store/ingest.py --reset
 python lessons/03_vector_store/search.py --demo
-python lessons/03_vector_store/search.py --artifact SSR-DCL-001 "telltale timing"
+python lessons/03_vector_store/search.py --artifact SRS-DCL-001 "telltale timing"
 ```
 
 ## The pipeline
@@ -19,10 +21,10 @@ Real ingest output:
 
 ```
   ✓ ICD-BRK-001.md     ICD-BRK-001   wbs 1.1.1.5   8 chunks
-  ✓ SSDD-BRK-001.md    SSDD-BRK-001  wbs 1.1.1.5   6 chunks
-  ✓ SSDD-DCL-001.md    SSDD-DCL-001  wbs 1.1.1.6   6 chunks
-  ✓ SSR-BRK-001.md     SSR-BRK-001   wbs 1.1.1.5   4 chunks
-  ✓ SSR-DCL-001.md     SSR-DCL-001   wbs 1.1.1.6   4 chunks
+  ✓ SDD-BRK-001.md    SDD-BRK-001  wbs 1.1.1.5   6 chunks
+  ✓ SDD-DCL-001.md    SDD-DCL-001  wbs 1.1.1.6   6 chunks
+  ✓ SRS-BRK-001.md     SRS-BRK-001   wbs 1.1.1.5   4 chunks
+  ✓ SRS-DCL-001.md     SRS-DCL-001   wbs 1.1.1.6   4 chunks
 Ingested 28 chunks. Store now holds 28.
 ```
 
@@ -59,9 +61,9 @@ LIMIT 4;                                                   -- ORDER BY + LIMIT i
 
 | Question | #1 hit | Why it's interesting |
 |---|---|---|
-| What does the driver see when anti-lock braking fails? | SSDD-BRK-001 §4 *Fail-safe behaviour* (0.679), then SSDD-DCL-001 §3 (0.658), ICD §4 (0.654) | The answer is spread over **three documents** from two subsystems. Vector search finds all three; none of them says "driver sees". |
-| Why is Linux acceptable for the cluster but not for the brake controller? | SSDD-DCL-001 §1 *Why this unit runs Linux* (0.735), then SSDD-BRK-001 §1 *…runs an RTOS* (0.628) | Design **rationale**: the kind of thing people search for years later. Both halves of the comparison come back. |
-| How does the display behave when the crew is using night vision goggles? | SSDD-DCL-001 §4 *Night operations* (0.668), then SSR-DCL-001 §3 (0.580) | The #2 requirement chunk never says "night vision", only "NVG-compatible" and "blackout", yet it ranks second. The model knows NVG ≈ night vision goggles. |
+| What does the driver see when anti-lock braking fails? | SDD-BRK-001 §4 *Fail-safe behaviour* (0.679), then SDD-DCL-001 §3 (0.658), ICD §4 (0.654) | The answer is spread over **three documents** from two subsystems. Vector search finds all three; none of them says "driver sees". |
+| Why is Linux acceptable for the cluster but not for the brake controller? | SDD-DCL-001 §1 *Why this unit runs Linux* (0.735), then SDD-BRK-001 §1 *…runs an RTOS* (0.628) | Design **rationale**: the kind of thing people search for years later. Both halves of the comparison come back. |
+| How does the display behave when the crew is using night vision goggles? | SDD-DCL-001 §4 *Night operations* (0.668), then SRS-DCL-001 §3 (0.580) | The #2 requirement chunk never says "night vision", only "NVG-compatible" and "blackout", yet it ranks second. The model knows NVG ≈ night vision goggles. |
 | If we change the EBC1 message period, which subsystems are affected? | ICD-BRK-001 §5 *Change control* (0.704): *"...requires review by every consuming subsystem **listed in the vehicle baseline**."* | See below. |
 
 ### The blind spot (question 4)
@@ -75,8 +77,8 @@ all, so it can never be a search result. That's lesson 04.
 ## Filters: search inside part of the corpus
 
 ```bash
-python lessons/03_vector_store/search.py --artifact SSR-DCL-001 "telltale timing"
-#1 score 0.455  SSR-DCL-001 chunk 2   (brake warning requirements: 200 ms / 300 ms)
+python lessons/03_vector_store/search.py --artifact SRS-DCL-001 "telltale timing"
+#1 score 0.455  SRS-DCL-001 chunk 2   (brake warning requirements: 200 ms / 300 ms)
 ```
 
 Filters work on columns (`artifact_id`, `source_file`) and on any metadata key (`wbs_code`,

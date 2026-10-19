@@ -10,7 +10,7 @@ Lesson 04b — Graph questions as SQL recursive CTEs.
   Q2  ancestors   : from a document UP to its WBS codes
   Q3  impact      : "the brake ECU changes EBC1, so who is affected?"
                     (the question lesson 03's vector search could NOT answer)
-  Q4  gaps        : which subsystems have no ICD / no SSR?
+  Q4  gaps        : which subsystems have no ICD / no SRS?
 
 Each query's SQL lives in esamkit/graphstores/postgres_cte.py with
 line-by-line comments. This script prints it next to the result so you can
@@ -81,8 +81,8 @@ def q3(g, show):
 Compare with lesson 03, question 4. Vector search found chunks that MENTION
 EBC1. The graph gives the actual list:
   * SUB-J1939-BB  depth 1: the bus itself. Safety-critical, and no documents.
-  * SUB-DCL       depth 2: reached THROUGH the bus. Re-review SSDD-DCL-001,
-                  SSR-DCL-001.
+  * SUB-DCL       depth 2: reached THROUGH the bus. Re-review SDD-DCL-001,
+                  SRS-DCL-001.
   * SUB-ENG-ECM   depth 2, status CANDIDATE: possibly affected, but the edge
                   was never confirmed. It has no documents, so no amount of
                   text search could ever have surfaced it.
@@ -91,11 +91,11 @@ That last row is the whole argument for the graph layer.""")
 
 
 def q4(g, show):
-    banner("Q4 — GAPS: subsystems with no ICD, and with no SSR", sql.ARTIFACT_GAPS, show)
+    banner("Q4 — GAPS: subsystems with no ICD, and with no SRS", sql.ARTIFACT_GAPS, show)
     print("No ICD:")
     table(g.artifact_gaps("icd"), ["eid", "wbs_code", "safety_critical", "name"])
-    print("\nNo SSR:")
-    table(g.artifact_gaps("ssr"), ["eid", "wbs_code", "safety_critical", "name"])
+    print("\nNo SRS:")
+    table(g.artifact_gaps("srs"), ["eid", "wbs_code", "safety_critical", "name"])
     print("""
 Not every gap is a defect. The cluster has no ICD of its own because the
 EBC1 interface is documented once, by its producer (ICD-BRK-001). The SE

@@ -1,5 +1,7 @@
 # Lesson 06: "That document doesn't exist yet"
 
+> **Renamed 2026-10-19:** documents now use MIL-STD-498 names (SSR→SRS, SSDD→SDD). IDs in the captured output below were updated to match; the scores were recorded under the old names and may differ slightly on a re-run.
+
 A system you can trust has to say **"I can't answer that, the document doesn't exist"**, and then
 answer correctly once the document arrives. This lesson tests exactly that, end to end, with the
 real model.
@@ -26,7 +28,7 @@ document has no vectors.
 Before the model sees anything, the pipeline works out:
 
 1. **Which document type would answer this?** A keyword table: test/verify → STD; message/interface → ICD;
-   design → SSDD; requirement → SSR. It's crude on purpose; an ontology should replace it (notes B3).
+   design → SDD; requirement → SRS. It's crude on purpose; an ontology should replace it (notes B3).
 2. **Which subsystem is it about?** The one the question names ("Engine Control Module"), else the one
    the vector search landed on.
 3. **Does the graph say that document exists?** If not, the prompt gets a plain line:
@@ -61,11 +63,11 @@ scenarios through the deterministic checks without a model, so they're covered b
 ```
 Brake ECU test description (STD)  [brake-std]
   ── BEFORE (document does not exist)
-  1. VECTOR  top hit: SSR-BRK-001 chunk 1 (score 0.803)
+  1. VECTOR  top hit: SRS-BRK-001 chunk 1 (score 0.803)
   3b. COVER  needs ['std'] for ['SUB-BRK-ECU']: MISSING SUB-BRK-ECU:STD
   ANSWER: This question cannot be answered as requested because the Brake ECU test description (STD)
     for subsystem SUB-BRK-ECU does not exist in the baseline yet. [...] SRS-BRK-011 is defined as: "The
-    software shall release brake pressure on a wheel within 15 ms [...]" [SSR-BRK-001] [...] until that
+    software shall release brake pressure on a wheel within 15 ms [...]" [SRS-BRK-001] [...] until that
     document exists, any detailed test sequence or thresholds would be an invention and must not be assumed.
   ── INGEST: STD-BRK-001 attached to SUB-BRK-ECU, 6 chunks
   ── AFTER

@@ -39,7 +39,7 @@ PAGE = Path(__file__).parent / "static" / "index.html"
 # Which document types every subsystem is checked for on the Dashboard.
 # A stand-in for the SE-owned rule table the health report (manual §5.2) will
 # read from the baseline; until then it is the same list for every subsystem.
-DOC_TYPES = ["icd", "ssdd", "ssr", "std"]
+DOC_TYPES = ["icd", "sdd", "srs", "std"]
 
 # The page ships as a fragment (title, style, markup, script) so the very same
 # file can be published as a snapshot; the server adds the document shell.

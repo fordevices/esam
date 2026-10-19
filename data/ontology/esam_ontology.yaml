@@ -1,0 +1,232 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# ESAM ONTOLOGY: the programme's agreed vocabulary, written so a machine can
+# check it.
+#
+# Owned by the SE team and version-controlled in Git next to the baseline,
+# exactly like the baseline itself. The baseline says WHAT this vehicle is
+# made of; this file says what KINDS of things, links, values and documents
+# are allowed to exist at all, and what each kind of thing must have.
+#
+# Standards it builds on:
+#   MIL-STD-881F Appendix G  WBS structure and codes (Vehicle .. System)
+#   MIL-STD-498 / J-STD-016  document types (SRS, SDD, SSDD, STD, ...)
+#   MIL-STD-882E             software criticality index (SwCI 1-5)
+#   SAE J1939                message names and PGNs
+#
+# Sections:
+#   value_sets       allowed values, referenced by attributes below
+#   classes          kinds of things, their IDs and their attributes
+#   relationships    kinds of links between things
+#   document_types   kinds of documents, with standard names and synonyms
+#   placement        where each kind of fact belongs (baseline / document)
+#   rules            what each kind of subsystem must have
+#
+# Check the baseline against it:  python -m esamkit.ontology
+# ─────────────────────────────────────────────────────────────────────────────
+
+metadata:
+  name: "ESAM ontology"
+  version: "0.1"
+  owner: "SE team"
+  synthetic: true            # written for the SYNTH-LTV learning programme
+
+# ── Allowed values ───────────────────────────────────────────────────────────
+value_sets:
+  os_class:
+    rtos: "Real-time operating system: deterministic, bounded worst-case latency (hard real-time)"
+    gpos: "General-purpose operating system, e.g. Linux (soft real-time at best)"
+  software_criticality:            # MIL-STD-882E Software Criticality Index
+    "SwCI 1": "Highest: software failure can directly cause a catastrophic or critical hazard"
+    "SwCI 2": "High"
+    "SwCI 3": "Medium"
+    "SwCI 4": "Low"
+    "SwCI 5": "No safety impact"
+  verification_method:
+    I: "Inspection"
+    A: "Analysis"
+    D: "Demonstration"
+    T: "Test"
+  link_status:
+    candidate: "Proposed (by a person or a tool), not yet reviewed by an SE"
+    confirmed: "Reviewed and accepted by an SE"
+  interface_type:
+    mechanical: "Physical attachment or load path"
+    electrical: "Power or discrete signals"
+    thermal: "Heat transfer"
+    signal: "Data exchanged over a bus or network (e.g. a J1939 message)"
+  universality:
+    universal: "Present on every variant"
+    variant_specific: "Present on some variants only"
+  variant_role:
+    lead: "The variant the family is designed around"
+    derivative: "A variant derived from the lead"
+
+# ── Kinds of things ──────────────────────────────────────────────────────────
+# id_pattern: regular expression every ID of this class must match.
+# part_of:    the class(es) this one may sit directly under.
+# attributes: name -> {type, values (a value_set), required, description}
+classes:
+  Vehicle:
+    description: "The whole vehicle system (MIL-STD-881F Level 1)."
+    id_pattern: '^V-\d{3}$'
+    attributes:
+      wbs_code: { type: wbs, required: true }
+  VehicleFamily:
+    description: "A family of vehicles sharing a design (Level 2)."
+    id_pattern: '^FAM-\d{3}$'
+    part_of: [Vehicle]
+    attributes:
+      wbs_code: { type: wbs, required: true }
+  Variant:
+    description: "One variant of the family (Level 2/3)."
+    id_pattern: '^VAR-\d{3}$'
+    part_of: [VehicleFamily]
+    attributes:
+      wbs_code: { type: wbs, required: true }
+      role: { type: enum, values: variant_role }
+  System:
+    description: "A MIL-STD-881F Appendix G Level 3 element, e.g. 1.1.1.5 Suspension/Steering."
+    id_pattern: '^SYS-[A-Z0-9]+$'
+    part_of: [Variant]
+    attributes:
+      wbs_code: { type: wbs, required: true }
+      universality: { type: enum, values: universality }
+  Subsystem:
+    description: "A unit inside a system that has its own design, documents and interfaces, e.g. the Brake Control ECU."
+    id_pattern: '^SUB-[A-Z0-9-]+$'
+    part_of: [System]
+    attributes:
+      safety_critical: { type: boolean, required: true, description: "Can its failure contribute to a hazard?" }
+      safety_classification: { type: text, pattern: '^(MIL-STD-882E )?SwCI [1-5]$', description: "MIL-STD-882E software criticality index" }
+      os_class: { type: enum, values: os_class, description: "Only for software subsystems" }
+      j1939_source_address: { type: integer, min: 0, max: 253 }
+      tsn_profile: { type: text }
+      repo_url: { type: text }
+      jira_component: { type: text }
+  Function:
+    description: "Something a subsystem does, e.g. wheel-slip regulation."
+    id_pattern: '^FN-[A-Z0-9-]+$'
+    part_of: [Subsystem]
+    attributes:
+      description: { type: text, description: "One sentence. Used to match documents and questions to this function." }
+      safety_classification: { type: text, pattern: '^(MIL-STD-882E )?SwCI [1-5]$' }
+  DesignArtifact:
+    description: "A controlled document attached to a subsystem."
+    id_pattern: '^(ICD|SRS|SDD|SSDD|STD|STP|STR)-[A-Z0-9]+-00[1-9]$'
+    attributes:
+      type: { type: enum, values: document_types, required: true }
+      revision: { type: text, pattern: '^[A-Z]{1,2}$', required: true }
+      attached_to: { type: ref, class: Subsystem, required: true }
+      file: { type: text, required: true }
+  # Planned (step 4): requirements and test cases as vertices of their own.
+  Requirement:
+    description: "One 'shall' statement in an SRS."
+    id_pattern: '^SRS-[A-Z0-9]+-0[1-9]\d$'
+    status: planned
+  TestCase:
+    description: "One test case in an STD, with a Verifies: line."
+    id_pattern: '^TC-[A-Z0-9]+-\d{3}$'
+    status: planned
+
+# ── Kinds of links ───────────────────────────────────────────────────────────
+relationships:
+  PART_OF:
+    from: [VehicleFamily, Variant, System, Subsystem, Function]
+    to: [Vehicle, VehicleFamily, Variant, System, Subsystem]
+    meaning: "child is part of parent (the WBS tree)"
+  HAS_ARTIFACT:
+    from: [Subsystem]
+    to: [DesignArtifact]
+    meaning: "subsystem is described by document"
+  INTERFACES_WITH:
+    from: [Subsystem]
+    to: [Subsystem]
+    meaning: "producer sends something the consumer uses"
+    properties:
+      type: { type: enum, values: interface_type, required: true }
+      status: { type: enum, values: link_status, required: true }
+      message: { type: text, description: "Required for signal interfaces, e.g. 'EBC1 (PGN 61441)'" }
+      source_artifact: { type: ref, class: DesignArtifact, description: "The interface document that defines it" }
+  VERIFIES:      { from: [TestCase], to: [Requirement], meaning: "test case verifies requirement", status: planned }
+  SPECIFIED_IN:  { from: [Requirement], to: [DesignArtifact], meaning: "requirement is stated in document", status: planned }
+  ALLOCATED_TO:  { from: [Requirement], to: [Subsystem], meaning: "requirement is met by subsystem", status: planned }
+
+# ── Kinds of documents ───────────────────────────────────────────────────────
+# standard:  where the name comes from.
+# answers:   words in a question that mean this document type would answer it
+#            (replaces the keyword table in esamkit/coverage.py in step 2).
+document_types:
+  srs:
+    name: "Software Requirements Specification"
+    standard: "MIL-STD-498 / J-STD-016"
+    answers: [requirement, shall, required, specification]
+    synonyms: ["SSR", "software requirements", "requirements spec"]
+  sdd:
+    name: "Software Design Description"
+    standard: "MIL-STD-498 / J-STD-016"
+    answers: [design, architecture, task set, scheduler, implement, how does it work]
+    synonyms: ["software design", "software design document"]
+  ssdd:
+    name: "System/Subsystem Design Description"
+    standard: "MIL-STD-498 / J-STD-016"
+    answers: [system design, subsystem design, allocation]
+    synonyms: ["system design description"]
+  icd:
+    name: "Interface Control Document"
+    standard: "Programme term; covers MIL-STD-498 IRS (Interface Requirements Specification) and IDD (Interface Design Description)"
+    answers: [interface, message, pgn, signal, j1939, transmit, receive, consume, send]
+    synonyms: ["IRS", "IDD", "interface spec", "interface document"]
+  std:
+    name: "Software Test Description"
+    standard: "MIL-STD-498 / J-STD-016"
+    answers: [test, verif, pass criteria, pass/fail, acceptance, test case, test procedure]
+    synonyms: ["test description", "test procedure", "test cases"]
+  stp:
+    name: "Software Test Plan"
+    standard: "MIL-STD-498 / J-STD-016"
+    answers: [test plan, test schedule, test environment]
+    synonyms: ["test plan"]
+  str:
+    name: "Software Test Report"
+    standard: "MIL-STD-498 / J-STD-016"
+    answers: [test result, passed, failed, test report]
+    synonyms: ["test report", "test results"]
+
+# ── Where each kind of fact belongs (the Q7 answer) ──────────────────────────
+# baseline:            a fact about the THING (in the YAML baseline)
+# document_header:     the table at the top of every document
+# requirement_line:    the attribute line under each requirement in an SRS
+# test_case_fields:    the fixed fields of each test case in an STD
+placement:
+  baseline:
+    - safety_critical
+    - safety_classification
+    - os_class
+    - j1939_source_address
+    - wbs_code
+  document_header: [document_id, type, revision, subsystem, classification]
+  requirement_line:
+    safety: { values: software_criticality, description: "Only if the requirement itself is safety-related" }
+    timing: { type: text, pattern: '^\d+(\.\d+)? ?(ms|s|us)( max| min| ± ?\d+(\.\d+)? ?(ms|s|us))?$', description: "e.g. '20 ms max', '100 ms ± 10 ms'" }
+    verification: { values: verification_method }
+    traces_to: { type: ref_list, description: "Parent requirement IDs" }
+  test_case_fields:
+    verifies: { type: ref_list, class: Requirement, required: true }
+    method: { values: verification_method, required: true }
+
+# ── What each kind of subsystem must have ────────────────────────────────────
+# A subsystem gets the union of every rule whose `when` matches.
+#   software:        it has an os_class
+#   has_interfaces:  it sends or receives an INTERFACES_WITH link
+#   safety_critical: its safety_critical attribute is true
+rules:
+  required_documents:
+    - when: [software]
+      require: [srs, sdd]
+      why: "Software is specified and designed (MIL-STD-498)."
+    - when: [software, safety_critical]
+      require: [std]
+      why: "Safety-critical software must have a documented test description."
+    - when: [has_interfaces]
+      require: [icd]
+      why: "Every interface is defined in a controlled interface document."

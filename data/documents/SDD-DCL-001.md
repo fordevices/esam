@@ -1,4 +1,4 @@
-# SSDD-DCL-001 — Driver Digital Cluster Software Design
+# SDD-DCL-001 — Driver Digital Cluster Software Design
 
 > SYNTHETIC LEARNING DOCUMENT. Programme SYNTH-LTV is fictional.
 

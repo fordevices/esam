@@ -27,7 +27,7 @@ def test_missing_documents_against_graph(pg_dsn, baseline):
 
 
 def test_prompt_states_missing_document():
-    entry = {"subsystem": "SUB-BRK-ECU", "artifact": "SSR-BRK-001", "score": 0.8, "origin": "SUB-BRK-ECU"}
+    entry = {"subsystem": "SUB-BRK-ECU", "artifact": "SRS-BRK-001", "score": 0.8, "origin": "SUB-BRK-ECU"}
     cov = {"needed": ["std"], "focus": ["SUB-BRK-ECU"], "missing": [{"eid": "SUB-BRK-ECU", "doc_type": "std"}]}
     p = build_prompt("How is it tested?", entry, [], [], cov)
     assert "MISSING: SUB-BRK-ECU has no test description (STD)" in p

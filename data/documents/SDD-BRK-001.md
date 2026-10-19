@@ -1,4 +1,4 @@
-# SSDD-BRK-001 — Brake Control ECU Software Design
+# SDD-BRK-001 — Brake Control ECU Software Design
 
 > SYNTHETIC LEARNING DOCUMENT. Programme SYNTH-LTV is fictional.
 

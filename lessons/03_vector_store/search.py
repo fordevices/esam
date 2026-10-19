@@ -3,7 +3,7 @@
 Lesson 03b — Search the vector store.
 
     python lessons/03_vector_store/search.py "what happens if brake data is lost?"
-    python lessons/03_vector_store/search.py --artifact SSR-DCL-001 "telltale timing"
+    python lessons/03_vector_store/search.py --artifact SRS-DCL-001 "telltale timing"
     python lessons/03_vector_store/search.py --demo      # runs the lesson's question set
 
 What a search is, mechanically:

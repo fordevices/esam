@@ -47,11 +47,11 @@ Both design docs state this explicitly, because it's the kind of rationale peopl
 
 * **Brake ECU → RTOS.** The slip-control loop runs every 5 ms. If it's late, a wheel locks before
   pressure is released. That's a *hard* deadline, so the scheduler must have a provable worst
-  case (`SSDD-BRK-001` §1).
+  case (`SDD-BRK-001` §1).
 * **Cluster → Linux.** A late display frame is a cosmetic glitch. That's a *soft* deadline, so a
   general-purpose OS is fine and brings a graphics stack and developer pool. The one
   safety-relevant job, warning telltales, gets a `SCHED_FIFO` process and a pre-boot stage
-  (`SSDD-DCL-001` §2, §5).
+  (`SDD-DCL-001` §2, §5).
 
 ## Seeded on purpose for later lessons
 
@@ -59,7 +59,7 @@ Both design docs state this explicitly, because it's the kind of rationale peopl
 |---|---|
 | The same fact in different words ("prevent wheel lock-up" / "anti-lock" / "ABS") | Lesson 02/03: meaning beats keywords |
 | "lock" meaning brakes vs. a door lock | Lesson 02 step 4 |
-| The 300 ms loss-of-EBC1 rule appears in the ICD, the cluster SSDD and the cluster SSR | Lesson 03: several right answers, which one ranks first? |
+| The 300 ms loss-of-EBC1 rule appears in the ICD, the cluster SDD and the cluster SRS | Lesson 03: several right answers, which one ranks first? |
 | Engine ECM consumes EBC1 but has **no documents** and a **candidate** edge | Lesson 03 → 04: what vector search can't see, and the graph can |
 
 ## Do this

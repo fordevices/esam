@@ -1,5 +1,7 @@
 # Lesson 05: Hybrid retrieval: vectors find the way in, the graph finds the reach
 
+> **Renamed 2026-10-19:** documents now use MIL-STD-498 names (SSR→SRS, SSDD→SDD). IDs in the captured output below were updated to match; the scores were recorded under the old names and may differ slightly on a re-run.
+
 ```bash
 # prerequisites: lesson 03 ingest.py and lesson 04 load_graph.py
 python lessons/05_hybrid/hybrid.py "If we change the EBC1 message period, what is affected?"
@@ -20,7 +22,7 @@ This lesson chains them. Real run:
 1. VECTOR  top hit: ICD-BRK-001 chunk 7 (score 0.688)
 2. LINK    ICD-BRK-001 belongs to SUB-BRK-ECU (Brake Control ECU (ABS))
 3. GRAPH   impact from SUB-BRK-ECU on EBC1 (PGN 61441): ['SUB-J1939-BB', 'SUB-DCL', 'SUB-ENG-ECM?']
-4. VECTOR  evidence from ['ICD-BRK-001', 'SSDD-BRK-001', 'SSR-BRK-001', 'SSDD-DCL-001', 'SSR-DCL-001']
+4. VECTOR  evidence from ['ICD-BRK-001', 'SDD-BRK-001', 'SRS-BRK-001', 'SDD-DCL-001', 'SRS-DCL-001']
 ```
 
 ## The five steps
@@ -67,12 +69,12 @@ IMPACT ORIGIN (from graph): SUB-BRK-ECU
 
 GRAPH: subsystems reachable over interfaces (depth = hops from the impact origin)
   - SUB-J1939-BB ...: depth 1, status confirmed, safety_critical=True,  documents: NO DOCUMENTS
-  - SUB-DCL ...:      depth 2, status confirmed, safety_critical=False, documents: SSDD-DCL-001, SSR-DCL-001
+  - SUB-DCL ...:      depth 2, status confirmed, safety_critical=False, documents: SDD-DCL-001, SRS-DCL-001
   - SUB-ENG-ECM ...:  depth 2, status candidate, safety_critical=False, documents: NO DOCUMENTS
 
 EVIDENCE (most relevant chunk per document):
 [ICD-BRK-001]  ...Any change to EBC1 content, period or source address is a Class I interface change...
-[SSR-DCL-001]  ...SRS-DCL-021 ... if no EBC1 frame is received for 300 ms...
+[SRS-DCL-001]  ...SRS-DCL-021 ... if no EBC1 frame is received for 300 ms...
 ...
 ```
 
@@ -87,10 +89,10 @@ Excerpts, unedited:
 
 > **Driver Digital Cluster (SUB-DCL), confirmed impacted consumer**
 > – It assumes that **loss of EBC1 for 300 ms** means anti-lock braking is unavailable and lights
->   the ABS telltale with a "BRAKE DATA LOST" message. [SSDD-DCL-001; SSR-DCL-001, SRS-DCL-021]
+>   the ABS telltale with a "BRAKE DATA LOST" message. [SDD-DCL-001; SRS-DCL-001, SRS-DCL-021]
 > – If the EBC1 period were increased such that messages could legitimately arrive more than
 >   300 ms apart, the cluster would incorrectly declare "BRAKE DATA LOST" and treat ABS as
->   unavailable. [SSDD-DCL-001; SSR-DCL-001]
+>   unavailable. [SDD-DCL-001; SRS-DCL-001]
 >
 > **J1939 Vehicle Data Backbone (SUB-J1939-BB)**: there are **no documents provided** for
 > SUB-J1939-BB. The specific impact on the backbone (e.g. bandwidth, timing assumptions)
@@ -126,5 +128,5 @@ ESAM_CHAT_MODEL=<model name>
    nothing downstream, and the evidence comes from the cluster's own documents only. Hybrid
    degrades gracefully into plain RAG.
 2. Mark the ECM edge `confirmed` in the YAML, re-run `load_graph.py`, and watch the prompt change.
-3. Add an `SSDD-ECM-001.md` (and list it under `artifacts:`), re-ingest, and the "NO DOCUMENTS"
+3. Add an `SDD-ECM-001.md` (and list it under `artifacts:`), re-ingest, and the "NO DOCUMENTS"
    line becomes evidence.

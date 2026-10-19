@@ -40,7 +40,7 @@ def test_impact_is_multi_hop_and_flags_candidates(graph):
     assert rows["SUB-J1939-BB"]["depth"] == 1
     assert rows["SUB-DCL"]["depth"] == 2 and rows["SUB-DCL"]["status"] == "confirmed"
     assert rows["SUB-ENG-ECM"]["status"] == "candidate"     # unreviewed edge on the path
-    assert rows["SUB-DCL"]["artifacts"] == ["SSDD-DCL-001", "SSR-DCL-001"]
+    assert rows["SUB-DCL"]["artifacts"] == ["SDD-DCL-001", "SRS-DCL-001"]
     assert rows["SUB-ENG-ECM"]["artifacts"] == []            # undocumented, yet found
 
 
@@ -55,7 +55,7 @@ def test_message_origin_is_the_producer_not_the_relay(graph):
 
 
 def test_artifact_gaps(graph):
-    assert [r["eid"] for r in graph.artifact_gaps("ssr")] == ["SUB-J1939-BB", "SUB-ENG-ECM"]
+    assert [r["eid"] for r in graph.artifact_gaps("srs")] == ["SUB-J1939-BB", "SUB-ENG-ECM"]
 
 
 def test_snapshot_uses_entity_ids(graph):
