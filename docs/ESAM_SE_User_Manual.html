@@ -1,0 +1,2369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ESAM SE User Manual</title>
+<!--
+  GENERATED from ESAM_SE_User_Manual.md by docs/build_manual_html.py.
+  Don't edit this file: edit the Markdown and rerun the script.
+  Self-contained: no CDN, no web fonts, no network, so it opens on the
+  air-gapped side too. Colours follow the SE Cockpit / how_esam_finds_answers.html.
+-->
+<style>
+:root {
+  --paper: #f3f5f8; --sheet: #ffffff; --sheet-2: #f8fafc; --ink: #142030; --ink-2: #4f5d6c; --rule: #dbe1e8;
+  --accent: #1f5f8b; --signal: #b5630a;
+  --ok: #2e7a4c; --ok-bg: #e4f2e9; --part: #8a6a00; --part-bg: #fbf3d9;
+  --crit: #b3261e; --crit-bg: #fbe9e7; --none: #5d6b78; --none-bg: #eef1f4; --info: #1f5f8b; --info-bg: #e5eff7;
+  --t-top: #5d6b78; --t-sys: #2b5d87; --t-sub: #0d7584; --t-doc: #7b4f8f;
+  --hue-1: #1f5f8b; --hue-2: #0d7584; --hue-3: #7b4f8f; --hue-4: #2e7a4c; --hue-5: #b5630a; --hue-6: #4a5bb0;
+  --shadow: 0 1px 2px rgb(16 32 48 / .05), 0 6px 22px rgb(16 32 48 / .07);
+  --glass: rgb(255 255 255 / .78);
+  --f-display: "Bahnschrift", "DIN Alternate", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --f-mono: ui-monospace, "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", Menlo, monospace;
+  --top: 56px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0d1217; --sheet: #151d25; --sheet-2: #19232c; --ink: #e2e8ee; --ink-2: #9aa8b5; --rule: #2a3642;
+  --accent: #6aa8d8; --signal: #eb9a3c;
+  --ok: #6cc28f; --ok-bg: #15301f; --part: #e3c14f; --part-bg: #33290c;
+  --crit: #ff7b6f; --crit-bg: #3a1d1a; --none: #a3b0bc; --none-bg: #222c35; --info: #6aa8d8; --info-bg: #182c3d;
+  --t-top: #96a5b3; --t-sys: #72a4d0; --t-sub: #4fb7c5; --t-doc: #c59bd8;
+  --hue-1: #6aa8d8; --hue-2: #4fb7c5; --hue-3: #c59bd8; --hue-4: #6cc28f; --hue-5: #eb9a3c; --hue-6: #8f9ef0;
+  --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 26px rgb(0 0 0 / .25);
+  --glass: rgb(21 29 37 / .8);
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --paper: #0d1217; --sheet: #151d25; --sheet-2: #19232c; --ink: #e2e8ee; --ink-2: #9aa8b5; --rule: #2a3642;
+  --accent: #6aa8d8; --signal: #eb9a3c;
+  --ok: #6cc28f; --ok-bg: #15301f; --part: #e3c14f; --part-bg: #33290c;
+  --crit: #ff7b6f; --crit-bg: #3a1d1a; --none: #a3b0bc; --none-bg: #222c35; --info: #6aa8d8; --info-bg: #182c3d;
+  --t-top: #96a5b3; --t-sys: #72a4d0; --t-sub: #4fb7c5; --t-doc: #c59bd8;
+  --hue-1: #6aa8d8; --hue-2: #4fb7c5; --hue-3: #c59bd8; --hue-4: #6cc28f; --hue-5: #eb9a3c; --hue-6: #8f9ef0;
+  --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 26px rgb(0 0 0 / .25);
+  --glass: rgb(21 29 37 / .8);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--top) + 16px); }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 16px/1.62 var(--f-body); -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+button { font: inherit; color: inherit; }
+code { font-family: var(--f-mono); font-size: .86em; background: var(--none-bg); border-radius: 4px; padding: .08em .35em; overflow-wrap: anywhere; }
+.skip { position: absolute; left: -999px; } .skip:focus { left: 12px; top: 12px; z-index: 99; background: var(--sheet); padding: 8px 12px; }
+
+/* ---------- top bar ---------- */
+.topbar { position: sticky; top: 0; z-index: 40; height: var(--top); display: flex; align-items: center; gap: 10px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+  background: var(--glass); backdrop-filter: saturate(1.6) blur(14px); -webkit-backdrop-filter: saturate(1.6) blur(14px);
+  border-bottom: 1px solid var(--rule); }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font: 15px var(--f-display); white-space: nowrap; }
+.brand b { font-weight: 600; }
+.logo { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; color: #fff; font: 700 16px var(--f-display);
+  background: linear-gradient(135deg, #1f5f8b, #0d7584); box-shadow: 0 2px 8px rgb(13 117 132 / .35); }
+.crumb { color: var(--ink-2); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.crumb:not(:empty)::before { content: "/"; margin: 0 8px 0 2px; opacity: .5; }
+.spacer { flex: 1; }
+.iconbtn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid transparent; background: none; cursor: pointer; font-size: 18px; display: grid; place-items: center; flex: none; }
+.iconbtn:hover { background: var(--none-bg); border-color: var(--rule); }
+.menu, .searchbtn { display: none; }
+.progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; }
+.progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--hue-2), var(--signal)); }
+
+/* ---------- layout ---------- */
+.layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); }
+.side { position: sticky; top: var(--top); height: calc(100vh - var(--top)); overflow-y: auto; border-right: 1px solid var(--rule);
+  background: var(--sheet); padding: 16px 12px 40px; overscroll-behavior: contain; }
+.scrim { display: none; }
+@media (max-width: 1080px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .menu, .searchbtn { display: grid; }
+  .side { position: fixed; z-index: 60; top: 0; left: 0; bottom: 0; height: 100vh; width: min(340px, 88vw);
+    transform: translateX(-102%); transition: transform .25s ease; box-shadow: var(--shadow); }
+  body.nav-open .side { transform: none; }
+  body.nav-open .scrim { display: block; position: fixed; inset: 0; z-index: 50; background: rgb(0 0 0 / .35); }
+}
+@media (max-width: 560px) { .brand > span:last-child { display: none; } }
+
+/* search */
+.search { position: relative; margin: 0 4px 14px; }
+.search input { width: 100%; padding: 9px 36px 9px 12px; border-radius: 10px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); font: inherit; font-size: 14.5px; }
+.search input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.search kbd { position: absolute; right: 10px; top: 9px; font: 12px var(--f-mono); color: var(--ink-2); border: 1px solid var(--rule); border-radius: 4px; padding: 0 5px; }
+.search-nav[hidden] { display: none; }
+.search-nav { display: flex; align-items: center; gap: 4px; margin-top: 6px; font-size: 13px; color: var(--ink-2); }
+.search-nav .count { flex: 1; }
+.search-nav button { border: 1px solid var(--rule); background: var(--sheet); border-radius: 6px; width: 28px; height: 26px; cursor: pointer; }
+mark.hit { background: color-mix(in srgb, var(--signal) 28%, transparent); color: inherit; border-radius: 2px; }
+mark.hit.cur { background: var(--signal); color: #fff; }
+
+/* toc */
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc > ol > li { margin-bottom: 2px; }
+.toc-ch { display: flex; gap: 10px; align-items: baseline; padding: 7px 10px; border-radius: 9px; color: var(--ink); text-decoration: none; font-size: 14.5px; line-height: 1.35; }
+.toc-ch .n { flex: none; width: 24px; height: 24px; border-radius: 7px; display: inline-grid; place-items: center; font: 600 12px var(--f-mono);
+  color: var(--c); background: color-mix(in srgb, var(--c) 13%, transparent); transform: translateY(5px); }
+.toc-ch:hover { background: var(--none-bg); }
+.toc li.active > .toc-ch { background: color-mix(in srgb, var(--c) 11%, transparent); font-weight: 600; }
+.toc li.active > .toc-ch .n { background: var(--c); color: var(--sheet); }
+.toc li ol { display: none; margin: 2px 0 8px 22px; border-left: 2px solid color-mix(in srgb, var(--c) 30%, transparent); }
+.toc li.active ol { display: block; }
+.toc li ol a { display: block; padding: 4px 10px 4px 14px; font-size: 13.5px; color: var(--ink-2); text-decoration: none; line-height: 1.35; margin-left: -2px; border-left: 2px solid transparent; }
+.toc li ol a:hover { color: var(--ink); }
+.toc li ol a.active { color: var(--c); border-left-color: var(--c); font-weight: 600; }
+
+/* ---------- hero ---------- */
+.hero { position: relative; overflow: hidden; color: #eaf2f8;
+  background: radial-gradient(1200px 400px at 85% -10%, rgb(235 154 60 / .28), transparent 60%),
+              radial-gradient(900px 500px at 0% 120%, rgb(79 183 197 / .35), transparent 60%),
+              linear-gradient(135deg, #0c2236 0%, #123a57 45%, #0d5560 100%); }
+.hero::before { content: ""; position: absolute; inset: 0; opacity: .14;
+  background-image: linear-gradient(rgb(255 255 255 / .5) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / .5) 1px, transparent 1px);
+  background-size: 34px 34px; mask-image: linear-gradient(180deg, #000 0%, transparent 85%); -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%); }
+.hero-inner { position: relative; max-width: 940px; margin: 0 auto; padding: 56px 16px 40px; }
+.eyebrow { font: 600 12.5px var(--f-display); letter-spacing: .16em; text-transform: uppercase; color: #9fd3dc; }
+.hero h1 { font: 600 clamp(30px, 5vw, 46px)/1.08 var(--f-display); margin: 10px 0 12px; letter-spacing: -.01em; text-wrap: balance; color: #fff; }
+.lede { font-size: 18px; color: #c9dbe8; max-width: 62ch; margin: 0 0 26px; }
+.meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.meta-card { background: rgb(255 255 255 / .08); border: 1px solid rgb(255 255 255 / .16); border-radius: 12px; padding: 12px 14px;
+  backdrop-filter: blur(6px); font-size: 14px; color: #dbe7f0; }
+.meta-k { font: 600 11.5px var(--f-display); letter-spacing: .12em; text-transform: uppercase; color: #9fd3dc; margin-bottom: 4px; }
+.meta-card strong { color: #fff; }
+.meta-card code { background: rgb(255 255 255 / .12); color: #fff; }
+
+/* ---------- content ---------- */
+.content { max-width: 940px; margin: 0 auto; padding: 8px 16px 80px; }
+.cards-h { font: 600 13px var(--f-display); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); margin: 34px 0 12px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.card { position: relative; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; padding: 14px 16px; border-radius: 12px; text-decoration: none; color: var(--ink);
+  background: var(--sheet); border: 1px solid var(--rule); box-shadow: var(--shadow); transition: transform .15s, border-color .15s; overflow: hidden; }
+.card::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--c); }
+.card:hover { transform: translateY(-2px); border-color: var(--c); }
+.card-n { grid-row: span 2; font: 600 26px/1 var(--f-display); color: var(--c); min-width: 30px; }
+.card-t { font-weight: 600; line-height: 1.3; font-size: 15px; }
+.card-m { font-size: 12.5px; color: var(--ink-2); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.tag { font: 600 10.5px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--c, var(--accent)); border: 1px solid currentColor; border-radius: 999px; padding: 0 7px; }
+
+.chap { margin-top: 56px; padding-top: 4px; }
+.chap-head { display: flex; gap: 16px; align-items: center; padding: 18px 20px; border-radius: 14px; margin-bottom: 8px;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--c) 14%, var(--sheet)), var(--sheet) 70%); border: 1px solid color-mix(in srgb, var(--c) 30%, var(--rule)); }
+.chap-n { flex: none; width: 54px; height: 54px; border-radius: 14px; display: grid; place-items: center; font: 600 26px var(--f-display); color: #fff;
+  background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 60%, #000)); box-shadow: 0 4px 14px color-mix(in srgb, var(--c) 35%, transparent); }
+.chap h2 { font: 600 clamp(22px, 3.2vw, 28px)/1.2 var(--f-display); margin: 0; text-wrap: balance; }
+.chap-meta { font-size: 13px; color: var(--ink-2); margin-top: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.sub { padding-top: 6px; }
+.chap h3 { font: 600 19px/1.3 var(--f-display); margin: 30px 0 8px; letter-spacing: .005em; }
+.hlink { margin-left: 8px; color: var(--ink-2); text-decoration: none; opacity: 0; font-weight: 400; transition: opacity .15s; }
+h2:hover .hlink, h3:hover .hlink, .hlink:focus { opacity: .7; }
+.hlink.copied::after { content: " link copied"; font-size: 12px; }
+.chap p, .chap li { max-width: 75ch; }
+.chap ul, .chap ol:not([class]) { padding-left: 22px; }
+.chap li { margin: 3px 0; }
+.chap li::marker { color: var(--c); }
+.chap strong { font-weight: 650; }
+.sub.status { margin-top: 24px; padding: 2px 18px 6px; border-radius: 12px; background: var(--part-bg); border: 1px dashed color-mix(in srgb, var(--part) 50%, transparent); }
+.sub.status h3 { margin-top: 14px; color: var(--part); }
+.sub.status h3::before { content: "⏳ "; }
+
+a.xref { position: relative; font-weight: 600; text-decoration: none; color: var(--c, var(--accent)); background: color-mix(in srgb, var(--c, var(--accent)) 10%, transparent);
+  padding: 0 .3em; border-radius: 4px; white-space: nowrap; }
+a.xref:hover { background: color-mix(in srgb, var(--c, var(--accent)) 20%, transparent); }
+a.xref::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%) translateY(4px); width: max-content; max-width: 280px;
+  white-space: normal; background: var(--ink); color: var(--paper); font: 500 12.5px/1.35 var(--f-body); padding: 6px 9px; border-radius: 7px; pointer-events: none; opacity: 0; transition: .15s; z-index: 30; }
+a.xref:hover::after, a.xref:focus-visible::after { opacity: 1; transform: translateX(-50%); }
+.seealso { font-size: 14.5px; color: var(--ink-2); }
+
+/* callouts */
+.callout { margin: 16px 0; padding: 12px 18px; border-radius: 12px; border-left: 4px solid var(--c); background: color-mix(in srgb, var(--c) 7%, var(--sheet)); }
+.callout p { margin: 6px 0; }
+.callout.tldr { border-left-color: var(--signal); background: color-mix(in srgb, var(--signal) 9%, var(--sheet)); }
+
+/* code */
+.code { margin: 14px 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--rule); background: #0f1a24; box-shadow: var(--shadow); }
+.code-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px 6px 14px; background: #16242f; color: #8fa6b8; font: 600 11.5px var(--f-mono); text-transform: uppercase; letter-spacing: .08em; }
+.copy { border: 1px solid #2c3e4d; background: none; color: #c8d6e1; border-radius: 6px; padding: 2px 10px; cursor: pointer; font: 12px var(--f-body); text-transform: none; letter-spacing: 0; }
+.copy:hover { background: #24384a; }
+.code pre { margin: 0; padding: 14px 16px; overflow-x: auto; }
+.code code { background: none; padding: 0; color: #d8e3ec; font-size: 13px; line-height: 1.55; overflow-wrap: normal; white-space: pre; }
+.code .c-com { color: #7d93a5; font-style: italic; } .code .c-key { color: #7cc4ff; } .code .c-str { color: #f2c27b; } .code .c-kw { color: #d7a0ff; }
+
+/* tables */
+.tbl { margin: 14px 0 18px; border: 1px solid var(--rule); border-radius: 12px; background: var(--sheet); box-shadow: var(--shadow); overflow-x: auto; }
+.tbl table { border-collapse: collapse; width: 100%; font-size: 14.5px; line-height: 1.5; }
+.tbl th { text-align: left; font: 600 12px var(--f-display); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2);
+  background: var(--sheet-2); padding: 10px 14px; border-bottom: 1px solid var(--rule); vertical-align: bottom; }
+.tbl td { padding: 10px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; overflow-wrap: break-word; }
+.tbl tbody tr:last-child td { border-bottom: 0; }
+.tbl tbody tr { transition: background .12s; }
+.tbl tbody tr:hover { background: color-mix(in srgb, var(--c, var(--accent)) 5%, transparent); }
+.tbl td:first-child { font-weight: 550; }
+.tbl.cols-2 td:first-child { width: 34%; }
+.tbl code { white-space: normal; }
+.chip-s { display: inline-block; font: 600 12px/1.6 var(--f-body); padding: 0 9px; border-radius: 999px; white-space: nowrap; }
+.chip-s.ok { color: var(--ok); background: var(--ok-bg); } .chip-s.part { color: var(--part); background: var(--part-bg); }
+.chip-s.crit { color: var(--crit); background: var(--crit-bg); } .chip-s.none { color: var(--none); background: var(--none-bg); }
+.chip-s.info { color: var(--info); background: var(--info-bg); }
+/* narrow screens: every row becomes a card, each cell labelled by its column */
+@media (max-width: 720px) {
+  .tbl:not(.keep) { border: 0; background: none; box-shadow: none; overflow: visible; }
+  .tbl:not(.keep) table, .tbl:not(.keep) tbody, .tbl:not(.keep) tr, .tbl:not(.keep) td { display: block; width: auto !important; }
+  .tbl:not(.keep) thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .tbl:not(.keep) tr { background: var(--sheet); border: 1px solid var(--rule); border-left: 4px solid var(--c, var(--accent)); border-radius: 10px; margin-bottom: 10px; padding: 6px 0; box-shadow: var(--shadow); }
+  .tbl:not(.keep) td { border: 0; padding: 4px 14px; }
+  .tbl:not(.keep) td::before { content: attr(data-label); display: block; font: 600 11px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+  .tbl:not(.keep) td:first-child { font-size: 15.5px; padding-top: 6px; }
+  .tbl:not(.keep) td:first-child::before { display: none; }
+  .tbl:not(.keep) td:empty { display: none; }
+}
+
+/* prev / next */
+.prevnext { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 30px; }
+.pn { display: grid; padding: 12px 16px; border: 1px solid var(--rule); border-radius: 12px; text-decoration: none; color: var(--ink); background: var(--sheet); font-weight: 600; font-size: 14.5px; line-height: 1.35; }
+.pn small { font-weight: 500; color: var(--ink-2); font-size: 12px; margin-bottom: 2px; }
+.pn:hover { border-color: var(--c); }
+.pn.next { text-align: right; }
+@media (max-width: 560px) { .prevnext { grid-template-columns: 1fr; } .pn.next { text-align: left; } }
+.foot { margin-top: 60px; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--ink-2); }
+.totop { position: fixed; right: 18px; bottom: 18px; z-index: 30; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--rule); background: var(--sheet);
+  box-shadow: var(--shadow); cursor: pointer; font-size: 18px; opacity: 0; pointer-events: none; transform: translateY(8px); transition: .2s; }
+.totop.show { opacity: 1; pointer-events: auto; transform: none; }
+
+/* ---------- figures ---------- */
+.fig { margin: 22px 0 26px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--c) 35%, var(--rule)); background: var(--sheet); box-shadow: var(--shadow); overflow: hidden; }
+.fig-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 18px; border-bottom: 1px solid var(--rule);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 12%, var(--sheet)), var(--sheet)); }
+.fig-kicker { font: 600 10.5px var(--f-display); letter-spacing: .12em; text-transform: uppercase; color: #fff; background: var(--c); padding: 2px 8px; border-radius: 999px; }
+.fig-title { font: 600 16px var(--f-display); }
+.fig-body { padding: 16px 18px; }
+.fig figcaption { padding: 0 18px 14px; font-size: 13px; color: var(--ink-2); }
+.fig-ctl { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.btn { border: 1px solid var(--rule); background: var(--sheet); border-radius: 10px; padding: 7px 13px; cursor: pointer; font-size: 14px; line-height: 1.3; text-align: left; }
+.btn:hover { border-color: var(--c); color: var(--c); }
+.btn[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: var(--sheet); }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.seg button { border: 0; background: var(--sheet); padding: 7px 13px; cursor: pointer; font-size: 13.5px; }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-pressed="true"] { background: var(--c); color: var(--sheet); font-weight: 600; }
+.std-toggle { display: inline-flex; align-items: center; gap: 9px; border: 1px solid var(--rule); background: var(--sheet); border-radius: 999px; padding: 5px 13px 5px 6px; cursor: pointer; font-size: 13.5px; }
+.std-toggle .sw { width: 34px; height: 20px; border-radius: 999px; background: var(--none-bg); border: 1px solid var(--rule); position: relative; transition: .2s; }
+.std-toggle .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--ink-2); transition: .2s; }
+.std-toggle[aria-pressed="true"] { border-color: var(--ok); color: var(--ok); font-weight: 600; }
+.std-toggle[aria-pressed="true"] .sw { background: var(--ok); border-color: var(--ok); }
+.std-toggle[aria-pressed="true"] .sw::after { left: 16px; background: #fff; }
+.ctl-label { font: 600 11.5px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 6px; }
+.detail { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: var(--sheet-2); border: 1px solid var(--rule); font-size: 14.5px; min-height: 48px; }
+.detail b { font-weight: 650; }
+.legend { display: inline-flex; gap: 6px 12px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+.big { font: 600 20px var(--f-display); margin-left: auto; }
+
+/* workflow */
+.flow { list-style: none; margin: 0 0 14px; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; counter-reset: f; }
+@media (max-width: 820px) { .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.flow li { position: relative; padding: 12px; border-radius: 12px; border: 1px solid var(--rule); background: var(--sheet-2); font-size: 13.5px; line-height: 1.35; transition: .25s; }
+.flow li .no { font: 600 22px var(--f-display); color: var(--ink-2); }
+.flow li .t { font-weight: 600; display: block; margin: 2px 0 8px; }
+.flow li.gate { border-style: dashed; border-color: var(--signal); }
+.flow li.gate::after { content: "GATE"; position: absolute; top: 10px; right: 10px; font: 700 9.5px var(--f-display); letter-spacing: .1em; color: var(--signal); }
+.flow li.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, var(--sheet)); transform: translateY(-3px); box-shadow: var(--shadow); }
+.flow li.on .no { color: var(--c); }
+.who { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; }
+.who.se { background: var(--accent); } .who.auto { background: var(--ok); } .who.it { background: var(--t-doc); }
+.whochip { font-size: 11.5px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
+.whochip.se { background: var(--accent); } .whochip.auto { background: var(--ok); } .whochip.it { background: var(--t-doc); }
+:root[data-theme="dark"] .whochip { color: #0d1217; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .whochip { color: #0d1217; } }
+
+/* bars */
+.bars { display: grid; gap: 8px; }
+.barrow { display: grid; grid-template-columns: minmax(110px, 190px) minmax(0, 1fr) 92px; gap: 12px; align-items: center; font-size: 14px; border: 0; background: none; padding: 4px 6px; border-radius: 8px; text-align: left; cursor: pointer; }
+.barrow:hover, .barrow[aria-pressed="true"] { background: var(--sheet-2); }
+.barrow[aria-pressed="true"] .lab { font-weight: 650; color: var(--c); }
+.track { height: 18px; border-radius: 6px; background: var(--paper); border: 1px solid var(--rule); overflow: hidden; }
+.track i { display: block; height: 100%; width: 0; border-radius: 5px; background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 60%, var(--signal))); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+.barrow .val { text-align: right; font: 12.5px var(--f-mono); font-variant-numeric: tabular-nums; }
+@media (max-width: 520px) { .barrow { grid-template-columns: 1fr 76px; } .barrow .track { grid-column: 1 / -1; grid-row: 2; } }
+.cards-out { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; min-height: 10px; }
+.icard { font: 11.5px var(--f-mono); padding: 6px 8px; border-radius: 6px; background: var(--sheet); border: 1px solid var(--rule); border-top: 3px solid var(--c);
+  box-shadow: var(--shadow); animation: pop .35s both; }
+@keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.96); } }
+
+/* chevrons */
+.chev { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; }
+.chev li { flex: 1 1 120px; }
+.chev button { width: 100%; border: 0; cursor: pointer; padding: 12px 22px 12px 26px; font-weight: 600; font-size: 14px; color: var(--ink);
+  background: color-mix(in srgb, var(--c) 12%, var(--sheet)); clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%); transition: .15s; }
+.chev li:first-child button { clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%); padding-left: 16px; }
+.chev button small { display: block; font-weight: 500; color: var(--ink-2); font-size: 11.5px; }
+.chev button:hover, .chev button[aria-pressed="true"] { background: var(--c); color: var(--sheet); }
+.chev button:hover small, .chev button[aria-pressed="true"] small { color: inherit; opacity: .85; }
+
+/* vectors */
+.vec { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 760px) { .vec { grid-template-columns: minmax(0, 1fr); } }
+.vec-plot svg { width: 100%; height: auto; display: block; border-radius: 12px; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--c) 6%, var(--sheet)), var(--sheet-2)); border: 1px solid var(--rule); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid var(--rule); background: var(--sheet); border-radius: 999px; padding: 6px 13px; cursor: pointer; font-size: 13.5px; text-align: left; }
+.chip:hover { border-color: var(--c); }
+.chip[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: var(--sheet); }
+.hits { margin: 0; padding-left: 20px; font-size: 13.5px; display: grid; gap: 6px; }
+.hits li::marker { color: var(--c); font-weight: 700; }
+.hits .sc { font: 600 12px var(--f-mono); color: var(--c); margin-left: 6px; }
+.hits:empty::before { content: "Pick a question to search."; color: var(--ink-2); margin-left: -20px; }
+svg text { font-family: var(--f-body); fill: var(--ink); }
+.mono { font-family: var(--f-mono); font-size: .9em; }
+
+/* graph */
+.graph-wrap { overflow-x: auto; margin: 0 -6px; padding: 0 6px; }
+.graph svg { min-width: 720px; width: 100%; height: auto; display: block; }
+.graph .node rect { fill: var(--sheet); stroke-width: 1.6; transition: .25s; }
+.graph .node { cursor: pointer; transition: opacity .25s; }
+.graph .node .id { font: 600 11px var(--f-mono); }
+.graph .node .nm { font-size: 10.5px; fill: var(--ink-2); }
+.graph .k-top rect { stroke: var(--t-top); } .graph .k-sys rect { stroke: var(--t-sys); } .graph .k-sub rect { stroke: var(--t-sub); } .graph .k-doc rect { stroke: var(--t-doc); }
+.graph .sc-dot { fill: var(--crit); }
+.graph .edge { fill: none; stroke: var(--ink-2); stroke-width: 1.3; opacity: .5; transition: .25s; }
+.graph .edge.doc { stroke-dasharray: 2 3; }
+.graph .edge.iface { stroke: var(--signal); stroke-width: 2.4; opacity: .95; }
+.graph .edge.cand { stroke-dasharray: 7 5; }
+.graph .elbl { font: 600 10px var(--f-mono); fill: var(--signal); paint-order: stroke; stroke: var(--sheet); stroke-width: 4px; }
+.graph svg.focus .node, .graph svg.focus .edge { opacity: .22; }
+.graph svg.focus .node.hl, .graph svg.focus .edge.hl { opacity: 1; }
+.graph .node.hl rect { stroke: var(--accent); stroke-width: 3; fill: color-mix(in srgb, var(--accent) 10%, var(--sheet)); }
+.graph .edge.hl { stroke: var(--accent); stroke-width: 3; }
+.graph .edge.iface.hl { stroke: var(--signal); stroke-width: 4; }
+.graph .node.sel rect { stroke: var(--signal); stroke-width: 3; }
+.graph .badge circle { fill: var(--accent); } .graph .badge text { fill: var(--sheet); font: 700 11px var(--f-mono); }
+.walk-out { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 14px; align-items: start; margin-top: 10px; }
+@media (max-width: 760px) { .walk-out { grid-template-columns: minmax(0, 1fr); } }
+.walk-info { padding: 12px 14px; border-radius: 10px; background: var(--sheet-2); border: 1px solid var(--rule); font-size: 14px; }
+.walk-tbl td, .walk-tbl th { font-size: 13px; padding: 6px 10px; }
+.walk-tbl td { font-family: var(--f-mono); font-size: 12.5px; }
+.walk-tbl tr { animation: pop .3s both; }
+.walk-out .tbl { margin: 0; }
+.walk-tbl .ph td { font-family: var(--f-body); color: var(--ink-2); }
+
+/* coverage */
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+@media (max-width: 620px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--rule); background: var(--sheet-2); }
+.tile .k { font: 600 11px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+.tile .v { font: 600 28px/1.15 var(--f-display); font-variant-numeric: tabular-nums; }
+.tile.bad .v { color: var(--crit); } .tile.good .v { color: var(--ok); }
+.tbl.cov { margin: 0; }
+.cov th, .cov td { text-align: center; }
+.cov th:first-child, .cov td:first-child { text-align: left; }
+.cell { display: inline-grid; place-items: center; width: 34px; height: 28px; border-radius: 7px; font-weight: 700; transition: .3s; }
+.cell.has { color: var(--ok); background: var(--ok-bg); }
+.cell.miss { color: var(--crit); background: var(--crit-bg); }
+.cell.miss.sc { outline: 2px solid var(--crit); }
+.cell.nr { color: var(--ink-2); opacity: .55; }
+.cell.new { animation: flash 1s; }
+@keyframes flash { 0% { transform: scale(1.4); box-shadow: 0 0 0 6px color-mix(in srgb, var(--ok) 35%, transparent); } }
+.cov .sub-n { font-weight: 600; display: block; }
+.cov .sub-a { font-size: 12px; color: var(--ink-2); font-weight: 400; }
+@media (max-width: 720px) { .tbl.cov td { display: flex !important; justify-content: space-between; align-items: center; } .tbl.cov td:first-child { display: block !important; } .tbl.cov td::before { display: inline !important; } }
+.rollup { display: grid; gap: 6px; }
+.rollup .barrow { cursor: default; }
+.rollup .barrow.total .lab { font-weight: 700; }
+
+/* gap decision */
+.decide { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.decide li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: start; }
+.decide .dot { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font: 700 14px var(--f-mono); color: #fff; background: var(--c); }
+.decide .q { font-style: italic; }
+.decide .box { padding: 10px 14px; border-radius: 10px; border: 1px solid var(--rule); background: var(--sheet-2); font-size: 14.5px; }
+.decide .branch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 620px) { .decide .branch { grid-template-columns: 1fr; } }
+.decide .br { padding: 10px 14px; border-radius: 10px; border: 1px dashed var(--rule); font-size: 14px; opacity: .45; transition: .3s; }
+.decide .br.on { opacity: 1; border-style: solid; box-shadow: var(--shadow); }
+.decide .br.gapb.on { border-color: var(--crit); background: var(--crit-bg); }
+.decide .br.okb.on { border-color: var(--ok); background: var(--ok-bg); }
+.decide .br h4 { margin: 0 0 4px; font: 600 13px var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
+.decide .br p { margin: 0; }
+
+/* traceability */
+.trow { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+.trow:last-child { border-bottom: 0; }
+@media (max-width: 560px) { .trow { grid-template-columns: 1fr; } }
+.trow .nm { font-weight: 600; font-size: 14px; } .trow .nm small { display: block; color: var(--ink-2); font-weight: 400; }
+.reqs { display: flex; flex-wrap: wrap; gap: 6px; }
+.req { font: 600 11.5px var(--f-mono); padding: 5px 9px; border-radius: 8px; cursor: pointer; border: 1.5px solid var(--crit); color: var(--crit); background: var(--sheet); transition: .3s; }
+.req.ver { border-color: var(--ok); background: var(--ok); color: var(--sheet); }
+.req[aria-pressed="true"] { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent); }
+
+/* swci */
+.swci { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 820px) { .swci { grid-template-columns: minmax(0, 1fr); } }
+.swci .tbl { margin: 0; }
+.swci th, .swci td { text-align: center; font-size: 13px; padding: 7px 8px; }
+.swci td:first-child, .swci th:first-child { text-align: left; }
+.swci td:first-child small { display: block; color: var(--ink-2); font-weight: 400; font-size: 11.5px; }
+.sw-cell { border: 0; border-radius: 8px; padding: 6px 4px; width: 100%; cursor: pointer; font: 600 12.5px var(--f-mono); }
+.sw-cell.l1 { background: var(--crit-bg); color: var(--crit); } .sw-cell.l2 { background: color-mix(in srgb, var(--signal) 18%, var(--sheet)); color: var(--signal); }
+.sw-cell.l3 { background: var(--part-bg); color: var(--part); } .sw-cell.l4 { background: var(--info-bg); color: var(--info); } .sw-cell.l5 { background: var(--none-bg); color: var(--none); }
+.sw-cell[aria-pressed="true"] { outline: 3px solid var(--ink); outline-offset: -1px; }
+.swci-out { padding: 16px; border-radius: 12px; background: var(--sheet-2); border: 1px solid var(--rule); }
+.swci-out .res { font: 600 34px/1 var(--f-display); margin: 4px 0 8px; }
+.swci-out p { margin: 8px 0 0; font-size: 14px; }
+.swci-out .src { font-size: 12px; color: var(--ink-2); }
+
+/* review pipeline */
+.pipe { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 820px) { .pipe { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.pipe button { width: 100%; height: 100%; text-align: left; border: 1px solid var(--rule); background: var(--sheet-2); border-radius: 12px; padding: 10px 12px; cursor: pointer; font-size: 13.5px; line-height: 1.3; }
+.pipe button .ic { font-size: 20px; display: block; margin-bottom: 4px; }
+.pipe button small { display: block; color: var(--ink-2); font-size: 11.5px; margin-top: 3px; }
+.pipe button:hover, .pipe button[aria-pressed="true"] { border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, var(--sheet)); }
+.pipe .human button { border: 2px solid var(--signal); background: color-mix(in srgb, var(--signal) 10%, var(--sheet)); }
+.pipe .agent button small::before { content: "agent · "; }
+
+/* print */
+@media print {
+  .topbar, .side, .totop, .fig-ctl, .search, .prevnext, .hlink, .scrim { display: none !important; }
+  .layout { display: block; } .hero { color: #000; background: none; } .hero h1, .meta-card strong { color: #000; }
+  .chap { break-before: page; } .fig, .tbl, .code { break-inside: avoid; box-shadow: none; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="topbar">
+  <button class="iconbtn menu" type="button" aria-label="Open contents" aria-expanded="false" aria-controls="side">☰</button>
+  <a class="brand" href="#top"><span class="logo" aria-hidden="true">E</span><span>ESAM <b>SE User Manual</b></span></a>
+  <span class="crumb" aria-live="polite"></span>
+  <span class="spacer"></span>
+  <button class="iconbtn searchbtn" type="button" aria-label="Search (press /)" title="Search  /">⌕</button>
+  <button class="iconbtn theme" type="button" aria-label="Colour theme" title="Theme: auto"></button>
+  <div class="progress" aria-hidden="true"><i></i></div>
+</div>
+<div class="layout">
+  <aside id="side" class="side" aria-label="Contents">
+    <div class="search">
+      <input id="q" type="search" placeholder="Search the manual" autocomplete="off" aria-label="Search the manual">
+      <kbd>/</kbd>
+      <div class="search-nav" hidden><span class="count"></span>
+        <button type="button" data-hit="-1" aria-label="Previous match">↑</button>
+        <button type="button" data-hit="1" aria-label="Next match">↓</button></div>
+    </div>
+    <nav class="toc"><ol><li style="--c:var(--hue-1)"><a class="toc-ch" href="#1-creating-and-maintaining-the-yaml-baseline"><span class="n">1</span><span>Creating and maintaining the YAML baseline</span></a><ol><li><a href="#11-what-the-baseline-is">1.1 What the baseline is</a></li><li><a href="#12-where-the-first-version-comes-from">1.2 Where the first version comes from</a></li><li><a href="#13-the-workflow-step-by-step">1.3 The workflow, step by step</a></li><li><a href="#14-what-goes-in-each-entry">1.4 What goes in each entry</a></li><li><a href="#15-tooling-status">1.5 Tooling status</a></li></ol></li><li style="--c:var(--hue-2)"><a class="toc-ch" href="#2-how-esam-reads-your-documents-chunks-and-rows"><span class="n">2</span><span>How ESAM reads your documents: chunks and rows</span></a><ol><li><a href="#21-why-documents-are-cut-into-chunks">2.1 Why documents are cut into chunks</a></li><li><a href="#22-one-chunk--one-row">2.2 One chunk = one row</a></li><li><a href="#23-what-happens-to-a-large-word-document-ssdd-system-test-description">2.3 What happens to a large Word document (SSDD, System Test Description)</a></li><li><a href="#24-how-to-write-documents-that-chunk-well">2.4 How to write documents that chunk well</a></li><li><a href="#25-the-two-filing-rules-in-plain-english">2.5 The two filing rules in plain English</a></li><li><a href="#26-tooling-status">2.6 Tooling status</a></li></ol></li><li style="--c:var(--hue-3)"><a class="toc-ch" href="#3-vectors-what-the-768-numbers-are"><span class="n">3</span><span>Vectors: what the 768 numbers are</span></a></li><li style="--c:var(--hue-4)"><a class="toc-ch" href="#4-how-esam-walks-the-baseline-recursive-ctes"><span class="n">4</span><span>How ESAM walks the baseline (recursive CTEs)</span></a><ol><li><a href="#41-what-the-term-means">4.1 What the term means</a></li><li><a href="#42-why-esam-needs-it">4.2 Why ESAM needs it</a></li><li><a href="#43-what-one-looks-like">4.3 What one looks like</a></li><li><a href="#44-the-three-parts-and-the-three-kinds-of-question">4.4 The three parts, and the three kinds of question</a></li><li><a href="#45-the-same-idea-in-graph-database-languages">4.5 The same idea in graph database languages</a></li></ol></li><li style="--c:var(--hue-5)"><a class="toc-ch" href="#5-finding-gaps-after-ingestion"><span class="n">5</span><span>Finding gaps after ingestion</span></a><ol><li><a href="#51-an-example-finding">5.1 An example finding</a></li><li><a href="#52-the-baseline-health-report">5.2 The baseline health report</a></li><li><a href="#53-what-to-do-with-the-findings">5.3 What to do with the findings</a></li></ol></li><li style="--c:var(--hue-6)"><a class="toc-ch" href="#6-when-to-move-to-a-dedicated-graph-database"><span class="n">6</span><span>When to move to a dedicated graph database</span></a><ol><li><a href="#61-size-is-rarely-the-trigger">6.1 Size is rarely the trigger</a></li><li><a href="#62-the-real-signals">6.2 The real signals</a></li><li><a href="#63-what-moving-costs">6.3 What moving costs</a></li><li><a href="#64-the-plan">6.4 The plan</a></li></ol></li><li style="--c:var(--hue-1)"><a class="toc-ch" href="#7-when-esam-says-that-document-doesnt-exist-yet"><span class="n">7</span><span>When ESAM says &quot;that document doesn&#x27;t exist yet&quot;</span></a><ol><li><a href="#71-why-this-matters">7.1 Why this matters</a></li><li><a href="#72-what-esam-does-with-each-question">7.2 What ESAM does with each question</a></li><li><a href="#73-what-it-looks-like">7.3 What it looks like</a></li><li><a href="#74-the-confidence-test">7.4 The confidence test</a></li><li><a href="#75-what-this-means-for-you">7.5 What this means for you</a></li></ol></li><li style="--c:var(--hue-2)"><a class="toc-ch" href="#8-the-esam-ontology-the-programmes-vocabulary"><span class="n">8</span><span>The ESAM ontology: the programme&#x27;s vocabulary</span></a><ol><li><a href="#81-what-it-is">8.1 What it is</a></li><li><a href="#82-what-it-contains">8.2 What it contains</a></li><li><a href="#83-document-names-follow-mil-std-498">8.3 Document names follow MIL-STD-498</a></li><li><a href="#84-rules-what-each-subsystem-must-have">8.4 Rules: what each subsystem must have</a></li><li><a href="#85-checking-the-baseline-against-the-ontology">8.5 Checking the baseline against the ontology</a></li><li><a href="#86-what-uses-the-ontology-today">8.6 What uses the ontology today</a></li></ol></li><li style="--c:var(--hue-3)"><a class="toc-ch" href="#9-where-attributes-go-and-writing-documents-esam-can-read"><span class="n">9</span><span>Where attributes go, and writing documents ESAM can read</span></a><ol><li><a href="#91-one-question-decides-it">9.1 One question decides it</a></li><li><a href="#92-in-the-baseline">9.2 In the baseline</a></li><li><a href="#93-in-every-document-a-header-table">9.3 In every document: a header table</a></li><li><a href="#94-in-an-srs-an-attribute-line-under-each-requirement">9.4 In an SRS: an attribute line under each requirement</a></li><li><a href="#95-in-an-std-fixed-fields-in-every-test-case">9.5 In an STD: fixed fields in every test case</a></li><li><a href="#96-checklist-in-priority-order">9.6 Checklist, in priority order</a></li></ol></li><li style="--c:var(--hue-4)"><a class="toc-ch" href="#10-requirements-and-tests-in-the-graph-traceability"><span class="n">10</span><span>Requirements and tests in the graph (traceability)</span></a><ol><li><a href="#101-what-changed">10.1 What changed</a></li><li><a href="#102-what-you-can-now-ask">10.2 What you can now ask</a></li><li><a href="#103-where-you-see-it">10.3 Where you see it</a></li><li><a href="#104-what-it-depends-on">10.4 What it depends on</a></li></ol></li><li style="--c:var(--hue-5)"><a class="toc-ch" href="#11-drafting-a-software-requirements-specification-with-esam"><span class="n">11</span><span>Drafting a software requirements specification with ESAM</span></a><ol><li><a href="#111-what-you-provide-the-authoring-brief">11.1 What you provide: the authoring brief</a></li><li><a href="#112-what-esam-does">11.2 What ESAM does</a></li><li><a href="#113-what-is-checked">11.3 What is checked</a></li><li><a href="#114-the-standards-library">11.4 The standards library</a></li><li><a href="#115-the-evidence-pack">11.5 The evidence pack</a></li><li><a href="#116-after-the-draft">11.6 After the draft</a></li></ol></li><li style="--c:var(--hue-6)"><a class="toc-ch" href="#12-working-with-the-esam-agents"><span class="n">12</span><span>Working with the ESAM agents</span></a><ol><li><a href="#121-the-team-and-what-it-will-never-do">12.1 The team, and what it will never do</a></li><li><a href="#122-before-you-start">12.2 Before you start</a></li><li><a href="#123-asking-a-question">12.3 Asking a question</a></li><li><a href="#124-bringing-in-a-new-document">12.4 Bringing in a new document</a></li><li><a href="#125-drafting-an-srs">12.5 Drafting an SRS</a></li><li><a href="#126-following-a-task">12.6 Following a task</a></li><li><a href="#127-when-something-goes-wrong">12.7 When something goes wrong</a></li><li><a href="#128-without-the-cockpit">12.8 Without the Cockpit</a></li><li><a href="#129-how-long-it-takes-and-what-it-costs">12.9 How long it takes, and what it costs</a></li></ol></li></ol></nav>
+  </aside>
+  <div class="scrim" hidden></div>
+  <main id="main">
+    <header class="hero" id="top">
+      <div class="hero-inner">
+        <div class="eyebrow">ESAM · Systems Engineering</div>
+        <h1>ESAM User Manual for Systems Engineers</h1>
+        <p class="lede">The baseline, the documents ESAM reads, and the agents that read them, explained in SE terms. Twelve topics, with interactive figures you can poke at.</p>
+        <div class="meta"><div class="meta-card"><div class="meta-k">Audience</div><div class="meta-v">Systems Engineers (SEs) and SE leads who own the vehicle baseline and the documents ESAM reads.</div></div><div class="meta-card"><div class="meta-k">You don&#x27;t need to know</div><div class="meta-v">Python, databases or AI internals. Where a technical idea matters to your work, this manual explains it in SE terms.</div></div><div class="meta-card"><div class="meta-k">Status</div><div class="meta-v">living document, grown one topic at a time. Examples use a synthetic vehicle, SYNTH-LTV (a Brake Control ECU and a Driver Digital Cluster linked by a J1939 CAN backbone); it is not a real programme.</div></div></div>
+      </div>
+    </header>
+    <div class="content">
+      <h2 class="cards-h">Contents</h2>
+      <div class="cards"><a class="card" href="#1-creating-and-maintaining-the-yaml-baseline" style="--c:var(--hue-1)"><span class="card-n">1</span><span class="card-t">Creating and maintaining the YAML baseline</span><span class="card-m">3 min read · 5 parts<span class="tag">Interactive</span></span></a><a class="card" href="#2-how-esam-reads-your-documents-chunks-and-rows" style="--c:var(--hue-2)"><span class="card-n">2</span><span class="card-t">How ESAM reads your documents: chunks and rows</span><span class="card-m">4 min read · 6 parts<span class="tag">Interactive</span></span></a><a class="card" href="#3-vectors-what-the-768-numbers-are" style="--c:var(--hue-3)"><span class="card-n">3</span><span class="card-t">Vectors: what the 768 numbers are</span><span class="card-m">1 min read<span class="tag">Interactive</span></span></a><a class="card" href="#4-how-esam-walks-the-baseline-recursive-ctes" style="--c:var(--hue-4)"><span class="card-n">4</span><span class="card-t">How ESAM walks the baseline (recursive CTEs)</span><span class="card-m">3 min read · 5 parts<span class="tag">Interactive</span></span></a><a class="card" href="#5-finding-gaps-after-ingestion" style="--c:var(--hue-5)"><span class="card-n">5</span><span class="card-t">Finding gaps after ingestion</span><span class="card-m">3 min read · 3 parts<span class="tag">Interactive</span></span></a><a class="card" href="#6-when-to-move-to-a-dedicated-graph-database" style="--c:var(--hue-6)"><span class="card-n">6</span><span class="card-t">When to move to a dedicated graph database</span><span class="card-m">2 min read · 4 parts</span></a><a class="card" href="#7-when-esam-says-that-document-doesnt-exist-yet" style="--c:var(--hue-1)"><span class="card-n">7</span><span class="card-t">When ESAM says &quot;that document doesn&#x27;t exist yet&quot;</span><span class="card-m">3 min read · 5 parts<span class="tag">Interactive</span></span></a><a class="card" href="#8-the-esam-ontology-the-programmes-vocabulary" style="--c:var(--hue-2)"><span class="card-n">8</span><span class="card-t">The ESAM ontology: the programme&#x27;s vocabulary</span><span class="card-m">4 min read · 6 parts</span></a><a class="card" href="#9-where-attributes-go-and-writing-documents-esam-can-read" style="--c:var(--hue-3)"><span class="card-n">9</span><span class="card-t">Where attributes go, and writing documents ESAM can read</span><span class="card-m">3 min read · 6 parts</span></a><a class="card" href="#10-requirements-and-tests-in-the-graph-traceability" style="--c:var(--hue-4)"><span class="card-n">10</span><span class="card-t">Requirements and tests in the graph (traceability)</span><span class="card-m">2 min read · 4 parts<span class="tag">Interactive</span></span></a><a class="card" href="#11-drafting-a-software-requirements-specification-with-esam" style="--c:var(--hue-5)"><span class="card-n">11</span><span class="card-t">Drafting a software requirements specification with ESAM</span><span class="card-m">4 min read · 6 parts<span class="tag">Interactive</span></span></a><a class="card" href="#12-working-with-the-esam-agents" style="--c:var(--hue-6)"><span class="card-n">12</span><span class="card-t">Working with the ESAM agents</span><span class="card-m">7 min read · 9 parts<span class="tag">Interactive</span></span></a></div>
+      <section class="chap" style="--c:var(--hue-1)" data-ch="1" data-title="Creating and maintaining the YAML baseline"><header class="chap-head"><span class="chap-n">1</span><div><h2 id="1-creating-and-maintaining-the-yaml-baseline">Creating and maintaining the YAML baseline<a class="hlink" href="#1-creating-and-maintaining-the-yaml-baseline" aria-label="Link to this section">#</a></h2><div class="chap-meta">3 min read · 5 parts<span class="tag">Interactive</span></div></div></header><div class="sub"><h3 id="11-what-the-baseline-is">1.1 What the baseline is<a class="hlink" href="#11-what-the-baseline-is" aria-label="Link to this section">#</a></h3>
+<p>The YAML baseline is the <strong>authoritative decomposition of the vehicle</strong>: which systems and subsystems exist, how they nest, how they connect and which documents describe each one. ESAM builds its graph from this file. When ESAM says &quot;the Brake ECU is part of Suspension/Steering, which is part of the Lead Variant,&quot; it is reading your baseline.</p>
+<p>It is a <strong>Systems Engineering artefact, not an IT configuration file.</strong> The SE team owns it, edits it and keeps it under version control in Git (ESAM Pilot Implementation §4.3). Nothing an AI tool produces goes into the baseline until an SE has reviewed and approved it.</p>
+</div><div class="sub"><h3 id="12-where-the-first-version-comes-from">1.2 Where the first version comes from<a class="hlink" href="#12-where-the-first-version-comes-from" aria-label="Link to this section">#</a></h3>
+<p>You rarely start from a blank page. There are three practical sources, and most programmes use a mix of them.</p>
+<div class="tbl cols-4"><table>
+<thead>
+<tr>
+<th>Source</th>
+<th>What it gives you</th>
+<th>How it gets into YAML</th>
+<th>Trust level</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Source"><strong>A. The programme's contract WBS</strong> <em>(start here)</em></td>
+<td data-label="What it gives you">Systems and subsystems, WBS codes, names, nesting (MIL-STD-881F Levels 1–3, often 4)</td>
+<td data-label="How it gets into YAML">Export from wherever the WBS lives (Excel, MS Project, cost tool) and run a converter script</td>
+<td data-label="Trust level"><span class="chip-s ok">High</span> the WBS is already contractually reviewed</td>
+</tr>
+<tr>
+<td data-label="Source"><strong>B. The MBSE model</strong> (e.g. Cameo / SysML), if one exists</td>
+<td data-label="What it gives you">Block hierarchy, ports, interfaces between blocks</td>
+<td data-label="How it gets into YAML">Export the model's blocks and connectors and run a converter</td>
+<td data-label="Trust level"><span class="chip-s part">Medium</span> only as good as how current the model is. Check first.</td>
+</tr>
+<tr>
+<td data-label="Source"><strong>C. AI-drafted proposals from documents</strong></td>
+<td data-label="What it gives you">Functions, messages, interfaces and document-to-subsystem links that no WBS carries</td>
+<td data-label="How it gets into YAML">ESAM reads your design documents and ICDs and <strong>proposes</strong> additions</td>
+<td data-label="Trust level"><span class="chip-s crit">Low until reviewed</span> every proposal is marked <code>candidate</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Rule:</strong> sources A and B give you the skeleton. Source C helps fill in detail. <strong>You</strong> decide what becomes <code>confirmed</code>.</p>
+</div><div class="sub"><h3 id="13-the-workflow-step-by-step">1.3 The workflow, step by step<a class="hlink" href="#13-the-workflow-step-by-step" aria-label="Link to this section">#</a></h3>
+<div class="tbl cols-3"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Who</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Step">1</td>
+<td data-label="Who">SE + converter script</td>
+<td data-label="What happens">Export the contract WBS and convert it into a skeleton YAML (the tree of systems and subsystems with WBS codes).</td>
+</tr>
+<tr>
+<td data-label="Step">2</td>
+<td data-label="Who">SE</td>
+<td data-label="What happens">Add the attributes a WBS doesn't carry, such as <code>safety_critical</code>, <code>safety_classification</code>, <code>os_class</code>, functions, interfaces, and which document file belongs to which node. AI-drafted proposals (source C) can be reviewed here.</td>
+</tr>
+<tr>
+<td data-label="Step">3</td>
+<td data-label="Who">Automatic check</td>
+<td data-label="What happens">A schema check catches errors before commit: malformed WBS codes, duplicate IDs, references to nodes that don't exist, documents listed but missing.</td>
+</tr>
+<tr>
+<td data-label="Step">4</td>
+<td data-label="Who">SE</td>
+<td data-label="What happens">Commit to Git with a meaningful message (&quot;Add EBC1 consumer: Engine ECM&quot;). Git gives you the full change history and who made each change.</td>
+</tr>
+<tr>
+<td data-label="Step">5</td>
+<td data-label="Who">IT/SW (or automatic)</td>
+<td data-label="What happens">The ingestion utility reads the YAML and updates the graph database.</td>
+</tr>
+<tr>
+<td data-label="Step">6</td>
+<td data-label="Who">SE</td>
+<td data-label="What happens">Review the <strong>Diff Matrix</strong> in the SE Cockpit (exactly which nodes and links will change), then press <strong>Approve and Lock Baseline</strong>.</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="fig" id="fig-workflow"><div class="fig-head"><span class="fig-kicker">Interactive</span><span class="fig-title">From contract WBS to a locked baseline</span></div><div class="fig-body"><ol class="flow" data-flow></ol><div class="fig-ctl"><button class="btn" data-play>▶ Play the flow</button><span class="legend"><i class="who se"></i>SE <i class="who auto"></i>Automatic <i class="who it"></i>IT/SW</span></div></div><figcaption>Two gates protect the baseline: the schema check (step 3) and your approval (step 6).</figcaption></figure></div><div class="sub"><h3 id="14-what-goes-in-each-entry">1.4 What goes in each entry<a class="hlink" href="#14-what-goes-in-each-entry" aria-label="Link to this section">#</a></h3>
+<p>A minimal subsystem entry, from the SYNTH-LTV example baseline:</p>
+<div class="code"><div class="code-bar"><span>yaml</span><button class="copy" type="button">Copy</button></div><pre><code>- id: SUB-BRK-ECU                          # unique, stable ID. Never reuse or rename
+  name: &quot;Brake Control ECU (ABS)&quot;
+  safety_critical: true                    # SE attribute, not in the WBS
+  safety_classification: &quot;MIL-STD-882E SwCI 1&quot;
+  os_class: rtos                           # rtos | gpos
+  functions:
+    - id: FN-BRK-STATUS
+      name: &quot;Brake status broadcast&quot;
+      description: &quot;Publishes ABS/brake state on the J1939 backbone (EBC1).&quot;
+</code></pre></div>
+<p>Good habits:</p>
+<ul>
+<li><strong>IDs are permanent.</strong> Rename the <code>name</code>, never the <code>id</code>. Documents, links and history all point at the ID.</li>
+<li><strong>Use the real WBS code</strong> from the contract WBS for anything at MIL-STD-881F Level 3 or above. Don't invent codes for lower levels; ESAM works them out from where the node sits in the tree.</li>
+<li><strong>Write a one-sentence <code>description</code></strong> for functions and any node you add yourself. ESAM uses descriptions to match incoming documents to the right node.</li>
+<li><strong>Link every document explicitly</strong> (<code>file:</code> under <code>artifacts:</code>). Don't rely on file names to imply which subsystem a document belongs to.</li>
+</ul>
+</div><div class="sub status"><h3 id="15-tooling-status">1.5 Tooling status<a class="hlink" href="#15-tooling-status" aria-label="Link to this section">#</a></h3>
+<p>The WBS-to-YAML converter (step 1) and the automatic schema check (step 3) are planned pilot tooling and not yet available. Until they are, the baseline is written by hand.</p>
+</div><nav class="prevnext"><span></span><a class="pn next" href="#2-how-esam-reads-your-documents-chunks-and-rows"><small>Next →</small>2. How ESAM reads your documents: chunks and rows</a></nav></section><section class="chap" style="--c:var(--hue-2)" data-ch="2" data-title="How ESAM reads your documents: chunks and rows"><header class="chap-head"><span class="chap-n">2</span><div><h2 id="2-how-esam-reads-your-documents-chunks-and-rows">How ESAM reads your documents: chunks and rows<a class="hlink" href="#2-how-esam-reads-your-documents-chunks-and-rows" aria-label="Link to this section">#</a></h2><div class="chap-meta">4 min read · 6 parts<span class="tag">Interactive</span></div></div></header><div class="sub"><h3 id="21-why-documents-are-cut-into-chunks">2.1 Why documents are cut into chunks<a class="hlink" href="#21-why-documents-are-cut-into-chunks" aria-label="Link to this section">#</a></h3>
+<p>ESAM can't usefully search a whole document as one unit. A 1,000-page SSDD is &quot;about&quot; everything, so as a single search entry it matches nothing in particular. Instead, ESAM cuts each document into <strong>chunks</strong> (short passages of roughly one paragraph to half a page) and searches those.</p>
+<p>Think of it as a <strong>card index</strong>. Every chunk becomes one index card holding:</p>
+<ul>
+<li>the <strong>text excerpt</strong>,</li>
+<li>a <strong>label</strong> saying which document and section it came from, and</li>
+<li>a <strong>fingerprint</strong> (the <em>vector</em>, see <a class="xref" href="#3-vectors-what-the-768-numbers-are" data-tip="§3 Vectors: what the 768 numbers are">§3</a>) that lets ESAM find cards with similar meaning, even when the wording differs.</li>
+</ul>
+</div><div class="sub"><h3 id="22-one-chunk--one-row">2.2 One chunk = one row<a class="hlink" href="#22-one-chunk--one-row" aria-label="Link to this section">#</a></h3>
+<p>Each chunk is stored as <strong>exactly one row</strong> in the database, and a row is never split further. A document cut into 100 chunks becomes 100 rows. In the SYNTH-LTV example, five short documents became 28 rows:</p>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Rows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Document">ICD-BRK-001</td>
+<td data-label="Rows">8</td>
+</tr>
+<tr>
+<td data-label="Document">SDD-BRK-001</td>
+<td data-label="Rows">6</td>
+</tr>
+<tr>
+<td data-label="Document">SDD-DCL-001</td>
+<td data-label="Rows">6</td>
+</tr>
+<tr>
+<td data-label="Document">SRS-BRK-001</td>
+<td data-label="Rows">4</td>
+</tr>
+<tr>
+<td data-label="Document">SRS-DCL-001</td>
+<td data-label="Rows">4</td>
+</tr>
+</tbody>
+</table></div>
+<p>What one row holds:</p>
+<div class="tbl cols-3"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Example</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Field"><code>id</code></td>
+<td data-label="Example"><code>ICD-BRK-001::0002</code></td>
+<td data-label="Purpose">Unique key: document plus chunk number</td>
+</tr>
+<tr>
+<td data-label="Field"><code>chunk_index</code></td>
+<td data-label="Example"><code>2</code></td>
+<td data-label="Purpose">Position in the document, so chunks can be put back in order</td>
+</tr>
+<tr>
+<td data-label="Field"><code>artifact_id</code></td>
+<td data-label="Example"><code>ICD-BRK-001</code></td>
+<td data-label="Purpose">Which document it came from. This is the link to the graph (your baseline).</td>
+</tr>
+<tr>
+<td data-label="Field"><code>content</code></td>
+<td data-label="Example"><code>[ICD-BRK-001 — … › 2. …]</code> + text</td>
+<td data-label="Purpose">The words, with the section label in front</td>
+</tr>
+<tr>
+<td data-label="Field"><code>metadata</code></td>
+<td data-label="Example">tags</td>
+<td data-label="Purpose">Extra labels that searches can filter on</td>
+</tr>
+<tr>
+<td data-label="Field"><code>embedding</code></td>
+<td data-label="Example"><code>[-0.0417, -0.0059, …]</code></td>
+<td data-label="Purpose">The fingerprint: one list of numbers (<a class="xref" href="#3-vectors-what-the-768-numbers-are" data-tip="§3 Vectors: what the 768 numbers are">§3</a>)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Loading a new revision replaces the old one.</strong> ESAM deletes every row for a document before loading the new version, so Rev B never mixes with Rev A.</p>
+<figure class="fig" id="fig-rows"><div class="fig-head"><span class="fig-kicker">Interactive</span><span class="fig-title">Five documents, 28 rows</span></div><div class="fig-body"><div class="bars" data-rows></div><div class="cards-out" data-cards aria-live="polite"></div></div><figcaption>Select a document to see its chunks: one index card per row, numbered so they can be put back in order.</figcaption></figure></div><div class="sub"><h3 id="23-what-happens-to-a-large-word-document-ssdd-system-test-description">2.3 What happens to a large Word document (SSDD, System Test Description)<a class="hlink" href="#23-what-happens-to-a-large-word-document-ssdd-system-test-description" aria-label="Link to this section">#</a></h3>
+<p><strong>Scale, for a 1,000-page document:</strong></p>
+<div class="tbl cols-2 lead-empty"><table>
+<thead>
+<tr>
+<th></th>
+<th>Estimate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="">Text</td>
+<td data-label="Estimate">~500,000 words (~3 million characters)</td>
+</tr>
+<tr>
+<td data-label="">Chunks (rows)</td>
+<td data-label="Estimate">~2,500–5,000</td>
+</tr>
+<tr>
+<td data-label="">Time to process on the CPU-only pilot VM</td>
+<td data-label="Estimate">roughly 5–15 minutes, once per revision</td>
+</tr>
+<tr>
+<td data-label="">Database space</td>
+<td data-label="Estimate">~15–25 MB</td>
+</tr>
+</tbody>
+</table></div>
+<p>Size is not the problem. <strong>How cleanly the document splits is.</strong></p>
+<p><strong>The steps:</strong></p>
+<div class="tbl cols-3"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What ESAM does</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Step">Convert</td>
+<td data-label="What ESAM does">Reads the .docx and turns Word heading styles (Heading 1/2/3) into a section tree</td>
+<td data-label="Why">The section tree is how every chunk knows where it sits</td>
+</tr>
+<tr>
+<td data-label="Step">Clean</td>
+<td data-label="What ESAM does">Drops the table of contents, revision history, lists of figures, and repeated headers and footers; accepts tracked changes</td>
+<td data-label="Why">Otherwise the table of contents matches every search</td>
+</tr>
+<tr>
+<td data-label="Step">Split on structure</td>
+<td data-label="What ESAM does">Cuts at section numbers first, then at <strong>requirement IDs</strong> (SRS, SDD) or <strong>test case IDs</strong> (test documents); only splits by length inside a long section</td>
+<td data-label="Why">One chunk per requirement or test case is far more useful than an arbitrary slice</td>
+</tr>
+<tr>
+<td data-label="Step">Label</td>
+<td data-label="What ESAM does">Prefixes every chunk with its full path, e.g. <code>SDD-BRK-001 › 3.2 Wheel-slip control › 3.2.4 Pressure modulation</code></td>
+<td data-label="Why">On page 600, &quot;the rate shall be 100 ms&quot; means nothing without its label</td>
+</tr>
+<tr>
+<td data-label="Step">Tag</td>
+<td data-label="What ESAM does">Records the IDs a chunk mentions, e.g. <code>verifies: SRS-BRK-012</code></td>
+<td data-label="Why">These become links in the graph: this test <em>verifies</em> that requirement</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Requirements and design documents (SRS, SDD, SSDD)</strong> are mostly prose and requirements. They split by section, then by requirement.</p>
+<p><strong>Test documents (STD/STP)</strong> are mostly tables. ESAM keeps <strong>one test case per chunk</strong> where possible: ID, objective, requirements verified, setup, steps and expected results together. A very long step table is split by step, and every piece repeats the test case ID and the table header. Table rows are rewritten as sentences (&quot;Step 4: Apply 50% pedal → Expected: EBC1 ABS-active flag = 1&quot;) because search models read sentences better than grids.</p>
+<figure class="fig" id="fig-chunk"><div class="fig-head"><span class="fig-kicker">Interactive</span><span class="fig-title">What ESAM does to a large Word document</span></div><div class="fig-body"><ol class="chev" data-chev></ol><div class="detail" data-chev-detail></div></div><figcaption>Select a step to see why it matters.</figcaption></figure></div><div class="sub"><h3 id="24-how-to-write-documents-that-chunk-well">2.4 How to write documents that chunk well<a class="hlink" href="#24-how-to-write-documents-that-chunk-well" aria-label="Link to this section">#</a></h3>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Do</th>
+<th>Avoid</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Do">Use real Word <strong>heading styles</strong> for every section</td>
+<td data-label="Avoid">Bold or enlarged text used as fake headings</td>
+</tr>
+<tr>
+<td data-label="Do">Number sections consistently (<code>3.2.4</code>)</td>
+<td data-label="Avoid">Unnumbered or hand-renumbered sections</td>
+</tr>
+<tr>
+<td data-label="Do">Write requirement and test IDs in one consistent format (<code>SRS-BRK-012</code>)</td>
+<td data-label="Avoid">Mixed formats (<code>SRS BRK 12</code>, <code>Req 12</code>)</td>
+</tr>
+<tr>
+<td data-label="Do">Give each test case a fixed <strong>&quot;Verifies:&quot;</strong> field</td>
+<td data-label="Avoid">Traceability buried in free text</td>
+</tr>
+<tr>
+<td data-label="Do">Put each requirement in its own paragraph</td>
+<td data-label="Avoid">Several &quot;shall&quot; statements in one paragraph</td>
+</tr>
+<tr>
+<td data-label="Do">Keep tables as real Word tables</td>
+<td data-label="Avoid">Tables pasted in as images</td>
+</tr>
+</tbody>
+</table></div>
+</div><div class="sub"><h3 id="25-the-two-filing-rules-in-plain-english">2.5 The two filing rules in plain English<a class="hlink" href="#25-the-two-filing-rules-in-plain-english" aria-label="Link to this section">#</a></h3>
+<p>ESAM files your documents like a good records clerk would, by two rules.</p>
+<p><strong>Rule 1: one topic per index card.</strong> A card that mixes brake timing, display fonts and power supply is hard to find and only partly relevant when found. A card about one thing is easy to find and easy to trust. <strong>In SE terms, one chunk should cover one requirement, one test case, one message definition or one design decision.</strong> That's why ESAM splits on requirement and test case IDs instead of every <em>N</em> characters.</p>
+<p><strong>Rule 2: every card says where it came from.</strong> On its own, <em>&quot;The message shall be transmitted every 100 ms&quot;</em> is useless: which message, which system? Labelled <strong>&quot;ICD-BRK-001 › 2. EBC1 message definition,&quot;</strong> it becomes a usable fact. The label lets ESAM <strong>find</strong> the chunk (a question about the brake ECU matches even though the sentence never says &quot;brake&quot;), lets you <strong>trust</strong> the answer (it can cite &quot;per ICD-BRK-001 §2&quot;) and <strong>links</strong> the chunk to the right node in your baseline.</p>
+<blockquote class="callout tldr">
+<p><em>One-line version:</em> ESAM files your documents as index cards, one topic per card and each card stamped with its document and section, so it can find the right fact and always show you where it came from.</p>
+</blockquote>
+</div><div class="sub status"><h3 id="26-tooling-status">2.6 Tooling status<a class="hlink" href="#26-tooling-status" aria-label="Link to this section">#</a></h3>
+<p>ESAM currently reads Markdown documents. Word (.docx) conversion, the cleaning step, splitting at requirement and test case IDs, and ID tagging are planned but not yet available.</p>
+</div><nav class="prevnext"><a class="pn prev" href="#1-creating-and-maintaining-the-yaml-baseline"><small>← Previous</small>1. Creating and maintaining the YAML baseline</a><a class="pn next" href="#3-vectors-what-the-768-numbers-are"><small>Next →</small>3. Vectors: what the 768 numbers are</a></nav></section><section class="chap" style="--c:var(--hue-3)" data-ch="3" data-title="Vectors: what the 768 numbers are"><header class="chap-head"><span class="chap-n">3</span><div><h2 id="3-vectors-what-the-768-numbers-are">Vectors: what the 768 numbers are<a class="hlink" href="#3-vectors-what-the-768-numbers-are" aria-label="Link to this section">#</a></h2><div class="chap-meta">1 min read<span class="tag">Interactive</span></div></div></header><div class="sub intro">
+<p><strong>How vectors work.</strong> Every chunk (and every question you ask) is turned into one list of numbers called a <strong>vector</strong>. Latitude and longitude are two numbers that place a city on a map; a vector is a few hundred numbers that place a passage of text on a &quot;map of meaning.&quot; Passages that mean similar things land close together even when the wording differs, so &quot;ABS status broadcast&quot; sits near &quot;EBC1 brake message.&quot; A search turns your question into a vector and returns the chunks whose vectors are closest. The <strong>score</strong> (1.0 means the same meaning, near 0 means unrelated) measures that closeness.</p>
+<p><strong>What the numbers mean.</strong> Individually, nothing you can read: no single number stands for &quot;brakes&quot; or &quot;timing.&quot; Meaning comes only from comparing one whole list with another.</p>
+<p><strong>The number depends on the model.</strong> The length of the list is fixed by the embedding model, not chosen by us. ESAM uses <code>bge-base-en-v1.5</code>, which produces <strong>768</strong> numbers per chunk, so the pilot database column is declared as 768-dim. Other models produce 384, 1,024, 1,536 or 3,072 numbers. Consequences:</p>
+<ul>
+<li><strong>Vectors from different models can't be compared</strong>, even if they happen to be the same length. Each model draws its own map.</li>
+<li><strong>Changing the model means re-processing every document</strong>, and if the length changes, the database column changes too. ESAM refuses to mix vectors from different models.</li>
+<li><strong>Storage is small:</strong> 768 numbers ≈ 3 KB per chunk, so ~15 MB for a 5,000-chunk document.</li>
+</ul>
+<figure class="fig" id="fig-vectors"><div class="fig-head"><span class="fig-kicker">Interactive</span><span class="fig-title">A map of meaning</span></div><div class="fig-body"><div class="vec"><div class="vec-plot" data-vplot></div><div class="vec-side"><div class="ctl-label">Ask a question</div><div class="chips" data-vq></div><div class="ctl-label" style="margin-top:14px">Closest chunks</div><ol class="hits" data-vhits></ol></div></div></div><figcaption>Illustrative only: a 2-D sketch of what are really 768 dimensions. Positions and scores are made up for the picture; the chunk labels are real sections of the SYNTH-LTV documents.</figcaption></figure></div><nav class="prevnext"><a class="pn prev" href="#2-how-esam-reads-your-documents-chunks-and-rows"><small>← Previous</small>2. How ESAM reads your documents: chunks and rows</a><a class="pn next" href="#4-how-esam-walks-the-baseline-recursive-ctes"><small>Next →</small>4. How ESAM walks the baseline (recursive CTEs)</a></nav></section><section class="chap" style="--c:var(--hue-4)" data-ch="4" data-title="How ESAM walks the baseline (recursive CTEs)"><header class="chap-head"><span class="chap-n">4</span><div><h2 id="4-how-esam-walks-the-baseline-recursive-ctes">How ESAM walks the baseline (recursive CTEs)<a class="hlink" href="#4-how-esam-walks-the-baseline-recursive-ctes" aria-label="Link to this section">#</a></h2><div class="chap-meta">3 min read · 5 parts<span class="tag">Interactive</span></div></div></header><div class="sub intro">
+<p>Your baseline is a tree (vehicle → family → variant → system → subsystem → documents) with interfaces running across it. To answer questions like <em>&quot;where does this document sit?&quot;</em> or <em>&quot;what's affected if this changes?&quot;</em>, ESAM has to <strong>walk</strong> that structure. In the pilot it does this with a database technique called a <strong>recursive CTE</strong>.</p>
+</div><div class="sub"><h3 id="41-what-the-term-means">4.1 What the term means<a class="hlink" href="#41-what-the-term-means" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>CTE (Common Table Expression)</strong> is a named, temporary result inside one database query. It works like a scratch-pad table that exists only while the question is being answered.</li>
+<li><strong>Recursive</strong> means the scratch-pad builds on itself: start somewhere, take one step, then take another step from wherever you landed, and repeat until there's nowhere new to go.</li>
+</ul>
+<p><strong>Analogy: walking an org chart, or a WBS.</strong> &quot;Who is in this division?&quot; means: find the division, then everyone who reports to it, then everyone who reports to them, and so on until nobody new turns up. You don't need to know in advance whether that's 2 levels or 7.</p>
+</div><div class="sub"><h3 id="42-why-esam-needs-it">4.2 Why ESAM needs it<a class="hlink" href="#42-why-esam-needs-it" aria-label="Link to this section">#</a></h3>
+<p>An ordinary database query follows a <strong>fixed</strong> number of links (&quot;go to the parent, then the grandparent&quot;). A vehicle decomposition has no fixed depth: one document may sit three levels down, another six. A recursive CTE follows <strong>however many levels there are</strong>. This is what lets the pilot use a standard PostgreSQL database as a graph, without a separate graph database product.</p>
+</div><div class="sub"><h3 id="43-what-one-looks-like">4.3 What one looks like<a class="hlink" href="#43-what-one-looks-like" aria-label="Link to this section">#</a></h3>
+<p>The question <em>&quot;Where does ICD-BRK-001 sit in the vehicle?&quot;</em> is written as:</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button">Copy</button></div><pre><code>WITH RECURSIVE up AS (
+    -- 1. START: the document
+    SELECT ... WHERE id = 'ICD-BRK-001'
+  UNION ALL
+    -- 2. STEP: from whatever has been found, follow one link upward
+    --    (document → its owning subsystem, subsystem → its parent, ...)
+    SELECT parent ... FROM up JOIN graph_edges ...
+    -- 3. SAFETY: never revisit something already on the path (prevents endless loops)
+    WHERE NOT parent = ANY(path)
+)
+SELECT depth, id, name, wbs FROM up;
+</code></pre></div>
+<p>The answer, from the example baseline:</p>
+<div class="code"><div class="code-bar"><span>text</span><button class="copy" type="button">Copy</button></div><pre><code> depth | id          | name                                       | wbs
+-------+-------------+--------------------------------------------+---------
+     0 | ICD-BRK-001 | Brake ECU J1939 Interface Control Document |
+     1 | SUB-BRK-ECU | Brake Control ECU (ABS)                    |
+     2 | SYS-SUSP    | Suspension/Steering                        | 1.1.1.5
+     3 | VAR-001     | Lead Variant (Utility)                     | 1.1.1
+     4 | FAM-001     | SYNTH-LTV Family of Vehicles               | 1.1
+     5 | V-001       | SYNTH-LTV Ground Vehicle System            | 1.0
+</code></pre></div>
+<p>One question returned five levels of answer, and nobody had to say how many levels there were.</p>
+</div><div class="sub"><h3 id="44-the-three-parts-and-the-three-kinds-of-question">4.4 The three parts, and the three kinds of question<a class="hlink" href="#44-the-three-parts-and-the-three-kinds-of-question" aria-label="Link to this section">#</a></h3>
+<p>Every recursive CTE has the same three parts:</p>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Part"><strong>Start</strong></td>
+<td data-label="Meaning">The node the question is about</td>
+</tr>
+<tr>
+<td data-label="Part"><strong>Step</strong></td>
+<td data-label="Meaning">Which kind of link to follow (part-of, has-document, sends-message, ...)</td>
+</tr>
+<tr>
+<td data-label="Part"><strong>Safety</strong></td>
+<td data-label="Meaning">Don't revisit nodes, so a loop in the data can't run forever</td>
+</tr>
+</tbody>
+</table></div>
+<p>ESAM uses them in three directions:</p>
+<div class="tbl cols-3"><table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Direction</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Question">&quot;What's under this system?&quot;</td>
+<td data-label="Direction">Down the tree</td>
+<td data-label="Example">Everything inside Suspension/Steering</td>
+</tr>
+<tr>
+<td data-label="Question">&quot;Where does this sit?&quot;</td>
+<td data-label="Direction">Up the tree</td>
+<td data-label="Example">The ICD-BRK-001 example above</td>
+</tr>
+<tr>
+<td data-label="Question">&quot;If this changes, who's affected?&quot;</td>
+<td data-label="Direction">Across interfaces</td>
+<td data-label="Example">Brake ECU changes the EBC1 message, so the Driver Cluster and the Engine ECM are affected</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="fig" id="fig-graph"><div class="fig-head"><span class="fig-kicker">Interactive</span><span class="fig-title">Walk the SYNTH-LTV baseline</span></div><div class="fig-body"><div class="fig-ctl wrap"><button class="btn" data-walk="up">↑ Where does ICD-BRK-001 sit?</button><button class="btn" data-walk="down">↓ What's under Suspension/Steering?</button><button class="btn" data-walk="across">↔ If the Brake ECU changes EBC1, who's affected?</button></div><div class="graph-wrap"><div class="graph" data-graph></div></div><div class="walk-out"><div class="walk-info" data-winfo>Choose a question, or select any box.</div><div class="tbl cols-4"><table class="walk-tbl"><thead><tr><th>depth</th><th>id</th><th>name</th><th>link followed</th></tr></thead><tbody data-wrows><tr class="ph"><td colspan="4" data-label="">Rows appear here as the walk proceeds.</td></tr></tbody></table></div></div></div><figcaption>Start, step, repeat: each step adds one row, and the walk stops when there's nowhere new to go. Dashed orange = candidate interface.</figcaption></figure></div><div class="sub"><h3 id="45-the-same-idea-in-graph-database-languages">4.5 The same idea in graph database languages<a class="hlink" href="#45-the-same-idea-in-graph-database-languages" aria-label="Link to this section">#</a></h3>
+<p>The full deployment targets JanusGraph, which uses the <strong>Gremlin</strong> language. <strong>Cypher</strong> is the language of Neo4j, which is shown for comparison only (it's not approved for this programme). All three express the same &quot;start, step, repeat&quot;:</p>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Language</th>
+<th>&quot;Where does ICD-BRK-001 sit?&quot;</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Language">Recursive CTE (PostgreSQL, the pilot)</td>
+<td data-label="&quot;Where does ICD-BRK-001 sit?&quot;">~10 lines, as in <a class="xref" href="#43-what-one-looks-like" data-tip="§4.3 What one looks like">§4.3</a></td>
+</tr>
+<tr>
+<td data-label="Language">Gremlin (JanusGraph, full deployment)</td>
+<td data-label="&quot;Where does ICD-BRK-001 sit?&quot;"><code>g.V().has('id','ICD-BRK-001').in('HAS_ARTIFACT').emit().repeat(out('PART_OF')).path()</code></td>
+</tr>
+<tr>
+<td data-label="Language">Cypher (Neo4j, comparison only)</td>
+<td data-label="&quot;Where does ICD-BRK-001 sit?&quot;"><code>MATCH (d {id:'ICD-BRK-001'})&lt;-[:HAS_ARTIFACT]-(s)-[:PART_OF*0..]-&gt;(p) RETURN p</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Graph languages are shorter to write. The answers are the same.</p>
+</div><nav class="prevnext"><a class="pn prev" href="#3-vectors-what-the-768-numbers-are"><small>← Previous</small>3. Vectors: what the 768 numbers are</a><a class="pn next" href="#5-finding-gaps-after-ingestion"><small>Next →</small>5. Finding gaps after ingestion</a></nav></section><section class="chap" style="--c:var(--hue-5)" data-ch="5" data-title="Finding gaps after ingestion"><header class="chap-head"><span class="chap-n">5</span><div><h2 id="5-finding-gaps-after-ingestion">Finding gaps after ingestion<a class="hlink" href="#5-finding-gaps-after-ingestion" aria-label="Link to this section">#</a></h2><div class="chap-meta">3 min read · 3 parts<span class="tag">Interactive</span></div></div></header><div class="sub intro">
+<p>Searching documents can only find what exists. <strong>A missing document has no text, so no search can find it.</strong> The baseline graph knows what <em>should</em> exist, which is what lets ESAM report what doesn't.</p>
+</div><div class="sub"><h3 id="51-an-example-finding">5.1 An example finding<a class="hlink" href="#51-an-example-finding" aria-label="Link to this section">#</a></h3>
+<p>&quot;Which subsystems have no document of each type?&quot; on the SYNTH-LTV example:</p>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Missing type</th>
+<th>Subsystems without one</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Missing type">ICD</td>
+<td data-label="Subsystems without one">Driver Cluster, <strong>J1939 Backbone (safety-critical)</strong>, Engine ECM</td>
+</tr>
+<tr>
+<td data-label="Missing type">SDD</td>
+<td data-label="Subsystems without one"><strong>J1939 Backbone (safety-critical)</strong>, Engine ECM</td>
+</tr>
+<tr>
+<td data-label="Missing type">SRS</td>
+<td data-label="Subsystems without one"><strong>J1939 Backbone (safety-critical)</strong>, Engine ECM</td>
+</tr>
+<tr>
+<td data-label="Missing type">STD (test description)</td>
+<td data-label="Subsystems without one"><strong>Brake ECU (safety-critical)</strong>, Driver Cluster, <strong>J1939 Backbone (safety-critical)</strong>, Engine ECM</td>
+</tr>
+</tbody>
+</table></div>
+<p>The key finding: <strong>the safety-critical Brake ECU has no test description.</strong></p>
+</div><div class="sub"><h3 id="52-the-baseline-health-report">5.2 The baseline health report<a class="hlink" href="#52-the-baseline-health-report" aria-label="Link to this section">#</a></h3>
+<p>ESAM checks the baseline, its documents and the graph, and shows the result at the top of the SE Cockpit Dashboard. It runs again every time the page loads, and a one-line summary is printed at the end of every document ingest and graph load. You see both <em>what is changing</em> (the Diff Matrix) and <em>what is still missing</em> before you approve.</p>
+<div class="tbl cols-4"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Check</th>
+<th>What it finds (SYNTH-LTV today)</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="#">1</td>
+<td data-label="Check"><strong>Required documents</strong>, from the ontology's rules (<a class="xref" href="#84-rules-what-each-subsystem-must-have" data-tip="§8.4 Rules: what each subsystem must have">§8.4</a>)</td>
+<td data-label="What it finds (SYNTH-LTV today)">Brake ECU has no STD; the J1939 backbone, the cluster and the engine ECM have no ICD</td>
+<td data-label="Effect"><span class="chip-s info">Reported</span></td>
+</tr>
+<tr>
+<td data-label="#">2</td>
+<td data-label="Check"><strong>Interfaces</strong></td>
+<td data-label="What it finds (SYNTH-LTV today)">A subsystem receives a message but has no interface document saying how it uses it; a confirmed link that cites no interface document; a message nobody originates</td>
+<td data-label="Effect"><span class="chip-s info">Reported</span></td>
+</tr>
+<tr>
+<td data-label="#">3</td>
+<td data-label="Check"><strong>Awaiting SE review</strong></td>
+<td data-label="What it finds (SYNTH-LTV today)">Candidate links: &quot;EBC1 to the engine ECM is a candidate&quot;</td>
+<td data-label="Effect"><span class="chip-s info">Reported</span></td>
+</tr>
+<tr>
+<td data-label="#">4</td>
+<td data-label="Check"><strong>Traceability</strong> (<a class="xref" href="#10-requirements-and-tests-in-the-graph-traceability" data-tip="§10 Requirements and tests in the graph (traceability)">§10</a>)</td>
+<td data-label="What it finds (SYNTH-LTV today)">Requirements no test case verifies (16 today); a test case whose <code>Verifies:</code> line names a requirement that doesn't exist</td>
+<td data-label="Effect"><span class="chip-s info">Reported</span></td>
+</tr>
+<tr>
+<td data-label="#">5</td>
+<td data-label="Check"><strong>Integrity</strong></td>
+<td data-label="What it finds (SYNTH-LTV today)">The baseline breaks the ontology; a listed document file is missing; the graph is out of step with the baseline; a document has no searchable text, or searchable text exists for a document the baseline no longer lists</td>
+<td data-label="Effect"><span class="chip-s crit">Blocks approval</span></td>
+</tr>
+<tr>
+<td data-label="#">6</td>
+<td data-label="Check"><strong>Roll-up</strong>, walking <em>up</em> the tree (<a class="xref" href="#4-how-esam-walks-the-baseline-recursive-ctes" data-tip="§4 How ESAM walks the baseline (recursive CTEs)">§4</a>)</td>
+<td data-label="What it finds (SYNTH-LTV today)">Suspension/Steering 75%, Vehicle Electronics 50%, Power Pack/Drive Train 0%, the whole vehicle 56% of required documents</td>
+<td data-label="Effect"><span class="chip-s info">Reported</span></td>
+</tr>
+</tbody>
+</table></div>
+<p>Gaps are normal mid-programme, so checks 1–4 and 6 inform you and never block. Check 5 means the load itself is broken (what ESAM searches no longer matches what the baseline says), so it blocks approval until fixed. Findings on safety-critical items are marked ⚠.</p>
+<p><strong>The rules are yours.</strong> Which document types each kind of subsystem needs is SE policy, kept in the ontology (<a class="xref" href="#84-rules-what-each-subsystem-must-have" data-tip="§8.4 Rules: what each subsystem must have">§8.4</a>) and versioned in Git like the baseline. Change a rule and checks 1 and 6 change with it.</p>
+<figure class="fig" id="fig-coverage"><div class="fig-head"><span class="fig-kicker">Interactive</span><span class="fig-title">Required documents and roll-up</span></div><div class="fig-body"><div class="fig-ctl wrap"><div class="seg" role="group" aria-label="Rule set"><button data-mode="rules" aria-pressed="true">Ontology rules</button><button data-mode="fixed" aria-pressed="false">Fixed checklist</button></div><button class="std-toggle" type="button" aria-pressed="false"><span class="sw" aria-hidden="true"></span>STD-BRK-001 loaded</button></div><div class="tiles" data-ctiles></div><div class="tbl cov"><table data-cmatrix></table></div><div class="ctl-label" style="margin-top:18px">Roll-up, walking up the tree</div><div class="rollup" data-rollup></div></div><figcaption>✓ present · ✗ missing · – not required · ⚠ safety-critical. Switch to the fixed checklist to see why rules beat one list for every subsystem; load the STD to watch the Brake ECU gap close.</figcaption></figure></div><div class="sub"><h3 id="53-what-to-do-with-the-findings">5.3 What to do with the findings<a class="hlink" href="#53-what-to-do-with-the-findings" aria-label="Link to this section">#</a></h3>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Finding</th>
+<th>Usual action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Finding">Required document missing</td>
+<td data-label="Usual action">Plan the document, or, if the rule doesn't fit this subsystem, change the rule</td>
+</tr>
+<tr>
+<td data-label="Finding">Interface without a document at the receiving end</td>
+<td data-label="Usual action">Get the receiving subsystem's ICD written, or confirm the link isn't real and remove it</td>
+</tr>
+<tr>
+<td data-label="Finding">Candidate link</td>
+<td data-label="Usual action">Review it: confirm it (cite the interface document) or remove it</td>
+</tr>
+<tr>
+<td data-label="Finding">Untested requirement</td>
+<td data-label="Usual action">Add a test case with a <code>Verifies:</code> line, or record why the requirement is verified another way</td>
+</tr>
+<tr>
+<td data-label="Finding">Integrity problem</td>
+<td data-label="Usual action">Re-run the ingest or the graph load, or fix the baseline; then check again before approving</td>
+</tr>
+</tbody>
+</table></div>
+</div><nav class="prevnext"><a class="pn prev" href="#4-how-esam-walks-the-baseline-recursive-ctes"><small>← Previous</small>4. How ESAM walks the baseline (recursive CTEs)</a><a class="pn next" href="#6-when-to-move-to-a-dedicated-graph-database"><small>Next →</small>6. When to move to a dedicated graph database</a></nav></section><section class="chap" style="--c:var(--hue-6)" data-ch="6" data-title="When to move to a dedicated graph database"><header class="chap-head"><span class="chap-n">6</span><div><h2 id="6-when-to-move-to-a-dedicated-graph-database">When to move to a dedicated graph database<a class="hlink" href="#6-when-to-move-to-a-dedicated-graph-database" aria-label="Link to this section">#</a></h2><div class="chap-meta">2 min read · 4 parts</div></div></header><div class="sub intro">
+<p>The pilot stores the baseline graph inside PostgreSQL and walks it with recursive CTEs (<a class="xref" href="#4-how-esam-walks-the-baseline-recursive-ctes" data-tip="§4 How ESAM walks the baseline (recursive CTEs)">§4</a>). The full deployment targets <strong>JanusGraph</strong>, a dedicated graph database. This section explains what should drive that move, so that SEs and PMs can recognise the signals.</p>
+</div><div class="sub"><h3 id="61-size-is-rarely-the-trigger">6.1 Size is rarely the trigger<a class="hlink" href="#61-size-is-rarely-the-trigger" aria-label="Link to this section">#</a></h3>
+<p>A full vehicle programme is not a large graph by database standards:</p>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Content</th>
+<th>Rough scale for one programme</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Content">Systems, subsystems, functions</td>
+<td data-label="Rough scale for one programme">thousands</td>
+</tr>
+<tr>
+<td data-label="Content">Requirements, tests, documents</td>
+<td data-label="Rough scale for one programme">~100,000</td>
+</tr>
+<tr>
+<td data-label="Content">Links (part-of, traces-to, verifies, interfaces)</td>
+<td data-label="Rough scale for one programme">~1 million</td>
+</tr>
+</tbody>
+</table></div>
+<p>PostgreSQL handles this comfortably for ESAM's everyday questions. These figures are rules of thumb; the pilot will measure real numbers (<a class="xref" href="#64-the-plan" data-tip="§6.4 The plan">§6.4</a>).</p>
+</div><div class="sub"><h3 id="62-the-real-signals">6.2 The real signals<a class="hlink" href="#62-the-real-signals" aria-label="Link to this section">#</a></h3>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>What you'd experience</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Signal"><strong>Deep &quot;all paths&quot; impact questions</strong></td>
+<td data-label="What you&#x27;d experience">&quot;Every path by which a change to EBC1 reaches any safety-critical function&quot; slows from instant to many seconds as interfaces grow</td>
+</tr>
+<tr>
+<td data-label="Signal"><strong>Graph analysis</strong></td>
+<td data-label="What you&#x27;d experience">You want shortest paths, the most-connected subsystems, clusters or cycle detection across the whole baseline, and ESAM can't answer without a developer exporting data</td>
+</tr>
+<tr>
+<td data-label="Signal"><strong>New questions are slow to add</strong></td>
+<td data-label="What you&#x27;d experience">Each new kind of question takes developers days, not hours</td>
+</tr>
+<tr>
+<td data-label="Signal"><strong>You want to explore the graph yourself</strong></td>
+<td data-label="What you&#x27;d experience">Visual, click-through exploration and writing your own queries without a developer</td>
+</tr>
+<tr>
+<td data-label="Signal"><strong>Many programmes or many users at once</strong></td>
+<td data-label="What you&#x27;d experience">One system serving several programmes, with performance that hardware upgrades no longer fix</td>
+</tr>
+</tbody>
+</table></div>
+<p>In practice, the people-side signals (slow to add questions, SEs wanting self-service) usually arrive first. Size usually arrives last.</p>
+</div><div class="sub"><h3 id="63-what-moving-costs">6.3 What moving costs<a class="hlink" href="#63-what-moving-costs" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Two databases to keep in step.</strong> Document search stays in PostgreSQL while the graph moves out, and the two can disagree if an update half-fails. Today one update covers both.</li>
+<li><strong>Not automatically faster.</strong> JanusGraph is built to spread very large graphs over many servers. On a graph of programme size, PostgreSQL is often as fast.</li>
+<li><strong>More to operate and accredit.</strong> A new product in the IL5 enclave means a new approval footprint and new skills.</li>
+</ul>
+<p>A possible middle step is <strong>Apache AGE</strong>, a PostgreSQL extension that adds a graph query language while keeping a single database. It would need its own approval and evaluation.</p>
+</div><div class="sub"><h3 id="64-the-plan">6.4 The plan<a class="hlink" href="#64-the-plan" aria-label="Link to this section">#</a></h3>
+<ol>
+<li><strong>Stay on PostgreSQL for the pilot.</strong> It fits the IL5 constraints, keeps one database, and the data is small.</li>
+<li><strong>Measure during the pilot.</strong> Record how long each kind of question takes on real programme data.</li>
+<li><strong>Agree the trigger in advance</strong>, for example: <em>&quot;if a typical impact question takes longer than about 2 seconds, or SEs need graph analysis they will actually use, we begin the move to JanusGraph.&quot;</em></li>
+<li><strong>The move is designed to be contained.</strong> ESAM's graph questions all go through one internal interface, so changing the database doesn't change how you use ESAM.</li>
+</ol>
+</div><nav class="prevnext"><a class="pn prev" href="#5-finding-gaps-after-ingestion"><small>← Previous</small>5. Finding gaps after ingestion</a><a class="pn next" href="#7-when-esam-says-that-document-doesnt-exist-yet"><small>Next →</small>7. When ESAM says &quot;that document doesn&#x27;t exist yet&quot;</a></nav></section><section class="chap" style="--c:var(--hue-1)" data-ch="7" data-title="When ESAM says &quot;that document doesn&#x27;t exist yet&quot;"><header class="chap-head"><span class="chap-n">7</span><div><h2 id="7-when-esam-says-that-document-doesnt-exist-yet">When ESAM says &quot;that document doesn&#x27;t exist yet&quot;<a class="hlink" href="#7-when-esam-says-that-document-doesnt-exist-yet" aria-label="Link to this section">#</a></h2><div class="chap-meta">3 min read · 5 parts<span class="tag">Interactive</span></div></div></header><div class="sub"><h3 id="71-why-this-matters">7.1 Why this matters<a class="hlink" href="#71-why-this-matters" aria-label="Link to this section">#</a></h3>
+<p>A document search always returns <em>something</em>: the closest passage that exists. Ask &quot;How is SRS-BRK-011 verified?&quot; when no test description has been written, and the closest passage is the requirement itself. It mentions 15 ms and wheel lock-up, so it looks like an answer, and an AI model given it could write a plausible test procedure that nobody ever approved.</p>
+<p>ESAM prevents this by checking the <strong>baseline</strong> before it answers. The baseline knows which documents each subsystem has, so ESAM can tell the difference between &quot;the documents don't say&quot; and &quot;the document doesn't exist.&quot;</p>
+</div><div class="sub"><h3 id="72-what-esam-does-with-each-question">7.2 What ESAM does with each question<a class="hlink" href="#72-what-esam-does-with-each-question" aria-label="Link to this section">#</a></h3>
+<ol>
+<li><strong>Works out which document type would answer it.</strong> Questions about testing or verification need a test description (STD); questions about messages or interfaces need an ICD; design questions need an SDD; requirement questions need an SRS.</li>
+<li><strong>Works out which subsystem it's about</strong>: the one you name, or else the one whose documents best match the question.</li>
+<li><strong>Checks the baseline.</strong> If that subsystem has no document of that type, ESAM tells you first and plainly, then reports only what the existing documents say, without filling the gap.</li>
+</ol>
+<figure class="fig" id="fig-gap"><div class="fig-head"><span class="fig-kicker">Interactive</span><span class="fig-title">How ESAM answers “How is SRS-BRK-011 verified?”</span></div><div class="fig-body"><div class="fig-ctl"><button class="std-toggle" type="button" aria-pressed="false"><span class="sw" aria-hidden="true"></span>STD-BRK-001 loaded</button></div><ol class="decide" data-decide></ol></div><figcaption>The gap is detected from the baseline, not guessed by the AI.</figcaption></figure></div><div class="sub"><h3 id="73-what-it-looks-like">7.3 What it looks like<a class="hlink" href="#73-what-it-looks-like" aria-label="Link to this section">#</a></h3>
+<p>Asked how SRS-BRK-011 is verified, before a test description exists:</p>
+<blockquote class="callout quote">
+<p><em>This question cannot be answered as requested because the Brake ECU test description (STD) for subsystem SUB-BRK-ECU does not exist in the baseline yet. … SRS-BRK-011 is defined as: &quot;The software shall release brake pressure on a wheel within 15 ms of detecting incipient lock-up on that wheel.&quot; [SRS-BRK-001] … until that document exists, any detailed test sequence or thresholds would be an invention and must not be assumed.</em></p>
+</blockquote>
+<p>The same question after STD-BRK-001 is added to the baseline and loaded:</p>
+<blockquote class="callout quote">
+<p><em>The requirement SRS-BRK-011 is verified by test case TC-BRK-011 … [STD-BRK-001] … Pass criteria: every one of the 200 releases (50 per wheel × 4 wheels) completes within 15 ms …</em></p>
+</blockquote>
+</div><div class="sub"><h3 id="74-the-confidence-test">7.4 The confidence test<a class="hlink" href="#74-the-confidence-test" aria-label="Link to this section">#</a></h3>
+<p>ESAM runs this exact sequence as an automated test: ask, confirm it reports the gap, add the document, ask again, confirm the answer now cites it. It is checked in two ways:</p>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Check"><strong>Baseline checks</strong></td>
+<td data-label="What it proves">The gap is detected from the baseline, not guessed by the AI. These are the guarantee.</td>
+</tr>
+<tr>
+<td data-label="Check"><strong>Answer checks</strong></td>
+<td data-label="What it proves">The AI's wording reports the gap, invents nothing, and cites the new document once it exists. These are simple text rules, a useful signal rather than proof.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The SE Cockpit Dashboard shows the latest run under <strong>Checks</strong>: date, pass or fail, and the before and after answers.</p>
+</div><div class="sub"><h3 id="75-what-this-means-for-you">7.5 What this means for you<a class="hlink" href="#75-what-this-means-for-you" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>&quot;Doesn't exist yet&quot; is a finding, not a failure.</strong> It usually points at the same gap the Dashboard's document coverage table shows in red.</li>
+<li><strong>A new document doesn't confirm a link by itself.</strong> When an ICD shows that a subsystem really does use a message, ESAM will cite it, but still calls a <em>candidate</em> interface unconfirmed. Changing it to confirmed is your decision, made in the baseline.</li>
+<li><strong>ESAM recognises document types and subsystems through the ontology</strong> (<a class="xref" href="#8-the-esam-ontology-the-programmes-vocabulary" data-tip="§8 The ESAM ontology: the programme&#x27;s vocabulary">§8</a>): each document type's words and synonyms, and each subsystem's name and aliases. If people use a term ESAM misses, add it to the ontology or the baseline <code>aliases</code>; no code change is needed.</li>
+</ul>
+</div><nav class="prevnext"><a class="pn prev" href="#6-when-to-move-to-a-dedicated-graph-database"><small>← Previous</small>6. When to move to a dedicated graph database</a><a class="pn next" href="#8-the-esam-ontology-the-programmes-vocabulary"><small>Next →</small>8. The ESAM ontology: the programme&#x27;s vocabulary</a></nav></section><section class="chap" style="--c:var(--hue-2)" data-ch="8" data-title="The ESAM ontology: the programme&#x27;s vocabulary"><header class="chap-head"><span class="chap-n">8</span><div><h2 id="8-the-esam-ontology-the-programmes-vocabulary">The ESAM ontology: the programme&#x27;s vocabulary<a class="hlink" href="#8-the-esam-ontology-the-programmes-vocabulary" aria-label="Link to this section">#</a></h2><div class="chap-meta">4 min read · 6 parts</div></div></header><div class="sub"><h3 id="81-what-it-is">8.1 What it is<a class="hlink" href="#81-what-it-is" aria-label="Link to this section">#</a></h3>
+<p>The baseline (<a class="xref" href="#1-creating-and-maintaining-the-yaml-baseline" data-tip="§1 Creating and maintaining the YAML baseline">§1</a>) says <strong>what this vehicle is made of</strong>. The ontology says <strong>what kinds of things, links, values and documents are allowed to exist at all</strong>, and what each kind of subsystem must have. It is the programme's agreed vocabulary, written down so a machine can check it.</p>
+<p>Like the baseline, it is a YAML file owned by the SE team and kept in Git (<code>data/ontology/esam_ontology.yaml</code>). It builds on the standards the programme already uses:</p>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Standard</th>
+<th>What the ontology takes from it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Standard">MIL-STD-881F Appendix G</td>
+<td data-label="What the ontology takes from it">The WBS levels (Vehicle, Family, Variant, System) and their codes</td>
+</tr>
+<tr>
+<td data-label="Standard">MIL-STD-498 / J-STD-016</td>
+<td data-label="What the ontology takes from it">Document type names: SRS, SDD, SSDD, STD, STP, STR</td>
+</tr>
+<tr>
+<td data-label="Standard">MIL-STD-882E</td>
+<td data-label="What the ontology takes from it">Software criticality index, SwCI 1 to 5</td>
+</tr>
+<tr>
+<td data-label="Standard">SAE J1939</td>
+<td data-label="What the ontology takes from it">Message names and PGNs on interfaces</td>
+</tr>
+</tbody>
+</table></div>
+</div><div class="sub"><h3 id="82-what-it-contains">8.2 What it contains<a class="hlink" href="#82-what-it-contains" aria-label="Link to this section">#</a></h3>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Part"><strong>Kinds of things</strong> (classes), each with an ID form</td>
+<td data-label="Example">Subsystem IDs look like <code>SUB-BRK-ECU</code>; document IDs like <code>SRS-BRK-001</code></td>
+</tr>
+<tr>
+<td data-label="Part"><strong>Kinds of links</strong></td>
+<td data-label="Example"><em>is part of</em>, <em>has document</em>, <em>interfaces with</em>; planned: <em>verifies</em>, <em>specified in</em>, <em>allocated to</em></td>
+</tr>
+<tr>
+<td data-label="Part"><strong>Allowed values</strong></td>
+<td data-label="Example"><code>os_class</code>: <code>rtos</code> or <code>gpos</code>. Interface status: <code>candidate</code> or <code>confirmed</code>. Verification method: I, A, D or T</td>
+</tr>
+<tr>
+<td data-label="Part"><strong>Document types</strong>, with standard names and synonyms</td>
+<td data-label="Example"><strong>STD</strong> = Software Test Description; also known as &quot;test description&quot;, &quot;test procedure&quot;</td>
+</tr>
+<tr>
+<td data-label="Part"><strong>Placement</strong>: where each kind of fact belongs</td>
+<td data-label="Example">See <a class="xref" href="#9-where-attributes-go-and-writing-documents-esam-can-read" data-tip="§9 Where attributes go, and writing documents ESAM can read">§9</a></td>
+</tr>
+<tr>
+<td data-label="Part"><strong>Rules</strong>: what each kind of subsystem must have</td>
+<td data-label="Example">See <a class="xref" href="#84-rules-what-each-subsystem-must-have" data-tip="§8.4 Rules: what each subsystem must have">§8.4</a></td>
+</tr>
+</tbody>
+</table></div>
+</div><div class="sub"><h3 id="83-document-names-follow-mil-std-498">8.3 Document names follow MIL-STD-498<a class="hlink" href="#83-document-names-follow-mil-std-498" aria-label="Link to this section">#</a></h3>
+<p>The example documents were originally named SSR (requirements) and SSDD (software design). Neither matches the standard: MIL-STD-498 calls a software requirements document an <strong>SRS</strong> and a software design document an <strong>SDD</strong>, and uses <strong>SSDD</strong> for a different document, the <em>System/Subsystem</em> Design Description. The documents were renamed to the standard names. The old names are kept in the ontology as <strong>synonyms</strong>, so a question that says &quot;SSR&quot; still finds the SRS, but a baseline that lists a document as type <code>ssr</code> is rejected.</p>
+<p>&quot;ICD&quot; is not a MIL-STD-498 name. It is kept as the programme's term, and the ontology records that it covers the standard's IRS (Interface Requirements Specification) and IDD (Interface Design Description).</p>
+</div><div class="sub"><h3 id="84-rules-what-each-subsystem-must-have">8.4 Rules: what each subsystem must have<a class="hlink" href="#84-rules-what-each-subsystem-must-have" aria-label="Link to this section">#</a></h3>
+<p>Instead of checking every subsystem for the same list of documents, the ontology states rules. A subsystem must have every document required by every rule that applies to it:</p>
+<div class="tbl cols-3"><table>
+<thead>
+<tr>
+<th>When the subsystem…</th>
+<th>It must have</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="When the subsystem…">is software (has an <code>os_class</code>)</td>
+<td data-label="It must have">SRS, SDD</td>
+<td data-label="Why">Software is specified and designed</td>
+</tr>
+<tr>
+<td data-label="When the subsystem…">is software <strong>and</strong> safety-critical</td>
+<td data-label="It must have">STD</td>
+<td data-label="Why">Safety-critical software needs a documented test description</td>
+</tr>
+<tr>
+<td data-label="When the subsystem…">has any interface</td>
+<td data-label="It must have">ICD</td>
+<td data-label="Why">Every interface is defined in a controlled document</td>
+</tr>
+</tbody>
+</table></div>
+<p>For SYNTH-LTV, these rules give:</p>
+<div class="tbl cols-4"><table>
+<thead>
+<tr>
+<th>Subsystem</th>
+<th>Must have</th>
+<th>Has</th>
+<th>Missing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Subsystem">Brake ECU (software, safety-critical, interfaces)</td>
+<td data-label="Must have">SRS, SDD, STD, ICD</td>
+<td data-label="Has">SRS, SDD, ICD</td>
+<td data-label="Missing"><strong>STD</strong></td>
+</tr>
+<tr>
+<td data-label="Subsystem">J1939 backbone (safety-critical, interfaces, not software)</td>
+<td data-label="Must have">ICD</td>
+<td data-label="Has">none</td>
+<td data-label="Missing"><strong>ICD</strong></td>
+</tr>
+<tr>
+<td data-label="Subsystem">Driver cluster (software, interfaces)</td>
+<td data-label="Must have">SRS, SDD, ICD</td>
+<td data-label="Has">SRS, SDD</td>
+<td data-label="Missing">ICD</td>
+</tr>
+<tr>
+<td data-label="Subsystem">Engine ECM (interfaces)</td>
+<td data-label="Must have">ICD</td>
+<td data-label="Has">none</td>
+<td data-label="Missing">ICD</td>
+</tr>
+</tbody>
+</table></div>
+<p>That's 9 required documents, 5 present and 4 missing, 2 of them on safety-critical subsystems. A fixed checklist of four types for every subsystem would report 16 required and 11 missing, most of them documents nobody needs (an SDD for a CAN backbone).</p>
+<p>The rules are SE policy. Change them in the ontology and every check that uses them changes with it.</p>
+<p class="seealso">↗ Try these rules interactively in the <a href="#fig-coverage">coverage figure</a> (<a class="xref" href="#52-the-baseline-health-report" data-tip="§5.2 The baseline health report">§5.2</a>).</p></div><div class="sub"><h3 id="85-checking-the-baseline-against-the-ontology">8.5 Checking the baseline against the ontology<a class="hlink" href="#85-checking-the-baseline-against-the-ontology" aria-label="Link to this section">#</a></h3>
+<p>ESAM checks the baseline against the ontology and reports:</p>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Error (must fix)</th>
+<th>Warning (probably a mistake)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Error (must fix)">A value outside the vocabulary (<code>os_class: hard-real-time</code>)</td>
+<td data-label="Warning (probably a mistake)">An attribute the ontology doesn't know (<code>safty_critical</code>), which would otherwise be silently ignored</td>
+</tr>
+<tr>
+<td data-label="Error (must fix)">An ID in the wrong form, or used twice</td>
+<td data-label="Warning (probably a mistake)">A confirmed interface that cites no interface document</td>
+</tr>
+<tr>
+<td data-label="Error (must fix)">A WBS code that doesn't sit under its parent's</td>
+<td data-label="Warning (probably a mistake)">A document file in the folder that the baseline doesn't list</td>
+</tr>
+<tr>
+<td data-label="Error (must fix)">A document whose ID and type disagree (<code>SRS-…</code> listed as type <code>ssr</code>)</td>
+<td data-label="Warning (probably a mistake)"></td>
+</tr>
+<tr>
+<td data-label="Error (must fix)">A document listed in the baseline whose file is missing</td>
+<td data-label="Warning (probably a mistake)"></td>
+</tr>
+</tbody>
+</table></div>
+<p>The SYNTH-LTV baseline currently passes with no errors and no warnings.</p>
+</div><div class="sub"><h3 id="86-what-uses-the-ontology-today">8.6 What uses the ontology today<a class="hlink" href="#86-what-uses-the-ontology-today" aria-label="Link to this section">#</a></h3>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Where</th>
+<th>What it takes from the ontology</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Where"><strong>Baseline check</strong></td>
+<td data-label="What it takes from the ontology">Everything: classes, ID forms, allowed values, document types</td>
+</tr>
+<tr>
+<td data-label="Where"><strong>SE Cockpit Ontology tab</strong></td>
+<td data-label="What it takes from the ontology">Shows the whole ontology, the path to the file, and whether the baseline passes it. If the file has been edited since the Cockpit started, it says so: restart the Cockpit to apply the changes</td>
+</tr>
+<tr>
+<td data-label="Where"><strong>SE Cockpit Dashboard</strong></td>
+<td data-label="What it takes from the ontology">The rules: the document coverage table shows what each subsystem <em>must</em> have, marks the rest &quot;not required&quot;, and lists the rules under the table</td>
+</tr>
+<tr>
+<td data-label="Where"><strong>Answering questions</strong> (<a class="xref" href="#7-when-esam-says-that-document-doesnt-exist-yet" data-tip="§7 When ESAM says &quot;that document doesn&#x27;t exist yet&quot;">§7</a>)</td>
+<td data-label="What it takes from the ontology">Document-type words and synonyms: &quot;test procedure&quot; means an STD, &quot;IRS&quot; means an ICD, the old &quot;SSR&quot; still means an SRS</td>
+</tr>
+<tr>
+<td data-label="Where"><strong>Recognising subsystems in questions</strong></td>
+<td data-label="What it takes from the ontology">Each subsystem's <code>aliases</code> in the baseline (&quot;ECM&quot;, &quot;brake ECU&quot;), declared in the ontology</td>
+</tr>
+</tbody>
+</table></div>
+<p>| <strong>Requirements and test cases</strong> (<a class="xref" href="#10-requirements-and-tests-in-the-graph-traceability" data-tip="§10 Requirements and tests in the graph (traceability)">§10</a>) | The <code>Requirement</code> and <code>TestCase</code> classes and the <em>verifies</em>, <em>specified in</em> and <em>allocated to</em> links |</p>
+<p>The health report (<a class="xref" href="#52-the-baseline-health-report" data-tip="§5.2 The baseline health report">§5.2</a>) uses the same rules.</p>
+</div><nav class="prevnext"><a class="pn prev" href="#7-when-esam-says-that-document-doesnt-exist-yet"><small>← Previous</small>7. When ESAM says &quot;that document doesn&#x27;t exist yet&quot;</a><a class="pn next" href="#9-where-attributes-go-and-writing-documents-esam-can-read"><small>Next →</small>9. Where attributes go, and writing documents ESAM can read</a></nav></section><section class="chap" style="--c:var(--hue-3)" data-ch="9" data-title="Where attributes go, and writing documents ESAM can read"><header class="chap-head"><span class="chap-n">9</span><div><h2 id="9-where-attributes-go-and-writing-documents-esam-can-read">Where attributes go, and writing documents ESAM can read<a class="hlink" href="#9-where-attributes-go-and-writing-documents-esam-can-read" aria-label="Link to this section">#</a></h2><div class="chap-meta">3 min read · 6 parts</div></div></header><div class="sub"><h3 id="91-one-question-decides-it">9.1 One question decides it<a class="hlink" href="#91-one-question-decides-it" aria-label="Link to this section">#</a></h3>
+<p><em>Is this a fact about the <strong>thing</strong>, or about one <strong>requirement</strong>?</em></p>
+<div class="tbl cols-3"><table>
+<thead>
+<tr>
+<th>It describes…</th>
+<th>It goes in…</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="It describes…">The subsystem or function itself</td>
+<td data-label="It goes in…"><strong>The baseline</strong></td>
+<td data-label="Examples">Safety-critical, MIL-STD-882E SwCI, <code>os_class: rtos</code>, J1939 source address</td>
+</tr>
+<tr>
+<td data-label="It describes…">The document as a whole</td>
+<td data-label="It goes in…"><strong>The document's header table</strong></td>
+<td data-label="Examples">Document ID, type, revision, owning subsystem, classification</td>
+</tr>
+<tr>
+<td data-label="It describes…">One requirement</td>
+<td data-label="It goes in…"><strong>An attribute line under that requirement</strong></td>
+<td data-label="Examples">Safety-related, timing, verification method, parent requirement</td>
+</tr>
+<tr>
+<td data-label="It describes…">One test case</td>
+<td data-label="It goes in…"><strong>The fixed fields of that test case</strong></td>
+<td data-label="Examples">Which requirements it verifies, method</td>
+</tr>
+</tbody>
+</table></div>
+<p>The baseline says what the system <strong>is</strong>; the requirement attributes say what each requirement <strong>demands</strong>. The document ID ties them together. Because both use the same vocabulary, ESAM can cross-check them: for example, a subsystem listed as SwCI 1 whose SRS contains no safety-related requirement.</p>
+</div><div class="sub"><h3 id="92-in-the-baseline">9.2 In the baseline<a class="hlink" href="#92-in-the-baseline" aria-label="Link to this section">#</a></h3>
+<p>Use only the attributes and values the ontology allows (<a class="xref" href="#8-the-esam-ontology-the-programmes-vocabulary" data-tip="§8 The ESAM ontology: the programme&#x27;s vocabulary">§8</a>):</p>
+<div class="code"><div class="code-bar"><span>yaml</span><button class="copy" type="button">Copy</button></div><pre><code>- id: SUB-BRK-ECU
+  name: &quot;Brake Control ECU (ABS)&quot;
+  safety_critical: true
+  safety_classification: &quot;MIL-STD-882E SwCI 1&quot;
+  os_class: rtos
+</code></pre></div>
+</div><div class="sub"><h3 id="93-in-every-document-a-header-table">9.3 In every document: a header table<a class="hlink" href="#93-in-every-document-a-header-table" aria-label="Link to this section">#</a></h3>
+<p>The first thing in every document, so ESAM can place it without guessing:</p>
+<div class="tbl cols-4"><table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Type</th>
+<th>Revision</th>
+<th>Subsystem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Document">STD-BRK-001</td>
+<td data-label="Type">STD</td>
+<td data-label="Revision">A</td>
+<td data-label="Subsystem">SUB-BRK-ECU</td>
+</tr>
+</tbody>
+</table></div>
+</div><div class="sub"><h3 id="94-in-an-srs-an-attribute-line-under-each-requirement">9.4 In an SRS: an attribute line under each requirement<a class="hlink" href="#94-in-an-srs-an-attribute-line-under-each-requirement" aria-label="Link to this section">#</a></h3>
+<p>Today a requirement reads:</p>
+<blockquote class="callout quote">
+<p><strong>SRS-BRK-021</strong> On detection of an internal fault, the software shall revert the hydraulic unit to conventional braking within 20 ms.</p>
+</blockquote>
+<p>A person can see it's safety-related and has a 20 ms deadline. ESAM can't do so reliably. Written for ESAM:</p>
+<blockquote class="callout quote">
+<p><strong>SRS-BRK-021</strong> On detection of an internal fault, the software shall revert the hydraulic unit to conventional braking within 20 ms.<br>Safety: SwCI 1 | Timing: 20 ms max | Verification: T | Traces to: SYS-BRK-004 | Basis: MIL-STD-882E 4.4.2</p>
+</blockquote>
+<p>In the markdown file, the attribute line sits directly under the requirement, indented two spaces:</p>
+<div class="code"><div class="code-bar"><span>text</span><button class="copy" type="button">Copy</button></div><pre><code>- **SRS-BRK-021** On detection of an internal fault, the software shall revert the hydraulic unit to conventional braking within 20 ms.
+  Safety: SwCI 1 | Timing: 20 ms max | Verification: T | Traces to: SYS-BRK-004 | Basis: MIL-STD-882E 4.4.2
+</code></pre></div>
+<div class="tbl cols-3"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What goes in it</th>
+<th>Checked against</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Field"><strong>Safety</strong></td>
+<td data-label="What goes in it">The SwCI (<code>SwCI 1</code> … <code>SwCI 5</code>), only on safety requirements</td>
+<td data-label="Checked against">MIL-STD-882E Table V; must equal the SwCI of the safety function it implements</td>
+</tr>
+<tr>
+<td data-label="Field"><strong>Timing</strong></td>
+<td data-label="What goes in it">A value with units: <code>20 ms max</code>, <code>100 ms ± 10 ms</code>, <code>10 ms period</code></td>
+<td data-label="Checked against">Required when the text states a time or rate</td>
+</tr>
+<tr>
+<td data-label="Field"><strong>Verification</strong></td>
+<td data-label="What goes in it">I, A, D or T (several allowed: <code>T, A</code>)</td>
+<td data-label="Checked against">DI-IPSC-81433A section 4 (qualification provisions)</td>
+</tr>
+<tr>
+<td data-label="Field"><strong>Traces to</strong></td>
+<td data-label="What goes in it">Parent IDs: a system requirement, a safety function from the brief (<code>SSF-ENG-01</code>), or a source document section (<code>ICD-ENG-001 §2.1</code>)</td>
+<td data-label="Checked against">Each must exist; DI-IPSC-81433A 5.a</td>
+</tr>
+<tr>
+<td data-label="Field"><strong>Basis</strong></td>
+<td data-label="What goes in it">The standard clauses the requirement rests on (<code>MIL-STD-882E 4.4.2</code>, <code>DI-IPSC-81433A 3.7</code>)</td>
+<td data-label="Checked against">Each must exist in ESAM's standards library (<a class="xref" href="#114-the-standards-library" data-tip="§11.4 The standards library">§11.4</a>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>ESAM reads these fields into the graph with the requirement, so &quot;which SwCI 1 requirements are verified only by inspection?&quot; becomes a lookup.</p>
+</div><div class="sub"><h3 id="95-in-an-std-fixed-fields-in-every-test-case">9.5 In an STD: fixed fields in every test case<a class="hlink" href="#95-in-an-std-fixed-fields-in-every-test-case" aria-label="Link to this section">#</a></h3>
+<div class="code"><div class="code-bar"><span>text</span><button class="copy" type="button">Copy</button></div><pre><code>TC-BRK-011 — Pressure release time on incipient wheel lock-up
+Verifies: SRS-BRK-011.
+Method: Test.
+Steps: …
+Pass criteria: …
+</code></pre></div>
+<p><code>Verifies:</code> is what lets ESAM answer &quot;which requirements have no test?&quot; and &quot;what does this test cover?&quot;.</p>
+</div><div class="sub"><h3 id="96-checklist-in-priority-order">9.6 Checklist, in priority order<a class="hlink" href="#96-checklist-in-priority-order" aria-label="Link to this section">#</a></h3>
+<div class="tbl cols-3"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Change</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="#">1</td>
+<td data-label="Change">A header table on every document</td>
+<td data-label="Why">ESAM places and checks the document without guessing</td>
+</tr>
+<tr>
+<td data-label="#">2</td>
+<td data-label="Change">One requirement ID format per document type (<code>SRS-BRK-021</code>)</td>
+<td data-label="Why">Traceability breaks on mixed formats</td>
+</tr>
+<tr>
+<td data-label="#">3</td>
+<td data-label="Change">An attribute line under every requirement, using the ontology's values</td>
+<td data-label="Why">Turns prose into facts ESAM can check and link</td>
+</tr>
+<tr>
+<td data-label="#">4</td>
+<td data-label="Change">Refer to things by ID (&quot;per ICD-BRK-001 §3&quot;), not by description (&quot;per the brake interface document&quot;)</td>
+<td data-label="Why">Every ID mention can become a link automatically</td>
+</tr>
+<tr>
+<td data-label="#">5</td>
+<td data-label="Change">A <code>Verifies:</code> field in every test case</td>
+<td data-label="Why">Powers the traceability check (<a class="xref" href="#52-the-baseline-health-report" data-tip="§5.2 The baseline health report">§5.2</a>, check 4)</td>
+</tr>
+<tr>
+<td data-label="#">6</td>
+<td data-label="Change">Real heading styles, one &quot;shall&quot; per paragraph, consistent units (<code>ms</code>, not <code>msec</code>)</td>
+<td data-label="Why">Clean chunking (<a class="xref" href="#24-how-to-write-documents-that-chunk-well" data-tip="§2.4 How to write documents that chunk well">§2.4</a>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>A Word template with the header table and a styled attribute line makes items 1 and 3 a matter of filling in fields.</p>
+</div><nav class="prevnext"><a class="pn prev" href="#8-the-esam-ontology-the-programmes-vocabulary"><small>← Previous</small>8. The ESAM ontology: the programme&#x27;s vocabulary</a><a class="pn next" href="#10-requirements-and-tests-in-the-graph-traceability"><small>Next →</small>10. Requirements and tests in the graph (traceability)</a></nav></section><section class="chap" style="--c:var(--hue-4)" data-ch="10" data-title="Requirements and tests in the graph (traceability)"><header class="chap-head"><span class="chap-n">10</span><div><h2 id="10-requirements-and-tests-in-the-graph-traceability">Requirements and tests in the graph (traceability)<a class="hlink" href="#10-requirements-and-tests-in-the-graph-traceability" aria-label="Link to this section">#</a></h2><div class="chap-meta">2 min read · 4 parts<span class="tag">Interactive</span></div></div></header><div class="sub"><h3 id="101-what-changed">10.1 What changed<a class="hlink" href="#101-what-changed" aria-label="Link to this section">#</a></h3>
+<p>Until now the graph knew about <strong>documents</strong>: the Brake ECU has an SRS. It now also knows what is <strong>inside</strong> them:</p>
+<div class="tbl cols-3"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Read from</th>
+<th>Linked to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Item"><strong>Requirement</strong></td>
+<td data-label="Read from">Each <code>SRS-…</code> line in an SRS (<a class="xref" href="#94-in-an-srs-an-attribute-line-under-each-requirement" data-tip="§9.4 In an SRS: an attribute line under each requirement">§9.4</a>)</td>
+<td data-label="Linked to"><em>specified in</em> its SRS; <em>allocated to</em> the SRS's subsystem</td>
+</tr>
+<tr>
+<td data-label="Item"><strong>Test case</strong></td>
+<td data-label="Read from">Each <code>TC-…</code> heading in an STD, with its fixed fields (<a class="xref" href="#95-in-an-std-fixed-fields-in-every-test-case" data-tip="§9.5 In an STD: fixed fields in every test case">§9.5</a>)</td>
+<td data-label="Linked to"><em>specified in</em> its STD; <strong>verifies</strong> each requirement on its <code>Verifies:</code> line</td>
+</tr>
+</tbody>
+</table></div>
+<p>Nothing is guessed. ESAM reads the formats this manual asks you to write, and every item remembers which document it came from. When a new revision of a document is loaded, everything the old revision contributed is replaced, so a deleted requirement or test case doesn't linger.</p>
+</div><div class="sub"><h3 id="102-what-you-can-now-ask">10.2 What you can now ask<a class="hlink" href="#102-what-you-can-now-ask" aria-label="Link to this section">#</a></h3>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Question</th>
+<th>How ESAM answers it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Question">Which requirements have no test?</td>
+<td data-label="How ESAM answers it">Requirements with no test case verifying them</td>
+</tr>
+<tr>
+<td data-label="Question">What verifies SRS-BRK-011?</td>
+<td data-label="How ESAM answers it">The test cases whose <code>Verifies:</code> line names it, and the STD each is in</td>
+</tr>
+<tr>
+<td data-label="Question">How well is each subsystem covered?</td>
+<td data-label="How ESAM answers it">Requirements allocated to it, and how many are verified</td>
+</tr>
+<tr>
+<td data-label="Question">Does any test cite a requirement that doesn't exist?</td>
+<td data-label="How ESAM answers it">Reported when the STD is loaded (e.g. a typo <code>SRS-BRK-999</code>)</td>
+</tr>
+</tbody>
+</table></div>
+</div><div class="sub"><h3 id="103-where-you-see-it">10.3 Where you see it<a class="hlink" href="#103-where-you-see-it" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>SE Cockpit Dashboard, Requirement coverage:</strong> per subsystem, how many requirements and how many are verified, plus the list of untested requirements. For SYNTH-LTV today: <strong>0 of 16 verified</strong>, because no test description exists yet. When the Brake ECU's STD is added, four of its nine requirements become verified.</li>
+<li><strong>SE Cockpit Graph tab:</strong> requirements sit under their SRS and test cases under their STD. Selecting a requirement shows what verifies it, or &quot;no test case verifies this&quot;.</li>
+<li><strong>Answers to questions:</strong> asked &quot;How is SRS-BRK-011 verified?&quot;, ESAM now checks the requirement itself, not just whether an STD exists, and reports <em>&quot;no test case verifies SRS-BRK-011&quot;</em> when that is the case. Once the STD exists, it names TC-BRK-011 and its document.</li>
+</ul>
+<figure class="fig" id="fig-trace"><div class="fig-head"><span class="fig-kicker">Interactive</span><span class="fig-title">Requirement coverage, SYNTH-LTV</span></div><div class="fig-body"><div class="fig-ctl"><button class="std-toggle" type="button" aria-pressed="false"><span class="sw" aria-hidden="true"></span>STD-BRK-001 loaded</button><span class="big" data-tsum></span></div><div data-tgrid></div><div class="detail" data-tdetail>Select a requirement.</div></div><figcaption>Green: a test case's <code>Verifies:</code> line names it. Red outline: nothing verifies it yet.</figcaption></figure></div><div class="sub"><h3 id="104-what-it-depends-on">10.4 What it depends on<a class="hlink" href="#104-what-it-depends-on" aria-label="Link to this section">#</a></h3>
+<p>Traceability is only as good as the documents' structure:</p>
+<ul>
+<li>Requirement lines in the <code>- **SRS-BRK-011** …</code> form, one requirement per line item.</li>
+<li>Test cases as <code>TC-…</code> headings with a <code>Verifies:</code> line listing requirement IDs exactly as written in the SRS.</li>
+<li>Consistent IDs (<a class="xref" href="#96-checklist-in-priority-order" data-tip="§9.6 Checklist, in priority order">§9.6</a>). A <code>Verifies:</code> line that says &quot;SRS BRK 11&quot; links to nothing.</li>
+</ul>
+</div><nav class="prevnext"><a class="pn prev" href="#9-where-attributes-go-and-writing-documents-esam-can-read"><small>← Previous</small>9. Where attributes go, and writing documents ESAM can read</a><a class="pn next" href="#11-drafting-a-software-requirements-specification-with-esam"><small>Next →</small>11. Drafting a software requirements specification with ESAM</a></nav></section><section class="chap" style="--c:var(--hue-5)" data-ch="11" data-title="Drafting a software requirements specification with ESAM"><header class="chap-head"><span class="chap-n">11</span><div><h2 id="11-drafting-a-software-requirements-specification-with-esam">Drafting a software requirements specification with ESAM<a class="hlink" href="#11-drafting-a-software-requirements-specification-with-esam" aria-label="Link to this section">#</a></h2><div class="chap-meta">4 min read · 6 parts<span class="tag">Interactive</span></div></div></header><div class="sub intro">
+<p>ESAM can draft an SRS for a subsystem and check it against the standards it must follow. The result is a <strong>candidate</strong>: it enters the baseline only after an SE reviews and approves it, like any other document. <strong>Certification remains the decision of the certifying authority.</strong> ESAM provides the evidence, not the approval.</p>
+</div><div class="sub"><h3 id="111-what-you-provide-the-authoring-brief">11.1 What you provide: the authoring brief<a class="hlink" href="#111-what-you-provide-the-authoring-brief" aria-label="Link to this section">#</a></h3>
+<p>A short YAML file that says what to write and on what basis:</p>
+<div class="code"><div class="code-bar"><span>yaml</span><button class="copy" type="button">Copy</button></div><pre><code>document: { id: SRS-ENG-001, name: &quot;Engine Control Module Software Requirements&quot;, revision: A, subsystem: SUB-ENG-ECM }
+sources:
+  - id: ICD-ENG-001                     # what the requirements derive from
+safety_assessment:
+  assessed_by: &quot;SE + system safety engineer&quot;
+  functions:
+    - id: SSF-ENG-01
+      name: &quot;Inhibit the engine compression brake while ABS is active&quot;
+      hazard: &quot;Engine braking locks the driven wheels during an anti-lock stop&quot;
+      severity: Critical                # MIL-STD-882E Table I
+      control_category: 2               # MIL-STD-882E Table IV
+</code></pre></div>
+<p><strong>ESAM never makes the safety assessment.</strong> You and the system safety engineer decide each safety-significant function's severity and software control category. ESAM looks up the <strong>SwCI</strong> in MIL-STD-882E Table V (Critical × category 2 = SwCI 2) and the <strong>level of rigor</strong> that SwCI requires.</p>
+<figure class="fig" id="fig-swci"><div class="fig-head"><span class="fig-kicker">Interactive</span><span class="fig-title">MIL-STD-882E Table V: from your assessment to a SwCI</span></div><div class="fig-body"><div class="swci"><div class="tbl cols-5 keep"><table data-swci></table></div><div class="swci-out" data-swci-out></div></div></div><figcaption>You and the system safety engineer choose the severity and control category; ESAM only looks the answer up. Text from ESAM's standards library.</figcaption></figure></div><div class="sub"><h3 id="112-what-esam-does">11.2 What ESAM does<a class="hlink" href="#112-what-esam-does" aria-label="Link to this section">#</a></h3>
+<div class="tbl cols-3"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Who</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Step">1. Check the brief</td>
+<td data-label="Who">ESAM</td>
+<td data-label="What">Computes each SwCI; reports where the brief and the baseline disagree (e.g. a Critical function on a subsystem the baseline calls not safety-critical, which MIL-STD-882E 3.2.31 says is safety-critical)</td>
+</tr>
+<tr>
+<td data-label="Step">2. Gather the basis</td>
+<td data-label="Who">Triage agent</td>
+<td data-label="What">The safety functions, the source document's sections, the subsystem's interfaces, the clauses that apply</td>
+</tr>
+<tr>
+<td data-label="Step">3. Draft</td>
+<td data-label="Who">Author agent</td>
+<td data-label="What">Every DI-IPSC-81433A paragraph, in order; each requirement with its attribute line (<a class="xref" href="#94-in-an-srs-an-attribute-line-under-each-requirement" data-tip="§9.4 In an SRS: an attribute line under each requirement">§9.4</a>); values only from the sources, <code>TBD</code> where a value is missing</td>
+</tr>
+<tr>
+<td data-label="Step">4. Verify</td>
+<td data-label="Who">ESAM, then the reviewer agent</td>
+<td data-label="What">ESAM's checks (<a class="xref" href="#113-what-is-checked" data-tip="§11.3 What is checked">§11.3</a>) after every save; then the reviewer confirms each value against the source, reads each cited clause to confirm it supports the requirement, and judges each requirement</td>
+</tr>
+<tr>
+<td data-label="Step">5. Evidence pack</td>
+<td data-label="Who">ESAM</td>
+<td data-label="What">The files in <a class="xref" href="#115-the-evidence-pack" data-tip="§11.5 The evidence pack">§11.5</a></td>
+</tr>
+</tbody>
+</table></div>
+</div><div class="sub"><h3 id="113-what-is-checked">11.3 What is checked<a class="hlink" href="#113-what-is-checked" aria-label="Link to this section">#</a></h3>
+<div class="tbl cols-3"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Rule</th>
+<th>From</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Check">Every SRS paragraph present, in order; an empty one says so</td>
+<td data-label="Rule">Outline</td>
+<td data-label="From">DI-IPSC-81433A I.4d and 3</td>
+</tr>
+<tr>
+<td data-label="Check">Each requirement has a qualification method</td>
+<td data-label="Rule">Verification attribute</td>
+<td data-label="From">DI-IPSC-81433A 4</td>
+</tr>
+<tr>
+<td data-label="Check">Each requirement traces to a parent that exists</td>
+<td data-label="Rule">Traces to</td>
+<td data-label="From">DI-IPSC-81433A 5.a</td>
+</tr>
+<tr>
+<td data-label="Check">Every safety function is implemented, at its SwCI</td>
+<td data-label="Rule">Safety attribute</td>
+<td data-label="From">MIL-STD-882E Table V, B.2.2.1</td>
+</tr>
+<tr>
+<td data-label="Check">Every safety requirement rests on MIL-STD-882E</td>
+<td data-label="Rule">Basis attribute</td>
+<td data-label="From">MIL-STD-882E 4.4</td>
+</tr>
+<tr>
+<td data-label="Check">Every cited clause exists</td>
+<td data-label="Rule">Basis attribute</td>
+<td data-label="From">The standards library</td>
+</tr>
+<tr>
+<td data-label="Check">Every source section and every interface is accounted for</td>
+<td data-label="Rule">Coverage</td>
+<td data-label="From">DI-IPSC-81433A 5.b, 3.3.1</td>
+</tr>
+<tr>
+<td data-label="Check">One &quot;shall&quot;, no vague words, no TBDs</td>
+<td data-label="Rule">Heuristics named after ISO/IEC/IEEE 29148's characteristics (singular, unambiguous, complete)</td>
+<td data-label="From">ESAM's own rules; the standard's text is not held</td>
+</tr>
+</tbody>
+</table></div>
+<p>Errors must be fixed. Warnings are for the SE to judge.</p>
+</div><div class="sub"><h3 id="114-the-standards-library">11.4 The standards library<a class="hlink" href="#114-the-standards-library" aria-label="Link to this section">#</a></h3>
+<p>ESAM cites only clauses it holds. It holds public US Government documents as text: the <strong>MIL-STD-882E</strong> extract (definitions, section 4 with Tables I–VI, Appendix B on software system safety) and the <strong>DI-IPSC-81433A</strong> SRS data item description. Each records the SHA-256 of its source PDF, so anyone can check the text against the original. <strong>ISO/IEC/IEEE 29148</strong> is copyrighted: ESAM names its requirement characteristics but holds none of its text. MIL-STD-882E <strong>Change 1</strong> (2023) is not held. A programme that cites Change 1 must check the extract against it.</p>
+<p>A citation that isn't in the library is an error, never a near miss: <code>MIL-STD-882E 4.4.9</code> does not exist, and ESAM says so.</p>
+</div><div class="sub"><h3 id="115-the-evidence-pack">11.5 The evidence pack<a class="hlink" href="#115-the-evidence-pack" aria-label="Link to this section">#</a></h3>
+<p>Written to <code>work/drafts/&lt;document&gt;_&lt;date&gt;/</code>:</p>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="File"><code>&lt;document&gt;.md</code></td>
+<td data-label="Shows">The candidate SRS</td>
+</tr>
+<tr>
+<td data-label="File"><code>compliance_matrix.md</code></td>
+<td data-label="Shows">Each DI-IPSC-81433A paragraph (present, states none, or tailored out); each safety function with its severity, control category, SwCI, the requirements that implement it and their verification; the level of rigor required; every cited clause resolved to its title</td>
+</tr>
+<tr>
+<td data-label="File"><code>traceability_matrix.csv</code></td>
+<td data-label="Shows">Every requirement with its section, text, verification, SwCI, timing, parents and basis; <em>verified by</em> stays empty until a test description exists</td>
+</tr>
+<tr>
+<td data-label="File"><code>lint.md</code></td>
+<td data-label="Shows">Every finding, with the rule and clause it applies</td>
+</tr>
+<tr>
+<td data-label="File"><code>evidence_pack.md</code></td>
+<td data-label="Shows">The index: provenance (brief, draft and standards fingerprints, model, run), what remains open, and the next step</td>
+</tr>
+</tbody>
+</table></div>
+<p>The level-of-rigor tasks (analysis of requirements, architecture, design and code; safety-specific testing) are programme activities. The pack says what they are; it is not evidence that they were done. If they are incomplete, MIL-STD-882E Table VI says how the software's contribution to risk must be documented (SwCI 2: <strong>serious</strong>).</p>
+</div><div class="sub"><h3 id="116-after-the-draft">11.6 After the draft<a class="hlink" href="#116-after-the-draft" aria-label="Link to this section">#</a></h3>
+<p>Review the draft and the evidence pack, then put the draft through the normal document review: the ontology check, the content review and <strong>your approval</strong> before it enters the baseline. Fix the baseline findings from <a class="xref" href="#112-what-esam-does" data-tip="§11.2 What ESAM does">§11.2</a> step 1 (for example, mark the subsystem safety-critical) as baseline changes in their own right.</p>
+</div><nav class="prevnext"><a class="pn prev" href="#10-requirements-and-tests-in-the-graph-traceability"><small>← Previous</small>10. Requirements and tests in the graph (traceability)</a><a class="pn next" href="#12-working-with-the-esam-agents"><small>Next →</small>12. Working with the ESAM agents</a></nav></section><section class="chap" style="--c:var(--hue-6)" data-ch="12" data-title="Working with the ESAM agents"><header class="chap-head"><span class="chap-n">12</span><div><h2 id="12-working-with-the-esam-agents">Working with the ESAM agents<a class="hlink" href="#12-working-with-the-esam-agents" aria-label="Link to this section">#</a></h2><div class="chap-meta">7 min read · 9 parts<span class="tag">Interactive</span></div></div></header><div class="sub intro">
+<p>ESAM has a small team of AI agents that do the reading, checking and drafting an SE would otherwise do by hand. This section is about using them day to day: asking questions, bringing in documents, drafting an SRS, and following what they did. You work with them from the <strong>Tasks</strong> tab of the SE Cockpit. Everything can also be done from a command line (<a class="xref" href="#128-without-the-cockpit" data-tip="§12.8 Without the Cockpit">§12.8</a>).</p>
+</div><div class="sub"><h3 id="121-the-team-and-what-it-will-never-do">12.1 The team, and what it will never do<a class="hlink" href="#121-the-team-and-what-it-will-never-do" aria-label="Link to this section">#</a></h3>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Its job</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Agent"><strong>Triage</strong></td>
+<td data-label="Its job">Works out what a request is about: which subsystem, which documents and requirements, and what is missing</td>
+</tr>
+<tr>
+<td data-label="Agent"><strong>Researcher / Author</strong></td>
+<td data-label="Its job">Gathers the evidence or writes the draft, citing a document or clause for every fact</td>
+</tr>
+<tr>
+<td data-label="Agent"><strong>SE Reviewer</strong></td>
+<td data-label="Its job">Checks the work against ESAM's rules and the sources, removes what isn't supported, and gives a verdict</td>
+</tr>
+<tr>
+<td data-label="Agent"><strong>Environment Engineer</strong></td>
+<td data-label="Its job">Confirms the models, databases and tools are available before work starts</td>
+</tr>
+</tbody>
+</table></div>
+<p>The agents read the baseline, the documents and the standards library <strong>only through ESAM's own checks</strong>: the ontology, the graph, the health report and the document search. They interpret what those checks report. They don't decide what is true.</p>
+<p><strong>What the agents never do:</strong></p>
+<ul>
+<li><strong>Approve anything.</strong> A document enters the baseline only after <strong>you</strong> approve it, and the approval is recorded under your name.</li>
+<li><strong>Make a safety assessment.</strong> Severity and software control category come from you and the system safety engineer, in a brief (<a class="xref" href="#111-what-you-provide-the-authoring-brief" data-tip="§11.1 What you provide: the authoring brief">§11.1</a>).</li>
+<li><strong>Invent a value.</strong> A time, rate or limit that isn't in a source document is written as <code>TBD</code> and reported, never guessed.</li>
+<li><strong>Cite a clause that doesn't exist.</strong> Only clauses held in the standards library (<a class="xref" href="#114-the-standards-library" data-tip="§11.4 The standards library">§11.4</a>) can be cited.</li>
+<li><strong>Work out of sight.</strong> Every run keeps its reports and a full log of each agent step and tool call (<a class="xref" href="#126-following-a-task" data-tip="§12.6 Following a task">§12.6</a>).</li>
+</ul>
+</div><div class="sub"><h3 id="122-before-you-start">12.2 Before you start<a class="hlink" href="#122-before-you-start" aria-label="Link to this section">#</a></h3>
+<ol>
+<li><strong>Open the SE Cockpit</strong> (on the ESAM machine: <code>http://127.0.0.1:8080</code>) and go to the <strong>Tasks</strong> tab. The number on the tab counts documents waiting for your decision.</li>
+<li><strong>Type your name</strong> under <em>Add a task</em>. Every task you add and every decision you make is recorded under it. The Cockpit remembers it in your browser.</li>
+<li><strong>A worker must be running.</strong> Tasks wait in a queue until a <em>worker</em> on the ESAM machine picks them up. If a task stays <em>queued</em> for more than two minutes and nothing is <em>running</em>, the Worker panel says so: ask whoever runs ESAM to start one (<code>python -m crew.main worker</code>).</li>
+</ol>
+</div><div class="sub"><h3 id="123-asking-a-question">12.3 Asking a question<a class="hlink" href="#123-asking-a-question" aria-label="Link to this section">#</a></h3>
+<p><em>Add a task</em> → <strong>Ask a question</strong> → type it → <strong>Queue task</strong>.</p>
+<p>The answer comes back with a citation for each fact (a document id such as <code>[SRS-BRK-001]</code>, or <code>[graph]</code> for structure and traceability) and a <strong>MISSING</strong> section listing every document or test the answer needed but the baseline doesn't have. An empty MISSING section means nothing was missing, not that nobody checked. Asking never changes anything. Open the answer from the <em>Recent runs</em> list.</p>
+<p>Good questions name the thing you care about: <em>&quot;Which brake ECU requirements have no test?&quot;</em>, <em>&quot;What consumes EBC1, and is any of it unconfirmed?&quot;</em>, <em>&quot;How fast must the brake ECU release pressure on lock-up, and what verifies it?&quot;</em></p>
+</div><div class="sub"><h3 id="124-bringing-in-a-new-document">12.4 Bringing in a new document<a class="hlink" href="#124-bringing-in-a-new-document" aria-label="Link to this section">#</a></h3>
+<p><strong>1. Prepare it</strong> the way <a class="xref" href="#9-where-attributes-go-and-writing-documents-esam-can-read" data-tip="§9 Where attributes go, and writing documents ESAM can read">§9</a> describes. ESAM must be able to tell what the document is from the document itself:</p>
+<div class="code"><div class="code-bar"><span>text</span><button class="copy" type="button">Copy</button></div><pre><code># STD-BRK-001 — Brake Control ECU Software Test Description
+
+| Document | Type | Revision | Subsystem |
+|---|---|---|---|
+| STD-BRK-001 | STD | A | SUB-BRK-ECU |
+</code></pre></div>
+<p>The file name must be the document id (<code>STD-BRK-001.md</code>). For a new revision of an existing document, raise the revision letter: ESAM refuses a second copy at the same revision.</p>
+<p><strong>2. Queue the review.</strong> Put the file in the ESAM inbox (<code>work/inbox/</code>), then in the Cockpit choose <em>Review a document for ingestion</em> and pick it.</p>
+<p><strong>3. The agents review it, then stop.</strong> Triage checks it against the ontology: the right document type for that subsystem, a real subsystem, a valid id and revision. The Researcher reads its content. For a test description, it compares every test case's pass criteria with the requirement it verifies and marks each one <strong>matches</strong>, <strong>stricter</strong>, <strong>weaker</strong> or <strong>unclear</strong>, quoting both. The SE Reviewer writes an <strong>approval request</strong> ending with <em>RECOMMENDATION: INGEST</em> or <em>DO NOT INGEST</em>.</p>
+<p><strong>4. You decide</strong>, in <em>Waiting for your decision</em>:</p>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>You</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="You">Read the <strong>approval request</strong> (and the log, if you want the detail)</td>
+<td data-label="What happens">Nothing changes until you decide</td>
+</tr>
+<tr>
+<td data-label="You"><strong>Approve: ingest + verify</strong></td>
+<td data-label="What happens">ESAM adds the document to the baseline and the search store, reloads the graph, and checks that it is really in: chunks stored, attached to its subsystem, its requirements or test cases and their links present, findable by search, integrity check passing. It also compares the health report before and after. The result is <em>verified</em> or <em>verification failed</em>.</td>
+</tr>
+<tr>
+<td data-label="You"><strong>Reject</strong>, with a note saying why</td>
+<td data-label="What happens">Recorded with your name; nothing is ingested. Fix the document and queue it again.</td>
+</tr>
+<tr>
+<td data-label="You">Approve when the recommendation was <em>DO NOT INGEST</em></td>
+<td data-label="What happens">Tick <em>Approve against the recommendation</em> and say why in the note. Both are recorded. An <strong>ontology error can't be approved past</strong>: fix the document instead.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Approving changes the baseline file (one line is added under <code>artifacts:</code>, and its comments and layout are kept) and copies the document into the documents folder. Review it with the baseline owner and put it under configuration control as usual. If an ingest has to be reversed, whoever runs ESAM can undo exactly that ingest (<code>crew.main undo &lt;run&gt;</code>).</p>
+<p><strong>Read the verification report</strong> after an approval. &quot;Findings closed&quot; is the point: for example, <em>&quot;Brake Control ECU has no STD&quot;</em> and <em>&quot;SRS-BRK-011: no test case verifies it&quot;</em> disappear once the test description is in.</p>
+<figure class="fig" id="fig-review"><div class="fig-head"><span class="fig-kicker">Interactive</span><span class="fig-title">A document review, end to end</span></div><div class="fig-body"><ol class="pipe" data-pipe></ol><div class="detail" data-pipe-detail></div></div><figcaption>The agents stop at the approval request. Nothing enters the baseline until you approve.</figcaption></figure></div><div class="sub"><h3 id="125-drafting-an-srs">12.5 Drafting an SRS<a class="hlink" href="#125-drafting-an-srs" aria-label="Link to this section">#</a></h3>
+<p>Write a brief (<a class="xref" href="#111-what-you-provide-the-authoring-brief" data-tip="§11.1 What you provide: the authoring brief">§11.1</a>) and place it in <code>data/briefs/</code>. Then <em>Add a task</em> → <strong>Draft an SRS from a brief</strong> → pick it. When the run finishes, its row in <em>Recent runs</em> shows the reviewer's verdict, the check counts and a link to the <strong>evidence pack</strong>. Read <a class="xref" href="#115-the-evidence-pack" data-tip="§11.5 The evidence pack">§11.5</a> for what each file shows.</p>
+<p>A draft is a <strong>candidate</strong>. Fix the open items (often an SE decision the agents raised, such as a hazard the source document creates), then bring the draft in like any other document (<a class="xref" href="#124-bringing-in-a-new-document" data-tip="§12.4 Bringing in a new document">§12.4</a>).</p>
+</div><div class="sub"><h3 id="126-following-a-task">12.6 Following a task<a class="hlink" href="#126-following-a-task" aria-label="Link to this section">#</a></h3>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Status"><span class="chip-s none">queued</span></td>
+<td data-label="Meaning">Waiting for a worker. You can <strong>Cancel</strong> it.</td>
+</tr>
+<tr>
+<td data-label="Status"><span class="chip-s info">running</span></td>
+<td data-label="Meaning">A worker has it. The page refreshes every few seconds.</td>
+</tr>
+<tr>
+<td data-label="Status"><span class="chip-s ok">done</span></td>
+<td data-label="Meaning">Finished. The <em>Outcome</em> says how: <em>awaiting SE approval</em>, <em>verified</em>, <em>GREEN LIGHT</em>, a draft with its check counts, or an answer.</td>
+</tr>
+<tr>
+<td data-label="Status"><span class="chip-s crit">failed</span></td>
+<td data-label="Meaning">It stopped. The <em>Outcome</em> gives the reason (<a class="xref" href="#127-when-something-goes-wrong" data-tip="§12.7 When something goes wrong">§12.7</a>).</td>
+</tr>
+</tbody>
+</table></div>
+<p>Every run has a folder. <em>Recent runs</em> links to what's in it:</p>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Link</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Link"><strong>approval request</strong></td>
+<td data-label="What it is">The SE Reviewer's one-page summary for a document review</td>
+</tr>
+<tr>
+<td data-label="Link"><strong>verification</strong></td>
+<td data-label="What it is">What the ingest did, every check expected vs found, findings closed and opened</td>
+</tr>
+<tr>
+<td data-label="Link"><strong>answer</strong></td>
+<td data-label="What it is">The answer to a question</td>
+</tr>
+<tr>
+<td data-label="Link"><strong>evidence pack</strong></td>
+<td data-label="What it is">An SRS draft's evidence (<a class="xref" href="#115-the-evidence-pack" data-tip="§11.5 The evidence pack">§11.5</a>)</td>
+</tr>
+<tr>
+<td data-label="Link"><strong>terminal log</strong></td>
+<td data-label="What it is">Everything the agents did, step by step: which agent, which check it ran, what the check returned, what it concluded. Read this when you want to know <em>why</em> an agent said something.</td>
+</tr>
+<tr>
+<td data-label="Link"><strong>error</strong></td>
+<td data-label="What it is">Present only if the run failed</td>
+</tr>
+</tbody>
+</table></div>
+</div><div class="sub"><h3 id="127-when-something-goes-wrong">12.7 When something goes wrong<a class="hlink" href="#127-when-something-goes-wrong" aria-label="Link to this section">#</a></h3>
+<div class="tbl cols-3"><table>
+<thead>
+<tr>
+<th>You see</th>
+<th>It means</th>
+<th>Do this</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="You see">Tasks stay <em>queued</em>; the Worker panel warns</td>
+<td data-label="It means">No worker is running</td>
+<td data-label="Do this">Ask whoever runs ESAM to start one</td>
+</tr>
+<tr>
+<td data-label="You see"><em>failed: NOT READY …</em></td>
+<td data-label="It means">A model, database or tool isn't available in this environment</td>
+<td data-label="Do this">Queue <strong>Check the environment</strong>: its report names the exact fix</td>
+</tr>
+<tr>
+<td data-label="You see"><em>ONTOLOGY FAIL</em> in the approval request</td>
+<td data-label="It means">The document's header doesn't match the ontology (wrong type for the id, unknown subsystem, bad revision)</td>
+<td data-label="Do this">Fix the header (<a class="xref" href="#124-bringing-in-a-new-document" data-tip="§12.4 Bringing in a new document">§12.4</a> step 1) and review again</td>
+</tr>
+<tr>
+<td data-label="You see">The document isn't in the list to review</td>
+<td data-label="It means">It isn't in <code>work/inbox/</code>, or isn't a <code>.md</code> file</td>
+<td data-label="Do this">Put it there; the list refreshes</td>
+</tr>
+<tr>
+<td data-label="You see"><em>Approve</em> is refused</td>
+<td data-label="It means">It's no longer waiting (already decided), or the reviewer said <em>DO NOT INGEST</em> and the override box or note is missing</td>
+<td data-label="Do this">Read the message under the buttons</td>
+</tr>
+<tr>
+<td data-label="You see"><em>verification failed</em></td>
+<td data-label="It means">The document went in, but a check didn't pass</td>
+<td data-label="Do this">Read the verification report; if needed, have the ingest undone</td>
+</tr>
+<tr>
+<td data-label="You see">An answer says <em>MISSING</em></td>
+<td data-label="It means">The baseline lacks a document or test the question needs</td>
+<td data-label="Do this">That's the finding: <a class="xref" href="#7-when-esam-says-that-document-doesnt-exist-yet" data-tip="§7 When ESAM says &quot;that document doesn&#x27;t exist yet&quot;">§7</a> explains what to do</td>
+</tr>
+</tbody>
+</table></div>
+</div><div class="sub"><h3 id="128-without-the-cockpit">12.8 Without the Cockpit<a class="hlink" href="#128-without-the-cockpit" aria-label="Link to this section">#</a></h3>
+<p>Whoever runs ESAM can do the same from a terminal on the ESAM machine:</p>
+<div class="tbl cols-2"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Task">Ask a question</td>
+<td data-label="Command"><code>python -m crew.main ask &quot;Which brake ECU requirements have no test?&quot;</code></td>
+</tr>
+<tr>
+<td data-label="Task">Review one document</td>
+<td data-label="Command"><code>python -m crew.main review work/inbox/STD-BRK-001.md</code></td>
+</tr>
+<tr>
+<td data-label="Task">Review everything in the inbox</td>
+<td data-label="Command"><code>python -m crew.main inbox</code></td>
+</tr>
+<tr>
+<td data-label="Task">List runs and their state</td>
+<td data-label="Command"><code>python -m crew.main runs</code></td>
+</tr>
+<tr>
+<td data-label="Task">Approve / reject</td>
+<td data-label="Command"><code>python -m crew.main approve &lt;run&gt;</code> · <code>python -m crew.main reject &lt;run&gt; --note &quot;why&quot;</code></td>
+</tr>
+<tr>
+<td data-label="Task">Undo an ingest</td>
+<td data-label="Command"><code>python -m crew.main undo &lt;run&gt;</code></td>
+</tr>
+<tr>
+<td data-label="Task">Draft an SRS</td>
+<td data-label="Command"><code>python -m crew.main author data/briefs/SRS-ENG-001.yaml</code></td>
+</tr>
+<tr>
+<td data-label="Task">Check the environment</td>
+<td data-label="Command"><code>python -m crew.main env</code></td>
+</tr>
+<tr>
+<td data-label="Task">Queue instead of running now</td>
+<td data-label="Command"><code>python -m crew.main tasks add ask &quot;…&quot;</code> · <code>tasks list</code> · <code>worker</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>A run started from the terminal shows in the Cockpit like any other.</p>
+</div><div class="sub"><h3 id="129-how-long-it-takes-and-what-it-costs">12.9 How long it takes, and what it costs<a class="hlink" href="#129-how-long-it-takes-and-what-it-costs" aria-label="Link to this section">#</a></h3>
+<p>Measured on the learning system (GPT-5.1). The pilot's numbers will differ, but the proportions hold:</p>
+<div class="tbl cols-3"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Typical time</th>
+<th>Model tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Task">Check the environment</td>
+<td data-label="Typical time">~15 s</td>
+<td data-label="Model tokens">~3 thousand</td>
+</tr>
+<tr>
+<td data-label="Task">Review a document</td>
+<td data-label="Typical time">~1 min</td>
+<td data-label="Model tokens">~70 thousand</td>
+</tr>
+<tr>
+<td data-label="Task">Approve (ingest + verify)</td>
+<td data-label="Typical time">~40 s</td>
+<td data-label="Model tokens">~13 thousand</td>
+</tr>
+<tr>
+<td data-label="Task">Ask a question</td>
+<td data-label="Typical time">a few minutes</td>
+<td data-label="Model tokens">~80 thousand</td>
+</tr>
+<tr>
+<td data-label="Task">Draft an SRS</td>
+<td data-label="Typical time">~5 min</td>
+<td data-label="Model tokens">~500 thousand</td>
+</tr>
+</tbody>
+</table></div>
+<p>Drafting an SRS is by far the most expensive task. Make sure the brief and its sources are right before you queue one.</p>
+<figure class="fig" id="fig-cost"><div class="fig-head"><span class="fig-kicker">Interactive</span><span class="fig-title">Time and tokens per task</span></div><div class="fig-body"><div class="fig-ctl"><div class="seg" role="group" aria-label="Measure"><button data-cm="tokens" aria-pressed="true">Model tokens</button><button data-cm="time" aria-pressed="false">Typical time</button></div></div><div class="bars" data-cost></div></div><figcaption>Measured on the learning system (GPT-5.1).</figcaption></figure></div><nav class="prevnext"><a class="pn prev" href="#11-drafting-a-software-requirements-specification-with-esam"><small>← Previous</small>11. Drafting a software requirements specification with ESAM</a><a class="pn next" href="#top"><small>Done</small>Back to the top ↑</a></nav></section>
+      <footer class="foot">Generated from <code>ESAM_SE_User_Manual.md</code>. Living document: edit the Markdown, then run <code>docs/build_manual_html.py</code>.</footer>
+    </div>
+  </main>
+</div>
+<button class="totop" type="button" aria-label="Back to top">↑</button>
+<script>
+(() => {
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const NS = 'http://www.w3.org/2000/svg';
+const svgEl = (tag, attrs = {}, parent) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if (parent) parent.appendChild(n); return n; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sleep = ms => new Promise(r => setTimeout(r, reduced ? 0 : ms));
+
+/* ---------- theme ---------- */
+const themes = ['auto', 'light', 'dark'], icons = { auto: '◐', light: '☀', dark: '☾' };
+const themeBtn = $('.theme');
+function applyTheme(t) {
+  if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
+  themeBtn.textContent = icons[t]; themeBtn.title = 'Theme: ' + t; store.set('esam-theme', t);
+}
+applyTheme(store.get('esam-theme') || 'auto');
+themeBtn.onclick = () => applyTheme(themes[(themes.indexOf(store.get('esam-theme') || 'auto') + 1) % 3]);
+
+/* ---------- drawer ---------- */
+const menuBtn = $('.menu');
+const setNav = open => { document.body.classList.toggle('nav-open', open); menuBtn.setAttribute('aria-expanded', open); $('.scrim').hidden = !open; };
+menuBtn.onclick = () => setNav(!document.body.classList.contains('nav-open'));
+$('.scrim').onclick = () => setNav(false);
+$('.side').addEventListener('click', e => { if (e.target.closest('a') && innerWidth <= 1080) setNav(false); });
+
+/* ---------- progress, scrollspy, back to top ---------- */
+const bar = $('.progress i'), toTop = $('.totop'), crumb = $('.crumb');
+const chaps = $$('.chap'), tocItems = $$('.toc > ol > li');
+const subLinks = $$('.toc li ol a'), h3s = $$('.chap h3[id]');
+function onScroll() {
+  const h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+  bar.style.width = (max > 0 ? h.scrollTop / max * 100 : 0) + '%';
+  toTop.classList.toggle('show', h.scrollTop > 800);
+  const y = scrollY + 120;
+  let ci = -1; chaps.forEach((c, i) => { if (c.offsetTop <= y) ci = i; });
+  tocItems.forEach((li, i) => li.classList.toggle('active', i === ci));
+  crumb.textContent = ci >= 0 ? chaps[ci].dataset.ch + '. ' + chaps[ci].dataset.title : '';
+  let cur = null; h3s.forEach(h => { if (h.getBoundingClientRect().top + scrollY <= y) cur = h.id; });
+  subLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur));
+}
+addEventListener('scroll', () => requestAnimationFrame(onScroll), { passive: true });
+onScroll();
+toTop.onclick = () => scrollTo({ top: 0 });
+
+/* ---------- heading links, code copy ---------- */
+async function copy(text) { try { await navigator.clipboard.writeText(text); return true; } catch { return false; } }
+document.addEventListener('click', async e => {
+  const h = e.target.closest('.hlink');
+  if (h) { e.preventDefault(); history.replaceState(null, '', h.getAttribute('href')); h.closest('h2,h3').scrollIntoView();
+    if (await copy(location.href)) { h.classList.add('copied'); setTimeout(() => h.classList.remove('copied'), 1400); } }
+  const c = e.target.closest('.copy');
+  if (c) { const ok = await copy(c.closest('.code').querySelector('code').innerText); c.textContent = ok ? 'Copied ✓' : 'Select + copy'; setTimeout(() => c.textContent = 'Copy', 1400); }
+});
+
+/* tiny syntax colouring for yaml / sql code blocks */
+$$('.code').forEach(b => {
+  const lang = b.querySelector('.code-bar span').textContent, code = b.querySelector('code');
+  let s = code.innerHTML;
+  if (lang === 'yaml') s = s.split('\n').map(l => l
+      .replace(/(#[^\n]*)$/, '<span class="c-com">$1</span>')
+      .replace(/^(\s*-?\s*)([\w]+)(:)/, '$1<span class="c-key">$2</span>$3')
+      .replace(/(&quot;[^&]*?&quot;)/g, '<span class="c-str">$1</span>')).join('\n');
+  else if (lang === 'sql') s = s.split('\n').map(l => l
+      .replace(/(--[^\n]*)$/, '<span class="c-com">$1</span>')
+      .replace(/\b(WITH RECURSIVE|SELECT|FROM|WHERE|JOIN|UNION ALL|AS|NOT|ANY)\b/g, '<span class="c-kw">$1</span>')
+      .replace(/('[^']*')/g, '<span class="c-str">$1</span>')).join('\n');
+  code.innerHTML = s;
+});
+
+/* ---------- search ---------- */
+const q = $('#q'), snav = $('.search-nav'), main = $('#main');
+let hits = [], hi = -1, qt;
+function clearHits() { $$('mark.hit', main).forEach(m => { const p = m.parentNode; p.replaceChild(document.createTextNode(m.textContent), m); p.normalize(); }); hits = []; hi = -1; }
+function runSearch() {
+  clearHits(); const term = q.value.trim();
+  if (term.length < 2) { snav.hidden = true; return; }
+  const src = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), re = new RegExp(src, 'gi'), probe = new RegExp(src, 'i');
+  const walker = document.createTreeWalker($('.content'), NodeFilter.SHOW_TEXT, { acceptNode: n =>
+    n.parentElement.closest('svg,script,style,button,.fig-ctl,.cards') || !probe.test(n.data) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(n => {
+    const frag = document.createDocumentFragment(); let last = 0; re.lastIndex = 0; let m;
+    while ((m = re.exec(n.data))) { frag.append(n.data.slice(last, m.index)); const mk = document.createElement('mark'); mk.className = 'hit'; mk.textContent = m[0]; frag.append(mk); hits.push(mk); last = m.index + m[0].length; }
+    frag.append(n.data.slice(last)); n.parentNode.replaceChild(frag, n);
+  });
+  snav.hidden = false; $('.count', snav).textContent = hits.length ? hits.length + ' match' + (hits.length > 1 ? 'es' : '') : 'No matches';
+  if (hits.length) go(0, false);
+}
+function go(i, scroll = true) {
+  if (!hits.length) return; hits[hi]?.classList.remove('cur'); hi = (i + hits.length) % hits.length; hits[hi].classList.add('cur');
+  $('.count', snav).textContent = (hi + 1) + ' of ' + hits.length;
+  if (scroll) hits[hi].scrollIntoView({ block: 'center' });
+}
+q.addEventListener('input', () => { clearTimeout(qt); qt = setTimeout(runSearch, 180); });
+q.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(hi + (e.shiftKey ? -1 : 1)); if (innerWidth <= 1080) setNav(false); } if (e.key === 'Escape') { q.value = ''; runSearch(); q.blur(); } });
+snav.addEventListener('click', e => { const b = e.target.closest('[data-hit]'); if (b) go(hi + +b.dataset.hit); });
+const openSearch = () => { if (innerWidth <= 1080) setNav(true); q.focus(); q.select(); };
+$('.searchbtn').onclick = openSearch;
+addEventListener('keydown', e => { if (e.key === '/' && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); openSearch(); } if (e.key === 'Escape') setNav(false); });
+
+/* ---------- shared scenario: has STD-BRK-001 been loaded? ---------- */
+const std = { on: false, subs: [], set(v) { this.on = v; $$('.std-toggle').forEach(b => b.setAttribute('aria-pressed', v)); this.subs.forEach(f => f(true)); } };
+document.addEventListener('click', e => { if (e.target.closest('.std-toggle')) std.set(!std.on); });
+
+/* ================= figures ================= */
+
+/* §1.3 workflow */
+(() => {
+  const ol = $('[data-flow]'); if (!ol) return;
+  const steps = [['SE + converter', 'se', 'Export the contract WBS → skeleton YAML'], ['SE', 'se', 'Add SE attributes, functions, interfaces, documents'],
+    ['Automatic', 'auto', 'Schema check catches errors before commit', 1], ['SE', 'se', 'Commit to Git with a meaningful message'],
+    ['IT/SW', 'it', 'Ingestion updates the graph database'], ['SE', 'se', 'Review the Diff Matrix → Approve and Lock Baseline', 1]];
+  ol.innerHTML = steps.map((s, i) => `<li class="${s[3] ? 'gate' : ''}"><span class="no">${i + 1}</span><span class="t">${s[2]}</span><span class="whochip ${s[1]}">${s[0]}</span></li>`).join('');
+  let busy = false;
+  $('[data-play]').onclick = async () => { if (busy) return; busy = true; const li = $$('li', ol);
+    for (const l of li) { li.forEach(x => x.classList.remove('on')); l.classList.add('on'); await sleep(750); }
+    await sleep(600); li.forEach(x => x.classList.remove('on')); busy = false; };
+})();
+
+/* §2.2 rows */
+(() => {
+  const box = $('[data-rows]'); if (!box) return;
+  const docs = [['ICD-BRK-001', 8], ['SDD-BRK-001', 6], ['SDD-DCL-001', 6], ['SRS-BRK-001', 4], ['SRS-DCL-001', 4]];
+  box.innerHTML = docs.map(([d, n]) => `<button class="barrow" aria-pressed="false" data-d="${d}" data-n="${n}"><span class="lab mono">${d}</span><span class="track"><i style="width:${n / 8 * 100}%"></i></span><span class="val">${n} rows</span></button>`).join('')
+    + `<div class="barrow" style="cursor:default"><span class="lab"><b>Total</b></span><span></span><span class="val"><b>28 rows</b></span></div>`;
+  const out = $('[data-cards]');
+  box.addEventListener('click', e => { const b = e.target.closest('button.barrow'); if (!b) return;
+    $$('button.barrow', box).forEach(x => x.setAttribute('aria-pressed', x === b));
+    out.innerHTML = Array.from({ length: +b.dataset.n }, (_, i) => `<span class="icard" style="animation-delay:${i * 45}ms">${b.dataset.d}::${String(i).padStart(4, '0')}</span>`).join(''); });
+})();
+
+/* §2.3 chunking steps */
+(() => {
+  const ol = $('[data-chev]'); if (!ol) return;
+  const st = [['Convert', 'Word headings → section tree', 'The section tree is how every chunk knows where it sits.'],
+    ['Clean', 'Drop TOC, revision history, headers', 'Otherwise the table of contents matches every search.'],
+    ['Split', 'Sections, then requirement / test IDs', 'One chunk per requirement or test case is far more useful than an arbitrary slice.'],
+    ['Label', 'Prefix the full section path', 'On page 600, “the rate shall be 100 ms” means nothing without its label: <code>SDD-BRK-001 › 3.2 Wheel-slip control › 3.2.4 Pressure modulation</code>'],
+    ['Tag', 'Record IDs a chunk mentions', 'These become links in the graph: <code>verifies: SRS-BRK-012</code> means this test <i>verifies</i> that requirement.']];
+  ol.innerHTML = st.map((s, i) => `<li><button aria-pressed="${i === 0}" data-i="${i}">${s[0]}<small>${s[1]}</small></button></li>`).join('');
+  const d = $('[data-chev-detail]'); const show = i => { d.innerHTML = `<b>${st[i][0]}.</b> ${st[i][2]}`; $$('button', ol).forEach((b, j) => b.setAttribute('aria-pressed', j === i)); };
+  ol.addEventListener('click', e => { const b = e.target.closest('button'); if (b) show(+b.dataset.i); }); show(0);
+})();
+
+/* §3 map of meaning */
+(() => {
+  const host = $('[data-vplot]'); if (!host) return;
+  const P = [
+    ['ICD-BRK-001 › 3.1 EBC1 — Electronic Brake Controller 1', 27, 30, 'icd'], ['ICD-BRK-001 › 4. Timing and loss of communication', 37, 40, 'icd'],
+    ['SRS-BRK-001 › 3. Interface requirements', 19, 38, 'srs'], ['SRS-BRK-001 › 1. Control requirements', 20, 56, 'srs'], ['SRS-BRK-001 › 2. Safety requirements', 31, 63, 'srs'],
+    ['SDD-BRK-001 › 4. Fail-safe behaviour', 40, 58, 'sdd'], ['SDD-BRK-001 › 2. Task set', 48, 48, 'sdd'],
+    ['SRS-DCL-001 › 2. Brake warning requirements', 56, 33, 'srs'], ['SDD-DCL-001 › 3. Brake-related displays', 62, 24, 'sdd'],
+    ['SRS-DCL-001 › 3. Night operations requirements', 82, 20, 'srs'], ['SDD-DCL-001 › 4. Night operations', 87, 30, 'sdd'],
+    ['SRS-DCL-001 › 1. Display requirements', 74, 40, 'srs'], ['SDD-DCL-001 › 5. Boot and update', 80, 54, 'sdd'],
+    ['ICD-BRK-001 › 2. Physical layer', 44, 80, 'icd'], ['SDD-BRK-001 › 5. Power and environment', 56, 84, 'sdd'], ['SDD-BRK-001 › 3. Memory and partitioning', 64, 72, 'sdd']];
+  const Q = [['ABS status broadcast', 28, 34], ['NVG / blackout display mode', 84, 25], ['What warns the driver about brake faults?', 58, 29], ['How fast must pressure release on lock-up?', 26, 58]];
+  const W = 560, H = 380, X = x => 20 + x / 100 * (W - 40), Y = y => 20 + y / 100 * (H - 40);
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Chunks placed on a two-dimensional map of meaning' }, host);
+  const col = { icd: 'var(--t-sys)', srs: 'var(--ok)', sdd: 'var(--t-doc)' };
+  [['Brake & EBC1', 30, 47], ['Driver display', 75, 36], ['Platform & power', 54, 78]].forEach(([t, x, y]) =>
+    svgEl('ellipse', { cx: X(x), cy: Y(y), rx: 95, ry: 70, fill: 'var(--none-bg)', opacity: .55 }, svg));
+  [['Brake & EBC1', 8, 12], ['Driver display', 70, 8], ['Platform & power', 30, 96]].forEach(([t, x, y]) => {
+    const tx = svgEl('text', { x: X(x), y: Y(y), 'font-size': 11, 'font-weight': 600, fill: 'var(--ink-2)', 'letter-spacing': '.08em' }, svg); tx.textContent = t.toUpperCase(); });
+  const lines = svgEl('g', {}, svg), dots = svgEl('g', {}, svg), qg = svgEl('g', {}, svg);
+  P.forEach(p => { const c = svgEl('circle', { cx: X(p[1]), cy: Y(p[2]), r: 7, fill: col[p[3]], stroke: 'var(--sheet)', 'stroke-width': 2 }, dots); svgEl('title', {}, c).textContent = p[0]; p.el = c; });
+  const lg = svgEl('g', {}, svg); [['ICD', 'icd'], ['SRS', 'srs'], ['SDD', 'sdd']].forEach(([t, k], i) => {
+    svgEl('circle', { cx: W - 120 + i * 40, cy: H - 14, r: 5, fill: col[k] }, lg); const tx = svgEl('text', { x: W - 112 + i * 40, y: H - 10, 'font-size': 11 }, lg); tx.textContent = t; });
+  const chips = $('[data-vq]'), list = $('[data-vhits]');
+  chips.innerHTML = Q.map((q, i) => `<button class="chip" aria-pressed="false" data-i="${i}">${q[0]}</button>`).join('');
+  chips.addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return;
+    $$('.chip', chips).forEach(x => x.setAttribute('aria-pressed', x === b));
+    const [label, qx, qy] = Q[+b.dataset.i];
+    const ranked = P.map(p => ({ p, d: Math.hypot(p[1] - qx, (p[2] - qy) * .7) })).sort((a, b) => a.d - b.d);
+    lines.innerHTML = qg.innerHTML = ''; P.forEach(p => p.el.setAttribute('r', 7));
+    ranked.slice(0, 3).forEach(({ p }, i) => { svgEl('line', { x1: X(qx), y1: Y(qy), x2: X(p[1]), y2: Y(p[2]), stroke: 'var(--signal)', 'stroke-width': 2.2 - i * .5, 'stroke-dasharray': '4 3' }, lines); p.el.setAttribute('r', 10); });
+    const star = svgEl('path', { d: 'M0,-12 L3.5,-4 12,-4 5,2 7.5,11 0,5.5 -7.5,11 -5,2 -12,-4 -3.5,-4Z', transform: `translate(${X(qx)},${Y(qy)})`, fill: 'var(--signal)', stroke: 'var(--sheet)', 'stroke-width': 1.5 }, qg);
+    svgEl('title', {}, star).textContent = 'Your question: ' + label;
+    list.innerHTML = ranked.slice(0, 3).map(({ p, d }) => `<li>${esc(p[0])}<span class="sc">${Math.max(0, 1 - d / 90).toFixed(2)}</span></li>`).join(''); });
+})();
+
+/* §4 graph walk */
+(() => {
+  const host = $('[data-graph]'); if (!host) return;
+  const N = {
+    'V-001': ['SYNTH-LTV Ground Vehicle System', 'top', 480, 30, '1.0'], 'FAM-001': ['SYNTH-LTV Family of Vehicles', 'top', 480, 100, '1.1'],
+    'VAR-001': ['Lead Variant (Utility)', 'top', 480, 170, '1.1.1'],
+    'SYS-SUSP': ['Suspension/Steering', 'sys', 170, 250, '1.1.1.5'], 'SYS-VETR': ['Vehicle Electronics', 'sys', 520, 250, '1.1.1.6'], 'SYS-PWR': ['Power Pack/Drive Train', 'sys', 830, 250, '1.1.1.7'],
+    'SUB-BRK-ECU': ['Brake Control ECU (ABS)', 'sub', 170, 345, '', 1], 'SUB-J1939-BB': ['J1939 Vehicle Data Backbone', 'sub', 420, 345, '', 1],
+    'SUB-DCL': ['Driver Digital Cluster', 'sub', 625, 345, ''], 'SUB-ENG-ECM': ['Engine Control Module', 'sub', 830, 345, ''],
+    'ICD-BRK-001': ['Brake ECU J1939 Interface Control Document', 'doc', 66, 440], 'SDD-BRK-001': ['Brake Control ECU Software Design', 'doc', 170, 440],
+    'SRS-BRK-001': ['Brake Control ECU Software Requirements', 'doc', 274, 440], 'SDD-DCL-001': ['Driver Digital Cluster Software Design', 'doc', 573, 440],
+    'SRS-DCL-001': ['Driver Digital Cluster Software Requirements', 'doc', 677, 440] };
+  const PART = [['FAM-001', 'V-001'], ['VAR-001', 'FAM-001'], ['SYS-SUSP', 'VAR-001'], ['SYS-VETR', 'VAR-001'], ['SYS-PWR', 'VAR-001'],
+    ['SUB-BRK-ECU', 'SYS-SUSP'], ['SUB-J1939-BB', 'SYS-VETR'], ['SUB-DCL', 'SYS-VETR'], ['SUB-ENG-ECM', 'SYS-PWR']];
+  const DOC = [['SUB-BRK-ECU', 'ICD-BRK-001'], ['SUB-BRK-ECU', 'SDD-BRK-001'], ['SUB-BRK-ECU', 'SRS-BRK-001'], ['SUB-DCL', 'SDD-DCL-001'], ['SUB-DCL', 'SRS-DCL-001']];
+  const IF = [['SUB-BRK-ECU', 'SUB-J1939-BB', 'confirmed'], ['SUB-J1939-BB', 'SUB-DCL', 'confirmed'], ['SUB-J1939-BB', 'SUB-ENG-ECM', 'candidate']];
+  const size = k => k === 'doc' ? [96, 30] : [150, 42];
+  const svg = svgEl('svg', { viewBox: '0 0 960 470', role: 'img', 'aria-label': 'SYNTH-LTV baseline graph' }, host);
+  const eg = svgEl('g', {}, svg), ng = svgEl('g', {}, svg), bg = svgEl('g', {}, svg);
+  const E = {};
+  const key = (a, b) => a + '|' + b;
+  const vline = (a, b, cls) => { const [, , ax, ay] = N[a], [, kb, bx, by] = N[b], [, ka] = N[a];
+    const y1 = ay - size(ka)[1] / 2, y2 = by + size(kb)[1] / 2, my = (y1 + y2) / 2;
+    E[key(a, b)] = E[key(b, a)] = svgEl('path', { class: 'edge ' + cls, d: `M${ax},${y1} C${ax},${my} ${bx},${my} ${bx},${y2}` }, eg); };
+  PART.forEach(([c, p]) => vline(c, p, ''));
+  DOC.forEach(([s, d]) => vline(d, s, 'doc'));
+  IF.forEach(([a, b, st]) => { const [, , ax, ay] = N[a], [, , bx, by] = N[b]; let d, lx, ly;
+    if (b === 'SUB-ENG-ECM') { d = `M${ax},${ay - 21} Q${(ax + bx) / 2},${ay - 70} ${bx},${by - 21}`; lx = (ax + bx) / 2; ly = ay - 50; }
+    else { d = `M${ax + 75},${ay} L${bx - 75},${by}`; lx = (ax + bx) / 2; ly = ay - 8; }
+    E[key(a, b)] = E[key(b, a)] = svgEl('path', { class: 'edge iface' + (st === 'candidate' ? ' cand' : ''), d, 'marker-end': 'url(#arr)' }, eg);
+    const t = svgEl('text', { class: 'elbl', x: lx, y: ly, 'text-anchor': 'middle' }, eg); t.textContent = 'EBC1' + (st === 'candidate' ? ' (candidate)' : ''); });
+  const defs = svgEl('defs', {}, svg), mk = svgEl('marker', { id: 'arr', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, defs);
+  svgEl('path', { d: 'M0,0 L10,5 L0,10z', fill: 'var(--signal)' }, mk);
+  const G = {};
+  for (const [id, [nm, k, x, y, wbs, sc]] of Object.entries(N)) {
+    const [w, h] = size(k), g = svgEl('g', { class: `node k-${k}`, tabindex: 0, role: 'button', 'aria-label': `${id} ${nm}` }, ng);
+    svgEl('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, rx: 8 }, g);
+    const t1 = svgEl('text', { class: 'id', x, y: k === 'doc' ? y + 4 : y - 3, 'text-anchor': 'middle' }, g); t1.textContent = id;
+    if (k !== 'doc') { const t2 = svgEl('text', { class: 'nm', x, y: y + 12, 'text-anchor': 'middle' }, g); t2.textContent = nm.length > 24 ? nm.slice(0, 22) + '…' : nm; }
+    if (sc) { const c = svgEl('circle', { class: 'sc-dot', cx: x + w / 2 - 8, cy: y - h / 2 + 8, r: 4 }, g); svgEl('title', {}, c).textContent = 'safety-critical'; }
+    g.onclick = () => info(id); g.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); info(id); } };
+    G[id] = g;
+  }
+  const winfo = $('[data-winfo]'), rows = $('[data-wrows]');
+  function info(id) {
+    const [nm, k, , , wbs, sc] = N[id];
+    $$('.node', svg).forEach(n => n.classList.remove('sel')); G[id].classList.add('sel');
+    const kind = { top: 'WBS level', sys: 'System', sub: 'Subsystem', doc: 'Document' }[k];
+    const ifs = IF.filter(i => i[0] === id || i[1] === id).map(i => `${i[0] === id ? 'sends EBC1 to' : 'receives EBC1 from'} <code>${i[0] === id ? i[1] : i[0]}</code> (${i[2]})`);
+    winfo.innerHTML = `<b>${esc(nm)}</b><br><code>${id}</code> · ${kind}${wbs ? ' · WBS ' + wbs : ''}${sc ? ' · <span class="chip-s crit">safety-critical</span>' : ''}${ifs.length ? '<br>' + ifs.join('<br>') : ''}`;
+  }
+  const WALKS = {
+    up: { info: '<b>Up the tree.</b> Start at the document, follow <i>has document</i> once, then <i>part of</i> until there is no parent.',
+      steps: [['ICD-BRK-001', null, 'start'], ['SUB-BRK-ECU', 'ICD-BRK-001', 'has document'], ['SYS-SUSP', 'SUB-BRK-ECU', 'part of'], ['VAR-001', 'SYS-SUSP', 'part of'], ['FAM-001', 'VAR-001', 'part of'], ['V-001', 'FAM-001', 'part of']] },
+    down: { info: '<b>Down the tree.</b> Start at the system, follow <i>part of</i> and <i>has document</i> downward until nothing new turns up.',
+      steps: [['SYS-SUSP', null, 'start'], ['SUB-BRK-ECU', 'SYS-SUSP', 'part of'], ['ICD-BRK-001', 'SUB-BRK-ECU', 'has document', 2], ['SDD-BRK-001', 'SUB-BRK-ECU', 'has document', 2], ['SRS-BRK-001', 'SUB-BRK-ECU', 'has document', 2]] },
+    across: { info: '<b>Across interfaces.</b> Start at the changed subsystem and follow <i>sends EBC1</i>. The Engine ECM link is still a <i>candidate</i>: an SE must confirm it.',
+      steps: [['SUB-BRK-ECU', null, 'start'], ['SUB-J1939-BB', 'SUB-BRK-ECU', 'EBC1 (confirmed)'], ['SUB-DCL', 'SUB-J1939-BB', 'EBC1 (confirmed)', 2], ['SUB-ENG-ECM', 'SUB-J1939-BB', 'EBC1 (candidate)', 2]] } };
+  let run = 0;
+  async function walk(name) {
+    const my = ++run, w = WALKS[name];
+    $$('[data-walk]').forEach(b => b.setAttribute('aria-pressed', b.dataset.walk === name));
+    svg.classList.add('focus'); $$('.hl', svg).forEach(n => n.classList.remove('hl')); bg.innerHTML = ''; rows.innerHTML = '';
+    winfo.innerHTML = w.info;
+    let depth = 0;
+    for (const [id, from, via, d] of w.steps) {
+      if (my !== run) return;
+      depth = d ?? (from ? depth + 1 : 0);
+      if (from) E[key(from, id)].classList.add('hl');
+      G[id].classList.add('hl');
+      const [, k, x, y] = N[id], [wd, h] = size(k);
+      const b = svgEl('g', { class: 'badge' }, bg); svgEl('circle', { cx: x - wd / 2, cy: y - h / 2, r: 10 }, b);
+      const t = svgEl('text', { x: x - wd / 2, y: y - h / 2 + 4, 'text-anchor': 'middle' }, b); t.textContent = depth;
+      rows.insertAdjacentHTML('beforeend', `<tr><td data-label="depth">${depth}</td><td data-label="id">${id}</td><td data-label="name">${esc(N[id][0])}</td><td data-label="link followed">${via}</td></tr>`);
+      await sleep(650);
+    }
+    if (my === run) rows.insertAdjacentHTML('beforeend', `<tr><td colspan="4" data-label="" style="font-family:var(--f-body);color:var(--ink-2)">Nowhere new to go: ${w.steps.length} rows, and nobody said how many levels there were.</td></tr>`);
+  }
+  $$('[data-walk]').forEach(b => b.onclick = () => walk(b.dataset.walk));
+})();
+
+/* §5.2 coverage */
+(() => {
+  const root = $('#fig-coverage'); if (!root) return;
+  const TYPES = ['SRS', 'SDD', 'STD', 'ICD'];
+  const SUBS = [
+    { id: 'SUB-BRK-ECU', name: 'Brake ECU', about: 'software · safety-critical · interfaces', sys: 0, sw: 1, sc: 1, has: ['SRS', 'SDD', 'ICD'] },
+    { id: 'SUB-J1939-BB', name: 'J1939 backbone', about: 'safety-critical · interfaces', sys: 1, sw: 0, sc: 1, has: [] },
+    { id: 'SUB-DCL', name: 'Driver cluster', about: 'software · interfaces', sys: 1, sw: 1, sc: 0, has: ['SRS', 'SDD'] },
+    { id: 'SUB-ENG-ECM', name: 'Engine ECM', about: 'interfaces', sys: 2, sw: 0, sc: 0, has: [] }];
+  const SYS = ['Suspension/Steering', 'Vehicle Electronics', 'Power Pack/Drive Train'];
+  let mode = 'rules';
+  const req = s => mode === 'fixed' ? TYPES : TYPES.filter(t => (t === 'SRS' || t === 'SDD') ? s.sw : t === 'STD' ? s.sw && s.sc : true);
+  const has = s => new Set(std.on && s.id === 'SUB-BRK-ECU' ? [...s.has, 'STD'] : s.has);
+  function render(fromStd) {
+    let R = 0, P = 0, SC = 0; const sysR = [0, 0, 0], sysP = [0, 0, 0];
+    const body = SUBS.map(s => { const r = req(s), h = has(s);
+      return `<tr><td data-label=""><span class="sub-n">${s.name}</span><span class="sub-a">${s.about}</span></td>` + TYPES.map(t => {
+        if (!r.includes(t)) return `<td data-label="${t}"><span class="cell nr" title="not required">–</span></td>`;
+        R++; sysR[s.sys]++;
+        if (h.has(t)) { P++; sysP[s.sys]++; const fresh = fromStd && std.on && t === 'STD' && s.id === 'SUB-BRK-ECU';
+          return `<td data-label="${t}"><span class="cell has${fresh ? ' new' : ''}" title="present">✓</span></td>`; }
+        if (s.sc) SC++;
+        return `<td data-label="${t}"><span class="cell miss${s.sc ? ' sc' : ''}" title="missing${s.sc ? ' (safety-critical)' : ''}">✗${s.sc ? '⚠' : ''}</span></td>`; }).join('') + '</tr>'; }).join('');
+    $('[data-cmatrix]', root).innerHTML = `<thead><tr><th>Subsystem</th>${TYPES.map(t => `<th>${t}</th>`).join('')}</tr></thead><tbody>${body}</tbody>`;
+    $('[data-ctiles]', root).innerHTML = [['Required', R], ['Present', P, 'good'], ['Missing', R - P, R - P ? 'bad' : 'good'], ['⚠ Safety-critical gaps', SC, SC ? 'bad' : 'good']]
+      .map(([k, v, c]) => `<div class="tile ${c || ''}"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+    const pct = (p, r) => r ? Math.round(p / r * 100) : 100;
+    $('[data-rollup]', root).innerHTML = SYS.map((n, i) => [n, sysP[i], sysR[i]]).concat([['Whole vehicle', P, R, 1]]).map(([n, p, r, tot]) =>
+      `<div class="barrow${tot ? ' total' : ''}"><span class="lab">${n}</span><span class="track"><i style="width:${pct(p, r)}%"></i></span><span class="val">${pct(p, r)}% · ${p}/${r}</span></div>`).join('');
+  }
+  $$('[data-mode]', root).forEach(b => b.onclick = () => { mode = b.dataset.mode; $$('[data-mode]', root).forEach(x => x.setAttribute('aria-pressed', x === b)); render(); });
+  std.subs.push(render); render();
+})();
+
+/* §7.2 gap decision */
+(() => {
+  const ol = $('[data-decide]'); if (!ol) return;
+  function render() {
+    ol.innerHTML = `
+      <li><span class="dot">?</span><div class="box q">“How is SRS-BRK-011 verified?”</div></li>
+      <li><span class="dot">1</span><div class="box"><b>Document type:</b> “verified” is a testing word → a test description, <b>STD</b> (ontology §8).</div></li>
+      <li><span class="dot">2</span><div class="box"><b>Subsystem:</b> SRS-BRK-011 is allocated to <code>SUB-BRK-ECU</code>.</div></li>
+      <li><span class="dot">3</span><div class="box"><b>Baseline check:</b> does SUB-BRK-ECU have an STD? → <b>${std.on ? 'Yes: STD-BRK-001' : 'No'}</b></div></li>
+      <li><span class="dot">→</span><div class="branch">
+        <div class="br gapb ${std.on ? '' : 'on'}"><h4>Report the gap first</h4><p>“…the Brake ECU test description (STD) for subsystem SUB-BRK-ECU does not exist in the baseline yet… any detailed test sequence or thresholds would be an invention and must not be assumed.”</p></div>
+        <div class="br okb ${std.on ? 'on' : ''}"><h4>Answer, with a citation</h4><p>“The requirement SRS-BRK-011 is verified by test case TC-BRK-011 … [STD-BRK-001] … every one of the 200 releases … completes within 15 ms.”</p></div>
+      </div></li>`;
+  }
+  std.subs.push(render); render();
+})();
+
+/* §10 traceability */
+(() => {
+  const grid = $('[data-tgrid]'); if (!grid) return;
+  const R = { 'Brake ECU|SUB-BRK-ECU · SRS-BRK-001': ['SRS-BRK-010', 'SRS-BRK-011', 'SRS-BRK-012', 'SRS-BRK-020', 'SRS-BRK-021', 'SRS-BRK-022', 'SRS-BRK-030', 'SRS-BRK-031', 'SRS-BRK-032'],
+              'Driver cluster|SUB-DCL · SRS-DCL-001': ['SRS-DCL-010', 'SRS-DCL-011', 'SRS-DCL-020', 'SRS-DCL-021', 'SRS-DCL-022', 'SRS-DCL-030', 'SRS-DCL-031'] };
+  const V = { 'SRS-BRK-010': 'TC-BRK-010', 'SRS-BRK-011': 'TC-BRK-011', 'SRS-BRK-021': 'TC-BRK-021', 'SRS-BRK-030': 'TC-BRK-030' };
+  const det = $('[data-tdetail]'); let sel = null;
+  function render() {
+    let tot = 0, ver = 0;
+    grid.innerHTML = Object.entries(R).map(([k, ids]) => { const [nm, sub] = k.split('|'); let v = 0;
+      const chips = ids.map(id => { tot++; const ok = std.on && V[id]; if (ok) { v++; ver++; }
+        return `<button class="req${ok ? ' ver' : ''}" aria-pressed="${id === sel}" data-id="${id}">${id}</button>`; }).join('');
+      return `<div class="trow"><div class="nm">${nm}<small>${sub} · ${v} of ${ids.length} verified</small></div><div class="reqs">${chips}</div></div>`; }).join('');
+    $('[data-tsum]').innerHTML = `<span style="color:var(${ver ? '--ok' : '--crit'})">${ver}</span> of ${tot} verified`;
+    if (sel) show(sel);
+  }
+  function show(id) { sel = id; $$('.req', grid).forEach(b => b.setAttribute('aria-pressed', b.dataset.id === id));
+    det.innerHTML = std.on && V[id] ? `<b>${id}</b> is verified by <code>${V[id]}</code> in <code>STD-BRK-001</code>.` : `<b>${id}</b>: no test case verifies this.`; }
+  grid.addEventListener('click', e => { const b = e.target.closest('.req'); if (b) show(b.dataset.id); });
+  std.subs.push(render); render();
+})();
+
+/* §11.1 SwCI */
+(() => {
+  const t = $('[data-swci]'); if (!t) return;
+  const SEV = ['Catastrophic', 'Critical', 'Marginal', 'Negligible'];
+  const SCC = [['1', 'Autonomous'], ['2', 'Semi-autonomous'], ['3', 'Redundant fault tolerant'], ['4', 'Influential'], ['5', 'No safety impact']];
+  const M = [[1, 1, 3, 4], [1, 2, 3, 4], [2, 3, 4, 4], [3, 4, 4, 4], [5, 5, 5, 5]];
+  const RIGOR = { 1: 'Program shall perform analysis of requirements, architecture, design, and code; and conduct in-depth safety-specific testing.',
+    2: 'Program shall perform analysis of requirements, architecture, and design; and conduct in-depth safety-specific testing.',
+    3: 'Program shall perform analysis of requirements and architecture; and conduct in-depth safety-specific testing.',
+    4: 'Program shall conduct safety-specific testing.', 5: 'Once assessed by safety engineering as Not Safety, then no safety specific analysis or verification is required.' };
+  const RISK = { 1: 'High', 2: 'Serious', 3: 'Medium', 4: 'Low', 5: 'Not Safety' };
+  t.innerHTML = `<thead><tr><th>Control category</th>${SEV.map(s => `<th>${s}</th>`).join('')}</tr></thead><tbody>` +
+    SCC.map(([n, nm], r) => `<tr><td>${n}<small>${nm}</small></td>${M[r].map((v, c) => `<td><button class="sw-cell l${v}" data-r="${r}" data-c="${c}" aria-pressed="false" aria-label="${SEV[c]}, category ${n}: SwCI ${v}">SwCI ${v}</button></td>`).join('')}</tr>`).join('') + '</tbody>';
+  const out = $('[data-swci-out]');
+  function pick(r, c) { const v = M[r][c];
+    $$('.sw-cell', t).forEach(b => b.setAttribute('aria-pressed', +b.dataset.r === r && +b.dataset.c === c));
+    out.innerHTML = `<div class="ctl-label">${SEV[c]} × category ${SCC[r][0]} (${SCC[r][1].toLowerCase()})</div><div class="res">SwCI ${v}</div>
+      <p><b>Level of rigor:</b> ${RIGOR[v]}</p><p><b>If the rigor isn't met</b> (Table VI), the software's contribution to risk is documented as <b>${RISK[v]}</b>.</p>
+      ${r === 1 && c === 1 ? '<p class="src">This is the example brief: SSF-ENG-01, Critical × category 2.</p>' : ''}<p class="src">MIL-STD-882E Tables V and VI, from ESAM's standards library.</p>`; }
+  t.addEventListener('click', e => { const b = e.target.closest('.sw-cell'); if (b) pick(+b.dataset.r, +b.dataset.c); });
+  pick(1, 1);
+})();
+
+/* §12.4 review pipeline */
+(() => {
+  const ol = $('[data-pipe]'); if (!ol) return;
+  const S = [['📥', 'Inbox', 'you', 'Put <code>STD-BRK-001.md</code> in <code>work/inbox/</code> with its header table, then queue <i>Review a document for ingestion</i>. The file name must be the document id.'],
+    ['🧭', 'Triage', 'agent', 'Checks the header against the ontology: the right document type for that subsystem, a real subsystem, a valid id and revision.'],
+    ['🔎', 'Researcher', 'agent', 'Reads the content. For a test description, compares every pass criterion with the requirement it verifies: <b>matches</b>, <b>stricter</b>, <b>weaker</b> or <b>unclear</b>, quoting both.'],
+    ['📝', 'SE Reviewer', 'agent', 'Writes the <b>approval request</b>, ending with <i>RECOMMENDATION: INGEST</i> or <i>DO NOT INGEST</i>. The agents stop here.'],
+    ['🧑‍💼', 'You decide', 'human', '<b>Approve: ingest + verify</b>, or <b>Reject</b> with a note. Approving against a DO NOT INGEST needs the override box and a reason. An ontology error can\'t be approved past.'],
+    ['✅', 'Ingest + verify', 'auto', 'Adds the document to the baseline and search store, reloads the graph, then checks it is really in: chunks stored, attached, links present, searchable, integrity passing. Result: <i>verified</i> or <i>verification failed</i>, plus findings closed.']];
+  ol.innerHTML = S.map((s, i) => `<li class="${s[2]}"><button aria-pressed="${i === 0}" data-i="${i}"><span class="ic">${s[0]}</span><b>${s[1]}</b><small>${s[2] === 'agent' ? 'reads only through ESAM checks' : s[2] === 'human' ? 'recorded under your name' : s[2] === 'you' ? 'you' : 'ESAM'}</small></button></li>`).join('');
+  const d = $('[data-pipe-detail]'); const show = i => { d.innerHTML = `<b>${S[i][1]}.</b> ${S[i][3]}`; $$('button', ol).forEach((b, j) => b.setAttribute('aria-pressed', j === i)); };
+  ol.addEventListener('click', e => { const b = e.target.closest('button'); if (b) show(+b.dataset.i); }); show(0);
+})();
+
+/* §12.9 cost */
+(() => {
+  const box = $('[data-cost]'); if (!box) return;
+  const T = [['Check the environment', 15, '~15 s', 3, '~3k'], ['Review a document', 60, '~1 min', 70, '~70k'], ['Approve (ingest + verify)', 40, '~40 s', 13, '~13k'],
+    ['Ask a question', 180, 'a few min', 80, '~80k'], ['Draft an SRS', 300, '~5 min', 500, '~500k']];
+  function render(m) { const i = m === 'time' ? 1 : 3, max = Math.max(...T.map(r => r[i]));
+    box.innerHTML = T.map(r => `<div class="barrow"><span class="lab">${r[0]}</span><span class="track"><i style="width:0" data-w="${r[i] / max * 100}"></i></span><span class="val">${r[i + 1]}</span></div>`).join('');
+    requestAnimationFrame(() => requestAnimationFrame(() => $$('i[data-w]', box).forEach(x => x.style.width = Math.max(1, +x.dataset.w) + '%'))); }
+  $$('[data-cm]').forEach(b => b.onclick = () => { $$('[data-cm]').forEach(x => x.setAttribute('aria-pressed', x === b)); render(b.dataset.cm); });
+  render('tokens');
+})();
+})();
+</script>
+</body>
+</html>
