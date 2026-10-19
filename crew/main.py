@@ -15,10 +15,18 @@ ESAM crew runner.
     # Pipeline B: an SRS from an SE's brief → candidate draft + evidence pack in work/drafts/
     python -m crew.main author data/briefs/SRS-ENG-001.yaml
 
+    # The task list (PostgreSQL) and its worker
+    python -m crew.main tasks add review work/inbox/STD-BRK-001.md
+    python -m crew.main tasks add approve <run> --note "checked"     # the SE's own decision
+    python -m crew.main tasks add author data/briefs/SRS-ENG-001.yaml
+    python -m crew.main tasks add ask "Which brake requirements have no test?"
+    python -m crew.main tasks list | show <id> | cancel <id> | requeue <id>
+    python -m crew.main worker [--once]
+
     # Interactive: a question answered by the three agents
     python -m crew.main ask "Which brake requirements have no test?"
 
-(The task-list worker is added in a later step; crew/README.md.)
+(Details: crew/README.md.)
 
 Every run gets a folder work/runs/<timestamp>_<name>/ with the environment
 report (JSON), the agents' output (markdown) and a usage summary, and every
@@ -49,8 +57,12 @@ INBOX = ROOT / "work" / "inbox"
 DRAFTS = ROOT / "work" / "drafts"
 
 
+LAST_RUN: dict = {}      # the run the last command made (the worker records it on the task)
+
+
 def new_run(name: str, environment: str) -> tuple[str, Path, UsageLedger]:
     run_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{name}"
+    LAST_RUN.update(run_id=run_id, folder=RUNS / run_id)
     folder = RUNS / run_id
     folder.mkdir(parents=True, exist_ok=True)
     profile = load_profile(environment)
@@ -229,6 +241,7 @@ def cmd_approve(args) -> int:
     if state.get("recommendation") != "INGEST" and not args.against_recommendation:
         sys.exit(f"The SE Reviewer recommended {state.get('recommendation')!r}. To approve anyway, add "
                  "--against-recommendation and a --note saying why.")
+    LAST_RUN.update(run_id=state["run_id"], folder=folder)
     profile, report, EsamCrew = prepare(args.env or state["environment"], "ingest")
     run_id, ledger = state["run_id"], new_run_ledger(state, profile)
     crew = EsamCrew(profile["name"], ledger, report)
@@ -347,6 +360,128 @@ def cmd_ask(args) -> int:
     return 0
 
 
+# ── The task list ───────────────────────────────────────────────────────────
+
+def _queue(env: str | None = None):
+    from esamkit.tasks import TaskQueue
+    profile = load_profile(env)
+    try:
+        return TaskQueue(resolve(profile)["dsn"]), profile
+    except Exception as e:
+        sys.exit(f"The task list needs the profile's database: {type(e).__name__}: {e}")
+
+
+def _outcome(rc: int) -> dict:
+    """What a finished command left in its run folder, in one line for people."""
+    run_id, folder = LAST_RUN.get("run_id", ""), LAST_RUN.get("folder")
+    state = json.loads((folder / "state.json").read_text()) if folder and (folder / "state.json").exists() else {}
+    s, line = state.get("state", ""), f"exit {rc}"
+    if s == "awaiting_approval":
+        line = f"awaiting SE approval (recommendation: {state.get('recommendation')}): crew.main approve {run_id}"
+    elif s in ("verified", "verification_failed", "ingest_refused", "rejected", "undone"):
+        line = s.replace("_", " ")
+    elif s == "candidate":
+        lint = state.get("final_lint", {})
+        line = (f"candidate draft, {lint.get('errors')} errors / {lint.get('warnings')} warnings, reviewer: "
+                f"{state.get('verdict')}; pack: {(state.get('evidence_pack') or {}).get('evidence_pack', '')}")
+    elif folder and (folder / "answer.md").exists():
+        line = f"answer: {folder / 'answer.md'}"
+    elif folder and (folder / "environment_report.md").exists():
+        line = "GREEN LIGHT" if rc == 0 else "NOT READY"
+    return {"ok": rc == 0, "run_id": run_id, "outcome": line,
+            "result": {k: state.get(k) for k in ("state", "recommendation", "verdict", "final_lint", "evidence_pack") if k in state}}
+
+
+def _handlers() -> dict:
+    ns = argparse.Namespace
+
+    def run(fn, task, **kw):
+        LAST_RUN.clear()
+        return _outcome(fn(ns(env=task["environment"] or None, **kw)))
+
+    def review(task):
+        LAST_RUN.clear()
+        path = Path(task["payload"]["file"])
+        return _outcome(review_one(path if path.is_absolute() else ROOT / path,
+                                   ns(env=task["environment"] or None, set=task["payload"].get("set") or [])))
+
+    return {
+        "review": review,
+        "approve": lambda t: run(cmd_approve, t, run=t["payload"]["run"], by=t["created_by"],
+                                 note=t["payload"].get("note", ""),
+                                 against_recommendation=t["payload"].get("against_recommendation", False)),
+        "author": lambda t: run(cmd_author, t, brief=t["payload"]["brief"]),
+        "ask": lambda t: run(cmd_ask, t, question=t["payload"]["question"]),
+        "env": lambda t: run(cmd_env, t, no_network=False),
+    }
+
+
+def cmd_tasks(args) -> int:
+    from esamkit.tasks import KINDS
+
+    q, profile = _queue(args.env)
+    if args.action == "add":
+        if not args.rest or args.rest[0] not in KINDS:
+            sys.exit(f"tasks add <kind> ...: kind is one of {', '.join(KINDS)}")
+        args.kind, arg = args.rest[0], " ".join(args.rest[1:])
+        if not arg and args.kind != "env":
+            sys.exit(f"tasks add {args.kind} needs its argument (a file, brief, run id or question)")
+        payload = {"review": lambda: {"file": arg, "set": args.set or []}, "author": lambda: {"brief": arg},
+                   "ask": lambda: {"question": arg}, "env": lambda: {},
+                   "approve": lambda: {"run": arg, "note": args.note,
+                                       "against_recommendation": args.against_recommendation}}[args.kind]()
+        for key in ("file", "brief"):
+            if key in payload and not (ROOT / payload[key]).exists() and not Path(payload[key]).exists():
+                sys.exit(f"no such file: {payload[key]}")
+        tid = q.add(args.kind, payload, created_by=args.by, priority=args.priority, environment=args.env or "")
+        print(f"Task {tid} queued: {args.kind} {arg}. Run `python -m crew.main worker` to process the list.")
+        return 0
+    if args.action == "list":
+        rows = q.list(args.status)
+        if not rows:
+            print("No tasks.")
+        for r in rows:
+            what = r["payload"].get("file") or r["payload"].get("brief") or r["payload"].get("run") or r["payload"].get("question", "")
+            print(f"  {r['id']:>4}  {r['status']:<9} {r['kind']:<8} {str(what)[:46]:<46} {r['outcome'][:70]}")
+        return 0
+    task = q.get(int(args.rest[0])) if args.rest and args.rest[0].isdigit() else None
+    if task is None:
+        sys.exit(f"no task {' '.join(args.rest)}")
+    if args.action == "show":
+        print(json.dumps(task, indent=1, default=str))
+        return 0
+    ok = q.cancel(task["id"]) if args.action == "cancel" else q.requeue(task["id"])
+    print(f"Task {task['id']}: {args.action} {'done' if ok else 'not possible (status ' + task['status'] + ')'}")
+    return 0 if ok else 1
+
+
+def cmd_worker(args) -> int:
+    from esamkit.tasks import process_one, worker_name
+
+    q, _ = _queue(args.env)
+    handlers, me = _handlers(), worker_name()
+    if args.kinds:
+        handlers = {k: v for k, v in handlers.items() if k in args.kinds}
+    print(f"Worker {me}: kinds {', '.join(handlers)}; {'one task' if args.once else f'polling every {args.poll} s (Ctrl-C stops)'}")
+    done = 0
+    try:
+        while True:
+            task = process_one(q, handlers, me)
+            if task is None:
+                if args.once or (args.drain and done):
+                    break
+                time.sleep(args.poll)
+                continue
+            done += 1
+            print(f"\nTask {task['id']} {task['kind']}: {task['status']}: {task['outcome']}")
+            if args.once:
+                break
+    except KeyboardInterrupt:
+        print("\nStopped. A task left 'running' can be put back with `tasks requeue <id>`.")
+    print(f"Worker {me}: {done} task(s) processed.")
+    return 0
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="ESAM crew runner")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -375,6 +510,20 @@ def main() -> None:
         p.add_argument("--note", default="", required=(name == "reject"))
         if name == "approve":
             p.add_argument("--against-recommendation", action="store_true")
+    tk = add("tasks", cmd_tasks, "the task list: add, list, show, cancel, requeue")
+    tk.add_argument("action", choices=["add", "list", "show", "cancel", "requeue"])
+    tk.add_argument("rest", nargs="*", help="add: <kind> <file | brief | run id | question>;  show/cancel/requeue: <task id>")
+    tk.add_argument("--by", default=getpass.getuser(), help="who adds it (an approve task records this person)")
+    tk.add_argument("--note", default="")
+    tk.add_argument("--priority", type=int, default=0)
+    tk.add_argument("--status", default=None, help="list: only this status")
+    tk.add_argument("--set", action="append", metavar="KEY=VALUE")
+    tk.add_argument("--against-recommendation", action="store_true")
+    w = add("worker", cmd_worker, "process the task list")
+    w.add_argument("--once", action="store_true", help="one task, then stop")
+    w.add_argument("--drain", action="store_true", help="stop when the list is empty")
+    w.add_argument("--poll", type=float, default=10.0)
+    w.add_argument("--kinds", nargs="*", help="only these kinds")
     b = add("author", cmd_author, "Pipeline B: draft an SRS from an SE's brief, verified, with an evidence pack")
     b.add_argument("brief")
     a = add("ask", cmd_ask, "answer a question with the three agents")

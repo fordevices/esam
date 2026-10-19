@@ -22,6 +22,10 @@ python -m crew.main ask "Which brake requirements have no test?"
 python -m esamkit.standards                         # the standards library
 python -m esamkit.standards show "MIL-STD-882E 4.4.2"
 python -m crew.main author data/briefs/SRS-ENG-001.yaml   # Pipeline B → work/drafts/
+
+python -m crew.main tasks add review work/inbox/STD-BRK-001.md     # queue work in PostgreSQL
+python -m crew.main tasks list
+python -m crew.main worker [--once | --drain]                     # process the list
 ```
 
 | Step | Status |
@@ -29,7 +33,7 @@ python -m crew.main author data/briefs/SRS-ENG-001.yaml   # Pipeline B → work/
 | 0. Environment: profiles, probes, capabilities, usage ledger, Environment Engineer | ✅ |
 | 1. Pipeline A (ontology → document review → **stop for SE approval** → ingest → verify), interactive + inbox modes | ✅ |
 | 2. Standards library (MIL-STD-882E) + Pipeline B (SRS authoring, verified, certification evidence pack) | ✅ |
-| 3. Task list in the database + worker | planned |
+| 3. Task list in the database + worker | ✅ |
 | 4. Cockpit Tasks tab | planned |
 
 ## Step 0: environments
@@ -125,3 +129,27 @@ Output in `work/drafts/<doc>_<timestamp>/`: the candidate SRS, `compliance_matri
 `lint.md`/`lint.json`, `evidence_pack.md` (provenance and open items) and `se_reviewer_memo.md`. The draft enters
 the baseline only through Pipeline A (`review` → SE `approve`). The pack is supporting evidence; certification is
 the certifying authority's decision.
+
+## Step 3: the task list (PostgreSQL) and the worker
+
+`esam_tasks` holds queued crew work; `python -m crew.main worker` claims the highest-priority, oldest task, runs the
+same command an SE would, and records the outcome. Several workers can run at once: a claim is
+`UPDATE … WHERE id = (SELECT … FOR UPDATE SKIP LOCKED)`, so no two take the same task (`tests/test_tasks.py`).
+
+| Kind | Runs | Ends as |
+|---|---|---|
+| `review <file>` | Pipeline A, A1 + A2 | `done`, outcome "awaiting SE approval: crew.main approve <run>" |
+| `approve <run> [--note]` | A3 ingest + A4 verify | `done` (verified) or `failed` |
+| `author <brief>` | Pipeline B | `done` with lint counts, reviewer verdict and the evidence pack path |
+| `ask "<question>"` | the interactive crew | `done` with the answer file |
+| `env` | step 0 with the Environment Engineer | `done` (GREEN LIGHT) or `failed` (NOT READY) |
+
+**The worker never approves.** A review ends waiting for a person. An `approve` task is the SE's own decision,
+queued by them and recorded with their login (`--by`); the same refusals apply as for `crew.main approve`
+(no approval against the reviewer's recommendation without `--against-recommendation` and a note).
+
+Each task records its worker, attempts, start and finish times, the run id (whose folder and usage-ledger rows
+hold the detail), a one-line outcome, and on failure the reason and traceback. A refusal (`sys.exit` in a
+command, e.g. "NOT READY: this environment disables save_draft") fails the task with that reason; the worker
+carries on. `tasks cancel <id>` removes a queued task; `tasks requeue <id>` puts back a failed one, or one left
+`running` by a worker that was stopped.
