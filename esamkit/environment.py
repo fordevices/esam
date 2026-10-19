@@ -48,7 +48,8 @@ TOOL_NEEDS = {
     "check_coverage": ["graph"],
     "verified_by": ["graph"],
     "health_report": ["graph", "database"],
-    "ingest_document": ["vector", "embeddings", "graph"],
+    "ingest_document": ["vector", "embeddings", "graph", "database"],
+    "verify_ingestion": ["vector", "embeddings", "graph", "database"],
 }
 
 

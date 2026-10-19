@@ -15,7 +15,7 @@ from crewai import LLM, Agent, Crew, Process, Task
 from esamkit.environment import load_profile, resolve
 from esamkit.usage import UsageLedger
 
-from .custom_tools import InspectEnvironmentTool
+from .custom_tools import TOOLS, InspectEnvironmentTool, Workbench
 
 CONFIG = Path(__file__).parent / "config"
 
@@ -35,6 +35,21 @@ def reasoning_llm(profile: dict) -> LLM:
 
 
 class EsamCrew:
+    # Which tools each agent gets, per pipeline. A tool step 0 disabled is left out.
+    PIPELINES = {
+        "review": {"tasks": ["a1_ontology_check", "a2_document_review", "a2_approval_request"],
+                   "tools": {"triage": ["ontology_check", "ontology_lookup", "check_coverage"],
+                             "researcher": ["review_document", "verified_by", "search_documents", "walk_graph"],
+                             "se_reviewer": ["ontology_check", "review_document"]}},
+        "ingest": {"tasks": ["a3_ingest", "a4_verify"],
+                   "tools": {"researcher": ["ingest_document"],
+                             "se_reviewer": ["verify_ingestion", "health_report"]}},
+        "ask": {"tasks": ["ask_triage", "ask_research", "ask_review"],
+                "tools": {"triage": ["ontology_lookup", "walk_graph", "check_coverage"],
+                          "researcher": ["search_documents", "walk_graph", "verified_by", "check_coverage", "ontology_lookup"],
+                          "se_reviewer": ["check_coverage", "verified_by", "ontology_lookup"]}},
+    }
+
     def __init__(self, environment: str, ledger: UsageLedger, env_report: dict):
         self.environment = environment
         self.profile = load_profile(environment)
@@ -59,3 +74,21 @@ class EsamCrew:
         eng = self.agent("environment_engineer", [InspectEnvironmentTool().preset(self.env_report)])
         return Crew(agents=[eng], tasks=[self.task("check_environment", eng)], process=Process.sequential,
                     memory=False, verbose=True)
+
+    def missing_tools(self, pipeline: str) -> list[str]:
+        """Tools this pipeline needs that step 0 did not enable."""
+        enabled = set(self.env_report["capabilities"]["enabled"])
+        return sorted({t for ts in self.PIPELINES[pipeline]["tools"].values() for t in ts} - enabled)
+
+    def pipeline_crew(self, pipeline: str, wb: Workbench, folder: Path) -> Crew:
+        """Triage → Researcher → SE Reviewer, each with its tools for this pipeline.
+        (The runner writes each task's output to the run folder: CrewAI's
+        output_file strips a leading '/' and would write relative to the cwd.)"""
+        spec, enabled = self.PIPELINES[pipeline], set(self.env_report["capabilities"]["enabled"])
+        agents = {name: self.agent(name, [TOOLS[t]().on(wb) for t in tools if t in enabled])
+                  for name, tools in spec["tools"].items()}
+        tasks: list[Task] = []
+        for name in spec["tasks"]:
+            agent = agents[self.tasks_cfg[name]["agent"]]
+            tasks.append(self.task(name, agent, context=list(tasks)))
+        return Crew(agents=list(agents.values()), tasks=tasks, process=Process.sequential, memory=False, verbose=True)

@@ -24,7 +24,7 @@ still there; it lives in the `esam-pgdata` volume, which survives reboots.
 ## 3. Check everything works (optional, 15 s)
 
 ```bash
-pytest -q                          # expect: 68 passed
+pytest -q                          # expect: 76 passed
 ```
 
 ## 4. Study
@@ -57,12 +57,18 @@ To check the baseline against the ontology (the SE vocabulary in `data/ontology/
 python -m esamkit.ontology                 # expect: 0 errors, 0 warnings
 ```
 
-To check the environment and run the crew's step 0 (details in `crew/README.md`):
+To check the environment and run the crew (details in `crew/README.md`):
 
 ```bash
 python -m esamkit.environment              # probes: what this machine offers, which crew tools are on
 python -m crew.main env                    # the Environment Engineer agent reads them (uses GPT-5.1)
+python -m crew.main review lessons/06_missing_document/staged/STD-BRK-001.md   # stops for your approval
+python -m crew.main approve <run>          # ingest + verify;  `undo <run>` reverses it
+python -m crew.main ask "Which brake requirements have no test?"
 ```
+
+An approved ingest edits `data/baseline/vehicle_decomposition.yaml` and `data/documents/`. Undo it
+before running lesson 06 again: that lesson expects the STD to be missing.
 
 To look inside the database directly:
 

@@ -27,7 +27,7 @@ from pathlib import Path
 
 import yaml
 
-from .config import settings
+from .config import Settings, settings
 from .graphstores.base import GraphStore
 from .ontology import Ontology, check_baseline, default_ontology
 
@@ -134,12 +134,12 @@ def health_report(graph: GraphStore, onto: Ontology, baseline_data: dict, docume
             "blocked": any(c["status"] == "blocks" for c in checks), "checks": checks}
 
 
-def report_for(graph: GraphStore) -> dict:
+def report_for(graph: GraphStore, s: Settings = settings) -> dict:
     """The report against the configured baseline, documents and collection."""
     from .vectorstores.pgvector_store import chunk_counts
 
-    return health_report(graph, default_ontology(), yaml.safe_load(settings.baseline_yaml.read_text()),
-                         settings.documents_dir, chunk_counts(settings.pg_dsn, settings.collection))
+    return health_report(graph, default_ontology(), yaml.safe_load(s.baseline_yaml.read_text()),
+                         s.documents_dir, chunk_counts(s.pg_dsn, s.collection))
 
 
 def summary_line(rep: dict) -> str:

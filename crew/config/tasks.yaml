@@ -11,3 +11,112 @@ check_environment:
   expected_output: >
     A markdown environment report ending with a single line: GREEN LIGHT or NOT READY.
   agent: environment_engineer
+
+# ── Pipeline A: a document arrives → verified ingestion ─────────────────────
+# A1 and A2 run, then the pipeline STOPS: an SE reads approval_request.md and
+# runs `approve` or `reject`. Only then do A3 and A4 run.
+
+a1_ontology_check:
+  description: >
+    A document arrived for ingestion: {document} (run {run_id}). Run ontology_check
+    and read every finding. State what the document is: id, MIL-STD-498 type and
+    name, revision, the subsystem it is for and whether that subsystem is
+    safety-critical, whether it replaces an earlier revision, and which ontology
+    rule (if any) requires this document for the subsystem. Run check_coverage
+    for the subsystem to show which required documents are present or MISSING
+    before this one. Use ontology_lookup when a term needs explaining. Report
+    every ontology finding verbatim; an error means the document cannot be
+    ingested as it stands, and you name the field to fix.
+  expected_output: >
+    A short markdown classification with the facts above, the ontology findings
+    (or "none"), and a last line: ONTOLOGY OK or ONTOLOGY FAIL.
+  agent: triage
+
+a2_document_review:
+  description: >
+    Review the content of {document}. Run review_document. For a test
+    description, compare each test case's pass criteria with the text of every
+    requirement it verifies: the numbers, units and conditions must match or
+    be stricter; say for each test case MATCHES, STRICTER, WEAKER or UNCLEAR
+    and quote both sides. Note test cases whose cited requirement is already
+    verified elsewhere, and the subsystem's requirements that remain untested
+    after this document. For an SRS, check every requirement is a single,
+    testable 'shall' with a measurable value, and flag any that is not. Use
+    search_documents or verified_by only to confirm something in the
+    document against an existing one; cite document ids. Report the tool's
+    issues list verbatim.
+  expected_output: >
+    A markdown review: a table per test case (or requirement) with the
+    comparison and verdict, the issues, and what remains untested.
+  agent: researcher
+
+a2_approval_request:
+  description: >
+    Write the approval request an SE will read before deciding whether
+    {document} enters the baseline (run {run_id}). From the classification and
+    the review: what was checked, what passed, what failed, and anything a human
+    must decide. Do not repeat tables; summarise and point to the failures.
+    Recommend INGEST only if the ontology check is OK and no test case is WEAKER
+    than its requirement (or no requirement is untestable); otherwise DO NOT
+    INGEST, with the fix. Remind the SE that approval is theirs: they run
+    `python -m crew.main approve {run_id}` or `python -m crew.main reject {run_id}`.
+  expected_output: >
+    A markdown approval request of at most one page, ending with one line:
+    RECOMMENDATION: INGEST or RECOMMENDATION: DO NOT INGEST.
+  agent: se_reviewer
+
+a3_ingest:
+  description: >
+    The SE approved run {run_id}. Run ingest_document once and report exactly
+    what it did: the baseline line added (and any revision it replaced), the
+    chunks stored, and the requirements, test cases and VERIFIES links the
+    graph now holds. If the tool refuses, report the refusal verbatim and stop.
+  expected_output: >
+    A short markdown ingest record, or the refusal.
+  agent: researcher
+
+a4_verify:
+  description: >
+    Verify that {document} is really in (run {run_id}). Run verify_ingestion and
+    report every check with expected and found. From its health section, list
+    the health findings this ingest closed and any it opened, and the roll-up
+    change. A finding opened by this ingest, or any failed check, means NOT
+    VERIFIED; say what to do (`python -m crew.main undo {run_id}` reverses the
+    ingest).
+  expected_output: >
+    A markdown verification report ending with one line: VERIFIED or NOT VERIFIED.
+  agent: se_reviewer
+
+# ── Interactive: an SE's question ───────────────────────────────────────────
+
+ask_triage:
+  description: >
+    An SE asks: "{request}". Identify the subsystems, document types and
+    requirement or test ids involved (use ontology_lookup, walk_graph and
+    check_coverage). State which documents would answer it and which of
+    those are MISSING. Do not answer the question yet.
+  expected_output: >
+    A short triage: entities involved, documents needed (present or MISSING),
+    and what the researcher should look up.
+  agent: triage
+
+ask_research:
+  description: >
+    Answer "{request}" from the tools only, following the triage. Every fact
+    carries, in brackets, the document id it came from, e.g. [SRS-BRK-001]
+    (a requirement's document is in verified_by's 'document' field), or
+    [graph] for structure and traceability. Never cite a tool name. Where a needed document is MISSING, or a requirement has no
+    verifying test, say so plainly; never fill the gap.
+  expected_output: >
+    A markdown answer with citations, and a MISSING section listing every gap.
+  agent: researcher
+
+ask_review:
+  description: >
+    Check the researcher's answer to "{request}". Re-run check_coverage or
+    verified_by where a claim depends on them. Remove anything uncited or
+    contradicted, keep citations as document ids or [graph] (never tool names), keep the MISSING section, and write the final answer for the SE.
+  expected_output: >
+    The final answer in markdown, then a line "Checked:" listing what you
+    re-ran, and a MISSING section (or "MISSING: none").
+  agent: se_reviewer
