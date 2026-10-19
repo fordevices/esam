@@ -10,3 +10,7 @@ pgvector>=0.3
 
 # Only for ESAM_EMBED_BACKEND=openai and the chat model in later lessons.
 openai>=1.40
+
+# SE Cockpit web app (cockpit/)
+fastapi>=0.110
+uvicorn>=0.29

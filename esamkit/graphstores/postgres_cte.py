@@ -238,6 +238,28 @@ ORDER BY wbs_code, eid
 """
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# SNAPSHOT — the whole graph, for drawing it (SE Cockpit Graph tab).
+# Not a query anyone "asks"; just every row, with UUIDs swapped for entity ids
+# so the caller never sees database internals.
+# ─────────────────────────────────────────────────────────────────────────────
+SNAPSHOT_VERTICES = """
+SELECT properties->>'id' AS eid, label, properties AS props
+FROM graph_vertices
+ORDER BY label, eid
+"""
+
+SNAPSHOT_EDGES = """
+SELECT e.type,
+       f.properties->>'id' AS from_eid,
+       t.properties->>'id' AS to_eid,
+       e.properties        AS props
+FROM graph_edges e
+JOIN graph_vertices f ON f.id = e.from_id
+JOIN graph_vertices t ON t.id = e.to_id
+ORDER BY e.type, from_eid, to_eid
+"""
+
 class PostgresCTEGraphStore(GraphStore):
     def __init__(self, dsn: str):
         if not dsn:
@@ -285,3 +307,6 @@ class PostgresCTEGraphStore(GraphStore):
 
     def artifact_gaps(self, artifact_type: str) -> list[dict]:
         return self._rows(ARTIFACT_GAPS, artifact_type=artifact_type)
+
+    def snapshot(self) -> dict:
+        return {"vertices": self._rows(SNAPSHOT_VERTICES), "edges": self._rows(SNAPSHOT_EDGES)}

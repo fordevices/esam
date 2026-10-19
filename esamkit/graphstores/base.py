@@ -50,3 +50,10 @@ class GraphStore(ABC):
     @abstractmethod
     def artifact_gaps(self, artifact_type: str) -> list[dict]:
         """Subsystems that have NO artifact of the given type (e.g. 'icd')."""
+
+    @abstractmethod
+    def snapshot(self) -> dict:
+        """Every vertex and edge, keyed by ENTITY id (never internal UUIDs):
+        {"vertices": [{eid, label, props}], "edges": [{type, from_eid, to_eid, props}]}.
+        For drawing the whole graph (the SE Cockpit). Fine at baseline size
+        (thousands of vertices); a million-edge graph would need paging."""

@@ -56,3 +56,13 @@ def test_message_origin_is_the_producer_not_the_relay(graph):
 
 def test_artifact_gaps(graph):
     assert [r["eid"] for r in graph.artifact_gaps("ssr")] == ["SUB-J1939-BB", "SUB-ENG-ECM"]
+
+
+def test_snapshot_uses_entity_ids(graph):
+    snap = graph.snapshot()
+    eids = {v["eid"] for v in snap["vertices"]}
+    assert len(eids) == 20 and len(snap["edges"]) == 22
+    # every edge endpoint is an entity id the vertex list contains (no UUIDs leak)
+    assert all(e["from_eid"] in eids and e["to_eid"] in eids for e in snap["edges"])
+    candidate = [e for e in snap["edges"] if e["props"].get("status") == "candidate"]
+    assert [(e["from_eid"], e["to_eid"]) for e in candidate] == [("SUB-J1939-BB", "SUB-ENG-ECM")]

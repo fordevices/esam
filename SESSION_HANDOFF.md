@@ -1,7 +1,7 @@
 # ESAM learning project: session handoff
 
 **Status (2026-10-18):** resumed on a fast connection. Everything is installed, every lesson
-runs end to end on the real stack, and **24/24 tests pass**. What's left is in
+runs end to end on the real stack, and **30/30 tests pass**. What's left is in
 [§5 Pending tasks](#5-pending-tasks-in-order): mainly pushing to GitHub and connecting a chat model.
 
 History: paused 2026-10-17 at ~15–75 KB/s, resumed 2026-10-18 at ~8.5 MB/s.
@@ -15,7 +15,7 @@ Day-to-day restart steps for the user are in [`HOW_TO_START.md`](HOW_TO_START.md
    lesson or corpus before moving on.
 2. Bring the database back: `docker compose up -d --wait` (stopped at the end of the 2026-10-18
    session to save resources; data is kept in volume `esam-pgdata`).
-3. Sanity check: `source .venv/bin/activate && pytest -q` (expect 24 passed).
+3. Sanity check: `source .venv/bin/activate && pytest -q` (expect 30 passed).
 
 ---
 
@@ -91,7 +91,7 @@ Everything is installed. To pick up again:
 cd /home/dev/Documents/kirahi/aidev/esam
 source .venv/bin/activate
 docker compose up -d --wait          # if the container isn't running (e.g. after a reboot)
-pytest -q                            # expect 24 passed
+pytest -q                            # expect 30 passed
 ```
 
 To rebuild from scratch on another machine (needs ~1 GB of downloads), see the Quick start in

@@ -24,7 +24,7 @@ still there; it lives in the `esam-pgdata` volume, which survives reboots.
 ## 3. Check everything works (optional, 15 s)
 
 ```bash
-pytest -q                          # expect: 24 passed
+pytest -q                          # expect: 30 passed
 ```
 
 ## 4. Study
@@ -40,6 +40,12 @@ Work through the lessons in order. For each: **read the README, then run the scr
 | 05 | `lessons/05_hybrid/README.md` | `python lessons/05_hybrid/hybrid.py "If we change the EBC1 message period, what is affected?"` |
 
 Try your own questions, e.g. `python lessons/03_vector_store/search.py "your question"`.
+
+To see the baseline in the SE Cockpit (Dashboard + Graph tabs; details in `cockpit/README.md`):
+
+```bash
+uvicorn cockpit.app:app --port 8080        # open http://127.0.0.1:8080, Ctrl+C to stop
+```
 
 To look inside the database directly:
 

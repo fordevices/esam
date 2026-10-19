@@ -1,0 +1,673 @@
+<title>ESAM SE Cockpit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+  ESAM SE Cockpit page. ONE file, no CDN, no web fonts: it must open on the
+  air-gapped pilot VM. Served by cockpit/app.py (which adds the <html> shell
+  and lets the page fetch /api/cockpit), or written out with the data baked
+  into #esam-data by cockpit/export_snapshot.py.
+-->
+<style>
+/* Layout: an engineering drawing sheet. Title block on top, tabbed sheets,
+   a drawing area with a parts-callout panel beside it. */
+:root {
+  --paper: #f3f5f7;  --sheet: #ffffff;  --ink: #16202a;  --ink-2: #4c5a68;  --rule: #d3dae1;
+  --accent: #1f5f8b;              /* selection, links, active tab */
+  --signal: #b5630a;              /* J1939 interfaces (signals) */
+  --ok: #2e7a4c;  --crit: #b3261e;  --crit-bg: #fbe9e7;  --ok-bg: #e6f2ea;  --signal-bg: #fbf0e3;
+  /* vertex types */
+  --t-top: #5d6b78;  --t-sys: #2b5d87;  --t-sub: #0d7584;  --t-fn: #557a26;  --t-doc: #7b4f8f;
+  --f-display: "Bahnschrift", "DIN Alternate", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --f-mono: ui-monospace, "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0f1418;  --sheet: #172028;  --ink: #e2e8ee;  --ink-2: #9aa8b5;  --rule: #2b3743;
+  --accent: #6aa8d8;  --signal: #eb9a3c;
+  --ok: #6cc28f;  --crit: #ff7b6f;  --crit-bg: #3a1d1a;  --ok-bg: #16301f;  --signal-bg: #33240f;
+  --t-top: #96a5b3;  --t-sys: #72a4d0;  --t-sub: #4fb7c5;  --t-fn: #9cc36b;  --t-doc: #c59bd8;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --paper: #0f1418;  --sheet: #172028;  --ink: #e2e8ee;  --ink-2: #9aa8b5;  --rule: #2b3743;
+  --accent: #6aa8d8;  --signal: #eb9a3c;
+  --ok: #6cc28f;  --crit: #ff7b6f;  --crit-bg: #3a1d1a;  --ok-bg: #16301f;  --signal-bg: #33240f;
+  --t-top: #96a5b3;  --t-sys: #72a4d0;  --t-sub: #4fb7c5;  --t-fn: #9cc36b;  --t-doc: #c59bd8;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 14px/1.5 var(--f-body); }
+.wrap { max-width: 1320px; margin: 0 auto;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.mono { font-family: var(--f-mono); font-size: 0.86em; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Title block */
+.titleblock { background: var(--sheet); border-bottom: 1px solid var(--rule); }
+.titleblock .wrap { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between;
+                    gap: 12px 24px; padding-block: 16px 0; }
+.brand h1 { font: 600 22px/1.1 var(--f-display); letter-spacing: 0.01em; margin: 0; text-wrap: balance; }
+.brand p { margin: 2px 0 0; color: var(--ink-2); font-size: 13px; }
+.source { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); }
+.pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--rule); border-radius: 999px;
+        padding: 2px 10px; font-size: 12px; white-space: nowrap; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ink-2); }
+.pill.live::before { background: var(--ok); }
+.pill.snap::before { background: var(--signal); }
+.btn { border: 1px solid var(--rule); background: var(--sheet); border-radius: 6px; padding: 4px 12px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.tabs { display: flex; gap: 4px; margin-top: 14px; }
+.tab { border: 0; background: none; padding: 8px 14px 10px; cursor: pointer; color: var(--ink-2);
+       font: 600 13px var(--f-display); letter-spacing: 0.06em; text-transform: uppercase;
+       border-bottom: 3px solid transparent; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+main .wrap { padding-block: 20px 40px; }
+.banner { border: 1px solid var(--crit); background: var(--crit-bg); color: var(--ink); padding: 12px 14px;
+          border-radius: 6px; margin-bottom: 16px; }
+.banner code { font-family: var(--f-mono); font-size: 0.9em; }
+
+/* Dashboard */
+.summary { display: flex; flex-wrap: wrap; gap: 8px 28px; align-items: baseline; margin-bottom: 18px; }
+.summary .big { font: 600 28px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.summary .lbl { color: var(--ink-2); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+.summary .stat { display: grid; gap: 4px; }
+.summary .alert .big { color: var(--crit); }
+.counts { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--ink-2); font-size: 12.5px; margin-top: 2px; }
+.counts b { color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; margin-bottom: 18px; min-width: 0; }
+.panel h2 { font: 600 15px var(--f-display); letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 4px; }
+.panel .sub { color: var(--ink-2); font-size: 13px; margin: 0 0 12px; max-width: 72ch; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th { text-align: left; font-weight: 600; color: var(--ink-2); font-size: 11.5px; text-transform: uppercase;
+     letter-spacing: 0.05em; padding: 6px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+td { padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.cell { white-space: nowrap; }
+.who { display: grid; gap: 1px; }
+.who small { color: var(--ink-2); font-size: 12px; }
+.linkish { border: 0; background: none; padding: 0; cursor: pointer; color: var(--accent); text-align: left; }
+.linkish:hover { text-decoration: underline; }
+
+.chip { display: inline-block; font: 600 10.5px/1.6 var(--f-mono); letter-spacing: 0.04em; padding: 0 6px;
+        border-radius: 4px; border: 1px solid currentColor; white-space: nowrap; }
+.chip.sc { color: var(--crit); }
+.chip.os { color: var(--ink-2); }
+.state { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; padding: 1px 8px; border-radius: 4px; white-space: nowrap; }
+.state.have { color: var(--ok); background: var(--ok-bg); }
+.state.miss { color: var(--ink-2); border: 1px dashed var(--rule); }
+.state.miss.sc { color: var(--crit); background: var(--crit-bg); border: 1px solid transparent; font-weight: 600; }
+.state.confirmed { color: var(--ok); background: var(--ok-bg); }
+.state.candidate { color: var(--signal); background: var(--signal-bg); border: 1px dashed var(--signal); }
+
+.t-top { color: var(--t-top); } .t-sys { color: var(--t-sys); } .t-sub { color: var(--t-sub); }
+.t-fn { color: var(--t-fn); }  .t-doc { color: var(--t-doc); }
+
+/* Graph tab */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 12px; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 7px; overflow: hidden; background: var(--sheet); }
+.seg button { border: 0; background: none; padding: 6px 14px; cursor: pointer; color: var(--ink-2); font-size: 13px; }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--sheet); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 10px; height: 10px; border-radius: 2px; background: currentColor; }
+.ln { width: 22px; height: 0; border-top: 2px solid var(--signal); }
+.ln.dash { border-top-style: dashed; }
+
+.graph-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+@media (max-width: 960px) { .graph-grid { grid-template-columns: minmax(0, 1fr); } }
+.drawing { padding: 10px; }
+.drawing .scroll { max-height: 72vh; overflow: auto; }
+.view-help { color: var(--ink-2); font-size: 12.5px; margin: 2px 4px 8px; max-width: 80ch; }
+
+/* tree outline */
+.tree, .tree ul { list-style: none; margin: 0; padding: 0; }
+.tree ul { margin-left: 13px; padding-left: 14px; border-left: 1px solid var(--rule); }
+.tree summary { list-style: none; cursor: pointer; display: flex; align-items: center; }
+.tree summary::-webkit-details-marker { display: none; }
+.tree summary::before { content: "▸"; width: 14px; color: var(--ink-2); transition: transform .15s; flex: none; }
+.tree details[open] > summary::before { transform: rotate(90deg); }
+.tree .leaf { display: flex; align-items: center; padding-left: 14px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; border: 1px solid transparent; border-radius: 6px;
+       background: none; padding: 3px 8px; cursor: pointer; text-align: left; margin: 1px 0; min-width: 0; }
+.row:hover { border-color: var(--rule); }
+.row.is-sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.row .nm { color: var(--ink); }
+.row .wbs { color: var(--ink-2); font-family: var(--f-mono); font-size: 11.5px; }
+.row .if { color: var(--signal); font-size: 12px; }
+
+/* svg drawings */
+svg { display: block; }
+svg text { font-family: var(--f-body); fill: var(--ink); }
+svg .eid { font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; }
+svg .nm { font-size: 11px; fill: var(--ink-2); }
+svg .halo { paint-order: stroke; stroke: var(--sheet); stroke-width: 4px; stroke-linejoin: round; }
+svg .box { fill: var(--sheet); stroke-width: 1.5; }
+svg .node { cursor: pointer; }
+svg .node.is-sel .box, svg .node.is-sel circle { stroke: var(--accent); stroke-width: 3.5; }
+svg .scmark { font: 700 9.5px var(--f-mono); fill: var(--crit); }
+svg .link { fill: none; stroke: var(--rule); stroke-width: 1.4; }
+svg .link.doc { stroke-dasharray: 2 3; }
+svg .iface { fill: none; stroke: var(--signal); stroke-width: 2.2; }
+svg .iface.candidate { stroke-dasharray: 6 4; }
+svg .iflabel { font: 600 10.5px var(--f-mono); fill: var(--signal); }
+svg .arrow { fill: var(--signal); }
+svg .s-top { stroke: var(--t-top); } svg .s-sys { stroke: var(--t-sys); } svg .s-sub { stroke: var(--t-sub); }
+svg .s-fn { stroke: var(--t-fn); }   svg .s-doc { stroke: var(--t-doc); }
+svg .f-top { fill: var(--t-top); } svg .f-sys { fill: var(--t-sys); } svg .f-sub { fill: var(--t-sub); }
+svg .f-fn { fill: var(--t-fn); }   svg .f-doc { fill: var(--t-doc); }
+svg.net circle { stroke: var(--sheet); stroke-width: 2; }
+svg.net .node { cursor: grab; touch-action: none; }
+
+/* details panel */
+.details { position: sticky; top: 12px; }
+.details .empty { color: var(--ink-2); }
+.details h3 { font: 600 17px/1.25 var(--f-display); margin: 6px 0 2px; text-wrap: balance; }
+.details .kind { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.details h4 { font: 600 11.5px var(--f-display); letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-2);
+              margin: 16px 0 6px; }
+.details dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 3px 12px; margin: 0; font-size: 13px; }
+.details dt { color: var(--ink-2); }
+.details dd { margin: 0; overflow-wrap: anywhere; }
+.details ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13px; }
+.crumbs { display: flex; flex-wrap: wrap; gap: 2px 6px; font-size: 12.5px; align-items: center; }
+.crumbs .sep { color: var(--ink-2); }
+.note { color: var(--ink-2); font-size: 12.5px; }
+footer { color: var(--ink-2); font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="titleblock">
+  <div class="wrap">
+    <div class="brand">
+      <h1>ESAM SE Cockpit</h1>
+      <p id="programme">Vehicle baseline</p>
+    </div>
+    <div class="source"><span id="source-pill" class="pill">Loading…</span>
+      <button id="refresh" class="btn" type="button" hidden>Refresh</button></div>
+    <nav class="tabs" role="tablist" aria-label="Cockpit sections" style="flex-basis:100%">
+      <button class="tab" role="tab" id="tab-dashboard" aria-controls="dashboard" aria-selected="true" type="button">Dashboard</button>
+      <button class="tab" role="tab" id="tab-graph" aria-controls="graph" aria-selected="false" type="button">Graph</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div id="error" class="banner" hidden></div>
+
+    <section id="dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
+      <div class="summary" id="summary"></div>
+      <div class="panel">
+        <h2>Document coverage</h2>
+        <p class="sub">Which document types each subsystem has. A missing document on a safety-critical subsystem is shown in red.
+          The document types checked are the same for every subsystem until the SE rule table is in place.</p>
+        <div class="scroll"><table id="coverage"></table></div>
+      </div>
+      <div class="panel">
+        <h2>Interfaces</h2>
+        <p class="sub">Messages that cross between subsystems. <em>Candidate</em> links are proposed but not yet confirmed by an SE.</p>
+        <div class="scroll"><table id="interfaces"></table></div>
+      </div>
+    </section>
+
+    <section id="graph" role="tabpanel" aria-labelledby="tab-graph" hidden>
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Graph view">
+          <button type="button" id="view-tree" data-view="tree" aria-pressed="false">Tree</button>
+          <button type="button" id="view-combined" data-view="combined" aria-pressed="true">Tree + interfaces</button>
+          <button type="button" id="view-network" data-view="network" aria-pressed="false">Network</button>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="graph-grid">
+        <div class="panel drawing">
+          <p class="view-help" id="view-help"></p>
+          <div class="scroll" id="canvas"></div>
+        </div>
+        <aside class="panel details" id="details" aria-live="polite"></aside>
+      </div>
+    </section>
+
+    <footer id="footer"></footer>
+  </div>
+</main>
+
+<script id="esam-data" type="application/json">null</script>
+<script>
+(() => {
+"use strict";
+const NS = "http://www.w3.org/2000/svg";
+const $ = (s) => document.querySelector(s);
+
+// Vertex types: short code, colour class, order among siblings.
+const TYPES = {
+  Vehicle:        { code: "VEH", cls: "top", name: "Vehicle",        rank: 0, r: 13 },
+  VehicleFamily:  { code: "FAM", cls: "top", name: "Vehicle family", rank: 1, r: 11 },
+  Variant:        { code: "VAR", cls: "top", name: "Variant",        rank: 2, r: 11 },
+  System:         { code: "SYS", cls: "sys", name: "System",         rank: 3, r: 10 },
+  Subsystem:      { code: "SUB", cls: "sub", name: "Subsystem",      rank: 4, r: 10 },
+  Function:       { code: "FN",  cls: "fn",  name: "Function",       rank: 5, r: 7 },
+  DesignArtifact: { code: "DOC", cls: "doc", name: "Document",       rank: 6, r: 7 },
+};
+const typeOf = (v) => TYPES[v.label] || { code: v.label.slice(0, 3).toUpperCase(), cls: "top", name: v.label, rank: 9, r: 8 };
+
+// h("tag.cls", {attrs}, ...children): small DOM builder. Text is always set
+// as text, never parsed as HTML.
+function h(spec, attrs, ...kids) {
+  const [tag, ...cls] = spec.split(".");
+  const n = document.createElement(tag);
+  if (cls.length) n.className = cls.join(" ");
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === false || v == null) continue;
+    if (k === "on") for (const [ev, fn] of Object.entries(v)) n.addEventListener(ev, fn);
+    else n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) n.append(k instanceof Node ? k : String(k));
+  return n;
+}
+function s(tag, attrs, text) {
+  const n = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) if (v != null) n.setAttribute(k, v);
+  if (text != null) n.textContent = text;
+  return n;
+}
+const chip = (v) => { const t = typeOf(v); return h("span.chip.t-" + t.cls, { title: t.name }, t.code); };
+const shortMsg = (m) => (m || "").split(" ")[0] || "?";
+const fit = (str, n) => (str.length > n ? str.slice(0, n - 1) + "…" : str);
+const store = {
+  get(k) { try { return localStorage.getItem("esam-cockpit:" + k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem("esam-cockpit:" + k, v); } catch { /* storage blocked: fine */ } },
+};
+
+// ── Model: turn the flat vertex/edge lists into a tree + interface list ──────
+let M = null;
+function buildModel(data) {
+  const byId = new Map(data.graph.vertices.map((v) => [v.eid, v]));
+  const parent = new Map(), children = new Map(), ifaces = [], docsOf = new Map();
+  const kid = (p, c) => { if (!children.has(p)) children.set(p, []); children.get(p).push(c); };
+  for (const e of data.graph.edges) {
+    if (e.type === "PART_OF") { parent.set(e.from_eid, e.to_eid); kid(e.to_eid, e.from_eid); }
+    else if (e.type === "HAS_ARTIFACT") {
+      parent.set(e.to_eid, e.from_eid); kid(e.from_eid, e.to_eid);
+      if (!docsOf.has(e.from_eid)) docsOf.set(e.from_eid, []);
+      docsOf.get(e.from_eid).push(byId.get(e.to_eid));
+    } else if (e.type === "INTERFACES_WITH") ifaces.push(e);
+  }
+  const order = (a, b) => {
+    const va = byId.get(a), vb = byId.get(b);
+    return (typeOf(va).rank - typeOf(vb).rank)
+      || String(va.props.wbs_code || "").localeCompare(String(vb.props.wbs_code || ""), undefined, { numeric: true })
+      || a.localeCompare(b);
+  };
+  for (const list of children.values()) list.sort(order);
+  const roots = [...byId.keys()].filter((id) => !parent.has(id)).sort(order);
+  const gapsOf = new Map();
+  for (const [t, eids] of Object.entries(data.gaps || {}))
+    for (const id of eids) { if (!gapsOf.has(id)) gapsOf.set(id, []); gapsOf.get(id).push(t); }
+  const path = (id) => { const p = []; let c = parent.get(id); while (c) { p.unshift(c); c = parent.get(c); } return p; };
+  const systemOf = (id) => path(id).map((x) => byId.get(x)).find((v) => v.label === "System");
+  return { data, byId, parent, children, roots, ifaces, docsOf, gapsOf, path, systemOf };
+}
+
+// ── Selection, shared by every view ──────────────────────────────────────────
+let selected = null;
+function select(eid) {
+  if (!M.byId.has(eid)) return;
+  selected = eid;
+  document.querySelectorAll("[data-eid]").forEach((n) => n.classList.toggle("is-sel", n.dataset.eid === eid));
+  renderDetails();
+}
+const goto = (eid) => { showTab("graph"); select(eid); };
+const nodeLink = (eid) => h("button.linkish.mono", { type: "button", on: { click: () => goto(eid) } }, eid);
+
+// ── Dashboard ────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const { data, byId } = M;
+  const subs = [...byId.values()].filter((v) => v.label === "Subsystem")
+    .sort((a, b) => String(M.systemOf(a.eid)?.props.wbs_code || "").localeCompare(String(M.systemOf(b.eid)?.props.wbs_code || ""), undefined, { numeric: true }) || a.eid.localeCompare(b.eid));
+  const types = data.doc_types || [];
+  let have = 0, scGaps = 0;
+  for (const sub of subs) for (const t of types) {
+    if ((M.gapsOf.get(sub.eid) || []).includes(t)) { if (sub.props.safety_critical) scGaps++; } else have++;
+  }
+  const need = subs.length * types.length;
+  const countBy = (list, key) => list.reduce((m, x) => (m[x[key]] = (m[x[key]] || 0) + 1, m), {});
+  const vc = countBy(data.graph.vertices, "label"), ec = countBy(data.graph.edges, "type");
+  const candidates = M.ifaces.filter((e) => e.props.status === "candidate").length;
+
+  const stat = (big, lbl, cls) => h("div.stat" + (cls ? "." + cls : ""), {}, h("span.big", {}, big), h("span.lbl", {}, lbl));
+  $("#summary").replaceChildren(
+    stat(`${have}/${need}`, "documents present"),
+    stat(scGaps, "safety-critical gaps", scGaps ? "alert" : ""),
+    stat(M.ifaces.length, `interfaces · ${candidates} unconfirmed`),
+    h("div.stat", {}, h("span.lbl", {}, `${data.graph.vertices.length} nodes · ${data.graph.edges.length} links`),
+      h("div.counts", {}, Object.entries(vc).sort((a, b) => (TYPES[a[0]]?.rank ?? 9) - (TYPES[b[0]]?.rank ?? 9))
+        .map(([k, n]) => h("span", {}, h("b", {}, n), " ", (TYPES[k]?.name || k).toLowerCase()))),
+      h("div.counts", {}, Object.entries(ec).map(([k, n]) => h("span", {}, h("b", {}, n), " ", k.replace(/_/g, " ").toLowerCase())))),
+  );
+
+  const head = h("tr", {}, h("th", {}, "Subsystem"), h("th", {}, "System"), h("th", {}, "Class"),
+    types.map((t) => h("th", {}, t.toUpperCase())));
+  const rows = subs.map((sub) => {
+    const sys = M.systemOf(sub.eid), sc = !!sub.props.safety_critical;
+    const docs = M.docsOf.get(sub.eid) || [];
+    return h("tr", {},
+      h("td", {}, h("div.who", {}, h("span", {}, sub.props.name), nodeLink(sub.eid))),
+      h("td", {}, h("div.who", {}, h("span", {}, sys?.props.name || "—"), h("small.mono", {}, sys?.props.wbs_code || ""))),
+      h("td.cell", {}, sc ? h("span.chip.sc", { title: sub.props.safety_classification || "safety-critical" }, "SAFETY") : "",
+        " ", sub.props.os_class ? h("span.chip.os", {}, sub.props.os_class.toUpperCase()) : ""),
+      types.map((t) => {
+        const missing = (M.gapsOf.get(sub.eid) || []).includes(t);
+        if (missing) return h("td.cell", {}, h("span.state.miss" + (sc ? ".sc" : ""), {}, "missing"));
+        const doc = docs.find((d) => (d.props.artifact_type || "").toLowerCase() === t);
+        return h("td.cell", {}, h("span.state.have", {}, "✓ ", doc ? nodeLink(doc.eid) : "present"));
+      }));
+  });
+  $("#coverage").replaceChildren(h("thead", {}, head), h("tbody", {}, rows));
+
+  const ihead = h("tr", {}, ["From", "To", "Message", "Status", "Source document", "Notes"].map((x) => h("th", {}, x)));
+  const irows = M.ifaces.map((e) => h("tr", {},
+    h("td", {}, h("div.who", {}, h("span", {}, byId.get(e.from_eid).props.name), nodeLink(e.from_eid))),
+    h("td", {}, h("div.who", {}, h("span", {}, byId.get(e.to_eid).props.name), nodeLink(e.to_eid))),
+    h("td.cell.mono", {}, e.props.message || ""),
+    h("td.cell", {}, h("span.state." + (e.props.status === "candidate" ? "candidate" : "confirmed"), {}, e.props.status || "confirmed")),
+    h("td.cell", {}, e.props.source_artifact && byId.has(e.props.source_artifact) ? nodeLink(e.props.source_artifact) : h("span.note", {}, "none")),
+    h("td", {}, h("span.note", {}, e.props.notes || ""))));
+  $("#interfaces").replaceChildren(h("thead", {}, ihead), h("tbody", {}, irows));
+}
+
+// ── Graph: tree outline ──────────────────────────────────────────────────────
+function treeRow(v) {
+  const outs = M.ifaces.filter((e) => e.from_eid === v.eid).length, ins = M.ifaces.filter((e) => e.to_eid === v.eid).length;
+  return h("button.row", { type: "button", "data-eid": v.eid, on: { click: (ev) => { ev.preventDefault(); select(v.eid); } } },
+    chip(v), h("span.mono", {}, v.eid), h("span.nm", {}, v.props.name || ""),
+    v.props.wbs_code ? h("span.wbs", {}, v.props.wbs_code) : null,
+    v.props.safety_critical ? h("span.chip.sc", {}, "SAFETY") : null,
+    v.props.os_class ? h("span.chip.os", {}, v.props.os_class.toUpperCase()) : null,
+    (outs || ins) ? h("span.if", { title: "interfaces out / in" }, `⇄ ${outs} out · ${ins} in`) : null);
+}
+function treeNode(eid) {
+  const v = M.byId.get(eid), kids = M.children.get(eid) || [];
+  if (!kids.length) return h("li", {}, h("div.leaf", {}, treeRow(v)));
+  return h("li", {}, h("details", { open: true }, h("summary", {}, treeRow(v)), h("ul", {}, kids.map(treeNode))));
+}
+function renderTree() {
+  return h("ul.tree", {}, M.roots.map(treeNode));
+}
+
+// ── Graph: tree laid out left to right, interfaces drawn as arcs ─────────────
+function layoutTree() {
+  const pos = new Map(); let leaf = 0;
+  const ROW = 46, depthOf = new Map();
+  const walk = (id, d) => {
+    depthOf.set(id, d);
+    const kids = M.children.get(id) || [];
+    if (!kids.length) { pos.set(id, leaf++ * ROW); return pos.get(id); }
+    const ys = kids.map((k) => walk(k, d + 1));
+    pos.set(id, (ys[0] + ys[ys.length - 1]) / 2);
+    return pos.get(id);
+  };
+  M.roots.forEach((r) => walk(r, 0));
+  return { y: pos, depthOf, leaves: leaf, ROW };
+}
+function renderCombined() {
+  const { y, depthOf, leaves, ROW } = layoutTree();
+  const W = 132, H = 36, PAD = 20, TOP = 30;
+  // Columns by depth; the gap before the subsystem column is wider so the
+  // interface arcs have room to run between systems and subsystems.
+  const maxDepth = Math.max(...depthOf.values());
+  const X = []; for (let d = 0, x = PAD; d <= maxDepth; d++) { X.push(x); x += W + (d === 3 ? 100 : 18); }
+  const width = X[maxDepth] + W + PAD, height = TOP + leaves * ROW + PAD;
+  // Scale to the panel, but never below ~75% (scroll instead) so labels stay legible.
+  const svg = s("svg", { width: "100%", viewBox: `0 0 ${width} ${height}`, role: "img",
+    "aria-label": "Vehicle decomposition tree with interface arcs" });
+  svg.style.maxWidth = width + "px"; svg.style.minWidth = Math.round(width * 0.75) + "px";
+  const defs = s("defs");
+  const mk = s("marker", { id: "arw", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" });
+  mk.append(s("path", { d: "M0,0 L10,5 L0,10 z", class: "arrow" })); defs.append(mk); svg.append(defs);
+  const at = (id) => ({ x: X[depthOf.get(id)], y: TOP + y.get(id) });
+
+  // column headings
+  const colName = X.map(() => new Set());
+  for (const v of M.byId.values()) colName[depthOf.get(v.eid)].add(typeOf(v).name);
+  X.forEach((x, d) => svg.append(s("text", { x, y: 14, class: "nm" }, [...colName[d]].join(" / ").toUpperCase())));
+
+  for (const [p, kids] of M.children) for (const c of kids) {
+    const a = at(p), b = at(c), isDoc = M.byId.get(c).label === "DesignArtifact";
+    const mx = a.x + W + 14;
+    svg.append(s("path", { class: "link" + (isDoc ? " doc" : ""), d: `M${a.x + W},${a.y + H / 2} H${mx} V${b.y + H / 2} H${b.x}` }));
+  }
+  // interface arcs, bulging left of the subsystem column
+  M.ifaces.forEach((e, i) => {
+    const a = at(e.from_eid), b = at(e.to_eid);
+    const y0 = a.y + H / 2, y1 = b.y + H / 2, bulge = 46 + 14 * i + Math.min(40, Math.abs(y1 - y0) / 6);
+    const cand = e.props.status === "candidate";
+    const p = s("path", { class: "iface" + (cand ? " candidate" : ""), "marker-end": "url(#arw)",
+      d: `M${a.x},${y0 - 6} C${a.x - bulge},${y0 - 6} ${b.x - bulge},${y1 + 6} ${b.x},${y1 + 6}` });
+    p.append(s("title", {}, `${e.from_eid} → ${e.to_eid}: ${e.props.message} (${e.props.status})`));
+    svg.append(p);
+    svg.append(s("text", { class: "iflabel halo", x: Math.min(a.x, b.x) - bulge * 0.75 - 8, y: (y0 + y1) / 2 + 4,
+      "text-anchor": "end" }, shortMsg(e.props.message) + (cand ? "?" : "")));
+  });
+  for (const v of M.byId.values()) {
+    const { x, y: yy } = at(v.eid), t = typeOf(v);
+    const g = s("g", { class: "node", "data-eid": v.eid, tabindex: 0, role: "button", "aria-label": `${v.eid} ${v.props.name || ""}` });
+    g.append(s("rect", { class: "box s-" + t.cls, x, y: yy, width: W, height: H, rx: 5 }));
+    g.append(s("text", { class: "eid", x: x + 8, y: yy + 14 }, v.eid));
+    g.append(s("text", { class: "nm", x: x + 8, y: yy + 28 }, fit(v.props.name || "", 20)));
+    if (v.props.safety_critical) g.append(s("text", { class: "scmark", x: x + W - 6, y: yy + 13, "text-anchor": "end" }, "SC"));
+    g.addEventListener("click", () => select(v.eid));
+    g.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); select(v.eid); } });
+    svg.append(g);
+  }
+  return svg;
+}
+
+// ── Graph: force-directed network ────────────────────────────────────────────
+let netPos = null;
+function simulate() {
+  // Start from the tree layout (deterministic, already untangled), then let
+  // springs and repulsion settle it. 20-ish nodes: plain O(n²) is plenty.
+  const { y, depthOf } = layoutTree();
+  const ids = [...M.byId.keys()];
+  const P = new Map(ids.map((id) => [id, { x: depthOf.get(id) * 120, y: y.get(id) * 1.1, vx: 0, vy: 0 }]));
+  const links = M.data.graph.edges;
+  const rest = { PART_OF: 70, HAS_ARTIFACT: 55, INTERFACES_WITH: 110 };
+  for (let it = 0; it < 500; it++) {
+    const cool = 1 - it / 500;
+    for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
+      const a = P.get(ids[i]), b = P.get(ids[j]);
+      let dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy || 0.01;
+      const f = 2600 / d2, d = Math.sqrt(d2);
+      a.vx += f * dx / d; a.vy += f * dy / d; b.vx -= f * dx / d; b.vy -= f * dy / d;
+    }
+    for (const e of links) {
+      const a = P.get(e.from_eid), b = P.get(e.to_eid);
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+      const f = (d - (rest[e.type] || 70)) * 0.04;
+      a.vx += f * dx / d; a.vy += f * dy / d; b.vx -= f * dx / d; b.vy -= f * dy / d;
+    }
+    for (const p of P.values()) { p.x += p.vx * cool * 0.5; p.y += p.vy * cool * 0.5; p.vx *= 0.6; p.vy *= 0.6; }
+  }
+  const xs = [...P.values()].map((p) => p.x), ys = [...P.values()].map((p) => p.y);
+  const minX = Math.min(...xs), minY = Math.min(...ys);
+  for (const p of P.values()) { p.x = p.x - minX + 60; p.y = p.y - minY + 40; }
+  return { P, w: Math.max(...xs) - minX + 120, h: Math.max(...ys) - minY + 80 };
+}
+function renderNetwork() {
+  netPos ??= simulate();
+  const { P, w, h: ht } = netPos;
+  const svg = s("svg", { class: "net", viewBox: `0 0 ${w} ${ht}`, width: "100%", role: "img",
+    "aria-label": "Baseline as a network of nodes and links" });
+  svg.style.maxHeight = "68vh"; svg.style.minHeight = "320px";
+  const defs = s("defs");
+  const mk = s("marker", { id: "arw2", viewBox: "0 0 10 10", refX: 22, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto" });
+  mk.append(s("path", { d: "M0,0 L10,5 L0,10 z", class: "arrow" })); defs.append(mk); svg.append(defs);
+  const lines = [];
+  for (const e of M.data.graph.edges) {
+    const cls = e.type === "INTERFACES_WITH" ? "iface" + (e.props.status === "candidate" ? " candidate" : "")
+      : "link" + (e.type === "HAS_ARTIFACT" ? " doc" : "");
+    const l = s("line", { class: cls, "marker-end": e.type === "INTERFACES_WITH" ? "url(#arw2)" : null });
+    l.append(s("title", {}, `${e.from_eid} —${e.type}→ ${e.to_eid}${e.props.message ? " · " + e.props.message : ""}`));
+    lines.push([l, e]); svg.append(l);
+  }
+  const nodes = new Map();
+  for (const v of M.byId.values()) {
+    const t = typeOf(v), g = s("g", { class: "node", "data-eid": v.eid, tabindex: 0, role: "button", "aria-label": v.eid });
+    g.append(s("circle", { r: t.r, class: "f-" + t.cls }));
+    g.append(s("text", { class: "eid halo", y: t.r + 13, "text-anchor": "middle" }, v.eid));
+    g.append(s("title", {}, `${t.name}: ${v.props.name || v.eid}`));
+    nodes.set(v.eid, g); svg.append(g);
+    g.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); select(v.eid); } });
+    // drag to rearrange; a press without movement is a click (select)
+    g.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault(); g.setPointerCapture(ev.pointerId);
+      const m = svg.getScreenCTM().inverse(), p = P.get(v.eid); let moved = false;
+      const start = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(m), ox = p.x, oy = p.y;
+      const move = (e2) => {
+        const q = new DOMPoint(e2.clientX, e2.clientY).matrixTransform(m);
+        if (Math.abs(q.x - start.x) + Math.abs(q.y - start.y) > 3) moved = true;
+        p.x = Math.max(10, Math.min(w - 10, ox + q.x - start.x)); p.y = Math.max(10, Math.min(ht - 10, oy + q.y - start.y)); place();
+      };
+      const up = () => { g.removeEventListener("pointermove", move); g.removeEventListener("pointerup", up); if (!moved) select(v.eid); };
+      g.addEventListener("pointermove", move); g.addEventListener("pointerup", up);
+    });
+  }
+  function place() {
+    for (const [l, e] of lines) {
+      const a = P.get(e.from_eid), b = P.get(e.to_eid);
+      l.setAttribute("x1", a.x); l.setAttribute("y1", a.y); l.setAttribute("x2", b.x); l.setAttribute("y2", b.y);
+    }
+    for (const [id, g] of nodes) { const p = P.get(id); g.setAttribute("transform", `translate(${p.x},${p.y})`); }
+  }
+  place();
+  return svg;
+}
+
+// ── Details panel ────────────────────────────────────────────────────────────
+const HIDE = new Set(["id", "name"]);
+const fmt = (v) => (v === true ? "yes" : v === false ? "no" : typeof v === "object" ? JSON.stringify(v) : String(v));
+function renderDetails() {
+  const box = $("#details");
+  if (!selected) { box.replaceChildren(h("p.empty", {}, "Select a node in the drawing to see where it sits, what it contains and what it connects to.")); return; }
+  const v = M.byId.get(selected), t = typeOf(v);
+  const parts = [h("div.kind", {}, chip(v), h("span.mono", {}, v.eid),
+    v.props.safety_critical ? h("span.chip.sc", { title: v.props.safety_classification || "" }, "SAFETY") : null),
+    h("h3", {}, v.props.name || v.eid)];
+
+  const crumbs = M.path(v.eid);
+  if (crumbs.length) parts.push(h("h4", {}, "Sits under"), h("div.crumbs", {},
+    crumbs.flatMap((id, i) => [i ? h("span.sep", {}, "›") : null, nodeLink(id)])));
+
+  const props = Object.entries(v.props).filter(([k]) => !HIDE.has(k));
+  if (props.length) parts.push(h("h4", {}, "Properties"),
+    h("dl", {}, props.flatMap(([k, val]) => [h("dt", {}, k.replace(/_/g, " ")), h("dd", {}, fmt(val))])));
+
+  const kids = M.children.get(v.eid) || [];
+  if (kids.length) parts.push(h("h4", {}, `Contains (${kids.length})`),
+    h("ul", {}, kids.map((id) => h("li", {}, chip(M.byId.get(id)), " ", nodeLink(id), " ", h("span.note", {}, M.byId.get(id).props.name || "")))));
+
+  const outs = M.ifaces.filter((e) => e.from_eid === v.eid), ins = M.ifaces.filter((e) => e.to_eid === v.eid);
+  const ifLine = (e, dir) => h("li", {}, dir, " ", nodeLink(dir === "→" ? e.to_eid : e.from_eid), " ",
+    h("span.mono", {}, shortMsg(e.props.message)), " ",
+    h("span.state." + (e.props.status === "candidate" ? "candidate" : "confirmed"), {}, e.props.status || "confirmed"));
+  if (outs.length || ins.length) parts.push(h("h4", {}, "Interfaces"),
+    h("ul", {}, outs.map((e) => ifLine(e, "→")), ins.map((e) => ifLine(e, "←"))));
+
+  if (v.label === "Subsystem") {
+    const gaps = M.gapsOf.get(v.eid) || [], sc = !!v.props.safety_critical;
+    parts.push(h("h4", {}, "Documents"), h("ul", {}, (M.data.doc_types || []).map((dt) => {
+      const doc = (M.docsOf.get(v.eid) || []).find((d) => (d.props.artifact_type || "").toLowerCase() === dt);
+      return h("li", {}, h("span.mono", {}, dt.toUpperCase().padEnd(5, " ")), " ",
+        gaps.includes(dt) ? h("span.state.miss" + (sc ? ".sc" : ""), {}, "missing") : h("span.state.have", {}, "✓ ", doc ? nodeLink(doc.eid) : "present"));
+    })));
+  }
+  if (v.label === "DesignArtifact") {
+    const usedBy = M.ifaces.filter((e) => e.props.source_artifact === v.eid);
+    if (usedBy.length) parts.push(h("h4", {}, "Defines interfaces"),
+      h("ul", {}, usedBy.map((e) => h("li", {}, nodeLink(e.from_eid), " → ", nodeLink(e.to_eid), " ", h("span.mono", {}, shortMsg(e.props.message))))));
+  }
+  box.replaceChildren(...parts);
+}
+
+// ── Views, tabs, legend ──────────────────────────────────────────────────────
+const HELP = {
+  tree: "The baseline as an outline: vehicle down to functions and documents. Click ▸ to fold a branch; click a row for its details.",
+  combined: "The same tree laid out left to right, with interfaces drawn as orange arcs between subsystems. A dashed arc is a candidate link that no SE has confirmed yet.",
+  network: "Every node and link at once, pulled together by their connections. Drag a node to untangle it; click it for details.",
+};
+let view = store.get("view") || "combined";
+function renderView() {
+  if (!HELP[view]) view = "combined";
+  document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === view)));
+  $("#view-help").textContent = HELP[view];
+  $("#canvas").replaceChildren(view === "tree" ? renderTree() : view === "network" ? renderNetwork() : renderCombined());
+  if (selected) select(selected);
+}
+document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => { view = b.dataset.view; store.set("view", view); renderView(); }));
+
+function renderLegend() {
+  const seen = new Set([...M.byId.values()].map((v) => typeOf(v).cls));
+  const groups = [["top", "Vehicle / family / variant"], ["sys", "System"], ["sub", "Subsystem"], ["fn", "Function"], ["doc", "Document"]];
+  $("#legend").replaceChildren(
+    ...groups.filter(([c]) => seen.has(c)).map(([c, n]) => h("span.t-" + c, {}, h("i.sw", {}), h("span", { style: "color:var(--ink-2)" }, n))),
+    h("span", {}, h("i.ln", {}), "interface"), h("span", {}, h("i.ln.dash", {}), "candidate"));
+}
+
+function showTab(name) {
+  for (const id of ["dashboard", "graph"]) {
+    $("#" + id).hidden = id !== name;
+    $("#tab-" + id).setAttribute("aria-selected", String(id === name));
+  }
+  if (location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
+}
+$("#tab-dashboard").addEventListener("click", () => showTab("dashboard"));
+$("#tab-graph").addEventListener("click", () => showTab("graph"));
+
+// ── Load: baked-in snapshot, or the live API ─────────────────────────────────
+function render(data) {
+  M = buildModel(data); netPos = null;
+  const veh = [...M.byId.values()].find((v) => v.label === "Vehicle");
+  $("#programme").textContent = veh ? `${veh.props.name} · WBS ${veh.props.wbs_code || "—"}` : "Vehicle baseline";
+  const when = new Date(data.generated_at);
+  const stamp = isNaN(when) ? data.generated_at : when.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  const snap = data.source === "snapshot";
+  const pill = $("#source-pill");
+  pill.className = "pill " + (snap ? "snap" : "live");
+  pill.textContent = snap ? `Snapshot · taken ${stamp}` : `Live · graph database · loaded ${stamp}`;
+  $("#refresh").hidden = snap;
+  $("#footer").textContent = snap
+    ? "Snapshot: the data is baked into this page and does not update. Re-export after each ingest."
+    : "Live: data comes from the graph database each time the page loads or you press Refresh.";
+  renderDashboard(); renderLegend(); renderView();
+  if (!selected || !M.byId.has(selected)) selected = M.byId.has("SUB-BRK-ECU") ? "SUB-BRK-ECU" : M.roots[0];
+  select(selected);
+}
+async function loadLive() {
+  $("#error").hidden = true;
+  try {
+    const r = await fetch("api/cockpit");
+    if (!r.ok) throw new Error(`the Cockpit API answered ${r.status} ${r.statusText}`);
+    render(await r.json());
+  } catch (e) {
+    const err = $("#error");
+    err.replaceChildren(h("strong", {}, "Can't load the baseline. "), `${e.message}. Check that the Cockpit is running (`,
+      h("code", {}, "uvicorn cockpit.app:app --port 8080"), ") and the database is up (", h("code", {}, "docker compose up -d --wait"), ").");
+    err.hidden = false;
+    $("#source-pill").textContent = "Not connected";
+  }
+}
+$("#refresh").addEventListener("click", loadLive);
+
+const baked = JSON.parse(document.getElementById("esam-data").textContent);
+showTab(location.hash === "#graph" ? "graph" : "dashboard");
+if (baked) render(baked); else loadLive();
+})();
+</script>
