@@ -112,6 +112,13 @@ top-level README update; also turned on pgvector 0.8 iterative scans for filtere
    model weights"*, but a local embedder *is* model weights (~440 MB, MIT). Get an exception, or
    request an embeddings route on the IL5 API Gateway (then set `ESAM_EMBED_BACKEND=openai`).
 
+### Known issue: intermittent crash at the end of pytest (2026-10-19)
+Twice in ~15 runs, `pytest -q` printed a native "Fatal Python error" dump (module list: torch, psycopg_binary,
+scipy, sklearn) after the tests had run. 13 runs were clean (49 passed, exit 0), including 6 back-to-back
+with `PYTHONFAULTHANDLER=1`, which never reproduced it. Likely an interpreter-shutdown race between torch's
+threads and psycopg's C extension. If it recurs, capture the head of the output (`grep -A30 "Fatal Python error"`)
+and try `pytest -p no:faulthandler` or closing the store connections in fixture teardown.
+
 ## 6. Decisions made this session (don't re-litigate)
 
 | Decision | Why |

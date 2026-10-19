@@ -181,6 +181,24 @@ ol.steps li.now { font-weight: 600; }
 .verdictbox h3 { font: 600 18px var(--f-display); margin: 0 0 8px; }
 .verdictbox ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
 
+.subhead { font: 600 15px var(--f-display); letter-spacing: 0.04em; text-transform: uppercase; margin: 22px 0 6px; }
+.flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 900px) { .flow { grid-template-columns: minmax(0, 1fr); } }
+.stage { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; }
+.stage.changed { border: 2px solid var(--accent); }
+.stage h4 { margin: 0; font: 600 13px var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; }
+.stage .k { font: 600 11px var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.stage p { margin: 0; font-size: 13.5px; }
+.stage .same { color: var(--ink-2); font-size: 13px; }
+.ba { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+@media (max-width: 820px) { .ba { grid-template-columns: minmax(0, 1fr); } }
+.ba .panel h4 { margin: 0 0 8px; font: 600 12px var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.ba dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; margin: 0; font-size: 14px; }
+.ba dt { color: var(--ink-2); }
+.ba dd { margin: 0; }
+.ba .outcome { margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; }
+.ba-note { grid-column: 1 / -1; font-size: 14px; margin: 0; }
+.ba .answer { margin-top: 10px; font-size: 13px; }
 .pilot ul { margin: 0; padding-left: 20px; display: grid; gap: 8px; max-width: 80ch; }
 footer { padding-block: 34px 48px; font-size: 13px; color: var(--ink-2); }
 footer ol { padding-left: 20px; display: grid; gap: 4px; }
@@ -289,14 +307,35 @@ footer ol { padding-left: 20px; display: grid; gap: 4px; }
     </div>
   </section>
 
+  <section id="onto-section">
+    <div class="wrap">
+      <h2><span class="n">6</span>What changes with an ontology</h2>
+      <p class="intro">The ontology is the programme's agreed vocabulary, written so a machine can check it: the kinds of things and
+        documents that exist, the words people use for them, and what each kind of subsystem must have. It's a file the SE team owns,
+        next to the baseline. It changes how ESAM <em>understands and checks</em> a question; it doesn't change how documents are
+        searched or how the graph is walked.</p>
+      <div class="flow" id="onto-flow"></div>
+      <h3 class="subhead">Same questions, before and after</h3>
+      <p class="intro">Real runs of ESAM's step that decides what to check, before the ontology (a fixed word list in the software) and
+        with it.</p>
+      <div class="chips" id="ochips" role="group" aria-label="Example question"></div>
+      <div class="ba" id="ba"></div>
+      <h3 class="subhead">What each subsystem must have</h3>
+      <div class="panel scroll"><table class="cost" id="rules-compare"></table>
+        <p class="graphnote">Before: every subsystem was checked for the same four document types, so the J1939 backbone "needed" a
+          software design. With the ontology's rules, each subsystem is checked only for what applies to it.</p></div>
+    </div>
+  </section>
+
   <section class="pilot">
     <div class="wrap">
-      <h2><span class="n">6</span>What this means for the pilot</h2>
+      <h2><span class="n">7</span>What this means for the pilot</h2>
       <ul>
         <li><b>The baseline is the asset.</b> The graph is only as good as the YAML baseline the SE team maintains. Budget SE time for it the way you would for any configuration-controlled artefact.</li>
         <li><b>The pilot's graph runs in PostgreSQL</b> with the same walks shown in the Gremlin and Cypher tabs. JanusGraph (Gremlin) is the full-deployment target. Neo4j (Cypher) is not approved and is shown only because most published work uses it.</li>
         <li><b>Treat "the document doesn't exist yet" as a finding.</b> Only the hybrid can say it with certainty, because only the graph knows what should exist.</li>
-        <li><b>Next steps:</b> route each question to the right source automatically (the planned Query tab in the SE Cockpit), and define the programme vocabulary (ontology) so routing and gap checks get sharper.</li>
+        <li><b>Own the vocabulary.</b> The ontology (section 6) is SE policy, like the baseline: add the words people actually use, and keep the rules for what each subsystem must have up to date. ESAM's checks follow without any software change.</li>
+        <li><b>Next steps:</b> route each question to the right source automatically (the planned Query tab in the SE Cockpit), and bring requirements and test cases into the graph so "which requirements have no test?" can be answered directly.</li>
       </ul>
     </div>
   </section>
@@ -450,7 +489,7 @@ const R = {
       answer: "Brake ECU —sends EBC1→ J1939 backbone.\nThe interface is defined in ICD-BRK-001.\n(The period is not stored in the graph.)",
       src: SRC_GRAPH, why: "<b>Same answer as Gremlin; only the way of asking differs.</b> Cypher states the pattern; Gremlin walks to it." },
     hybrid: { v: "correct", short: "100 ms, cited twice", hl: ["ICD-BRK", "SRS-BRK", "BRK", "i-1", "BB"], badges: { "ICD-BRK": "0.80" },
-      steps: ["Document search lands on ICD-BRK-001 (score 0.80).", "The graph says that document belongs to the Brake ECU and finds who receives EBC1.", "Coverage check: the interface document this question needs exists.", "The model answers from the best passage of each relevant document."],
+      steps: ["Document search lands on ICD-BRK-001 (score 0.80).", "The graph says that document belongs to the Brake ECU and finds who receives EBC1.", "Coverage check: the ontology says a message question needs an interface document (ICD), and it exists.", "The model answers from the best passage of each relevant document."],
       answer: "The brake ECU transmits the EBC1 message every 100 ms. This is stated both in the ICD and in the software requirements:\n- EBC1 is \"broadcast every 100 ms\" [ICD-BRK-001].\n- The software \"shall transmit EBC1 (PGN 61441) every 100 ms ± 10 ms\" [SRS-BRK-001].",
       src: SRC_REAL, why: "<b>Correct, but no better than document search here</b>, and it sent nearly twice as much text to the model. For a pure lookup the graph adds cost, not accuracy." },
   },
@@ -512,7 +551,7 @@ const R = {
       answer: "The Brake ECU has no test description (STD).\nSo no document in the baseline can say how SRS-BRK-011 is verified.",
       src: SRC_GRAPH, why: "<b>Same result.</b> Certain about the gap, silent about the content." },
     hybrid: { v: "correct", short: "Says it doesn't exist; quotes the requirement", hl: ["SRS-BRK", "BRK", "STD-BRK", "d-std"], badges: { "SRS-BRK": "0.63" },
-      steps: ["Document search lands on SRS-BRK-001: the Brake ECU.", "Coverage check: a verification question needs a test description (STD). The graph says the Brake ECU has none.", "The model is told plainly: MISSING, do not fill the gap.", "It answers with what exists (the requirement) and names what doesn't."],
+      steps: ["Document search lands on SRS-BRK-001: the Brake ECU.", "Coverage check: the ontology says a verification question needs a test description (STD). The graph says the Brake ECU has none.", "The model is told plainly: MISSING, do not fill the gap.", "It answers with what exists (the requirement) and names what doesn't."],
       answer: "This question cannot be fully answered because the required test description (STD) for the Brake Control ECU (SUB-BRK-ECU) does not exist in the baseline yet.\nFrom the existing evidence:\n- SRS-BRK-011 states: \"The software shall release brake pressure on a wheel within 15 ms of detecting incipient lock-up on that wheel.\" [SRS-BRK-001]\n[...] Those test steps and pass/fail conditions must be obtained from, or defined in, the missing SUB-BRK-ECU STD, which has not yet been created in the baseline.",
       src: SRC_REAL + " Once STD-BRK-001 is added, the same question returns test case TC-BRK-011 with its steps and pass criteria.",
       why: "<b>Certain about the gap and accurate about the content.</b> \"Doesn't exist yet\" is now a finding you can act on: write the test description." },
@@ -654,7 +693,66 @@ function renderEvidence() {
   $("#sources").replaceChildren(...SOURCES.map(([id, text, url]) => h("li", { id: "src-" + id }, text, ". ", h("a", { href: url, target: "_blank", rel: "noopener" }, url))));
 }
 
-renderScorecard(); renderBench(); renderCost(); renderEvidence();
+// ── 6. With an ontology (real runs, 2026-10-19) ─────────────────────────────
+const STAGES = [
+  { t: "1 · Understand the question", changed: true,
+    before: "A fixed word list in the software decides which document type a question needs. Subsystems are recognised only by their full name.",
+    after: "The ontology's words and synonyms decide: “IRS” means an interface document, the old name “SSR” means an SRS, “test procedure” means an STD. Subsystems are also recognised by everyday names (“ECM”, “brake ECU”)." },
+  { t: "2 · Check the baseline", changed: true,
+    before: "Every subsystem is checked for the same four document types. If the question's words aren't on the list, no check runs.",
+    after: "Rules decide what each subsystem must have. The check runs for any word the ontology knows, on the subsystem the question names. The baseline itself is checked against the vocabulary." },
+  { t: "3 · Find the evidence", changed: false, same: "Unchanged: document search and graph walks work exactly as before." },
+  { t: "4 · Write the answer", changed: false, same: "Unchanged, except that the “document missing” warning now names the right subsystem." },
+];
+const BA = [
+  { q: "Does the ECM use the EBC1 brake message?",
+    before: { type: "Interface document (from “message”)", sub: "Not recognised. Falls back to where the search landed: the Brake ECU", check: "Brake ECU has its ICD: “all present”", v: "wrong", vl: "Checked the wrong subsystem" },
+    after: { type: "Interface document (ICD)", sub: "Engine ECM (from the alias “ECM”)", check: "Engine ECM has no ICD: MISSING", v: "correct", vl: "Checked the right subsystem" },
+    note: "The model's answer was cautious in <b>both</b> runs, because the graph shows the ECM with no documents. Before, that was the model being careful; with the ontology, the warning is a deterministic check that doesn't depend on the model noticing.",
+    answers: ["“The question cannot be fully answered because there is no Engine Control Module (SUB-ENG-ECM) document … Without an ECM interface or requirements document, we cannot determine from documents whether the ECM uses EBC1.”",
+              "“This question cannot be fully answered because the Engine Control Module (SUB-ENG-ECM) has no interface control document (ICD); that document does not exist in the baseline yet …”"] },
+  { q: "Where is the IRS for the brake ECU?",
+    before: { type: "None recognised (“IRS” isn't on the list)", sub: "Brake ECU (where the search landed)", check: "No check runs", v: "cant", vl: "No check" },
+    after: { type: "Interface document (ICD), via the synonym “IRS”", sub: "Brake ECU (from the alias “brake ECU”)", check: "Brake ECU has ICD-BRK-001: present", v: "correct", vl: "Checked and confirmed" },
+    note: "Same documents found either way. The difference is that ESAM now <b>knows</b> an interface document is what's being asked for, so it would have reported it if it were missing." },
+  { q: "Which SSR covers the off-road ABS mode?",
+    before: { type: "None recognised (old name “SSR”)", sub: "Brake ECU (where the search landed)", check: "No check runs", v: "cant", vl: "No check" },
+    after: { type: "Requirements (SRS), via the old name “SSR”", sub: "Brake ECU (where the search landed)", check: "Brake ECU has SRS-BRK-001: present", v: "correct", vl: "Checked and confirmed" },
+    note: "Renaming documents to MIL-STD-498 names didn't break the old vocabulary: “SSR” is kept as a synonym, so people can keep saying it." },
+  { q: "Where is the test procedure for the instrument cluster?",
+    before: { type: "Test description (from “test”)", sub: "Driver cluster (where the search landed)", check: "Driver cluster has no STD: MISSING", v: "correct", vl: "Already right" },
+    after: { type: "Test description (STD)", sub: "Driver cluster (from the alias “instrument cluster”)", check: "Driver cluster has no STD: MISSING", v: "correct", vl: "Same result" },
+    note: "No change here: the search happened to land on the cluster's documents, and “test” was already on the old list. The ontology doesn't make every answer different; it removes the cases where getting it right depended on luck." },
+];
+let baCur = 0;
+function renderOntoSection() {
+  $("#onto-flow").replaceChildren(...STAGES.map((st) => h("div.stage" + (st.changed ? ".changed" : ""), {}, h("h4", {}, st.t),
+    st.changed ? [h("span.k", {}, "Before"), h("p", {}, st.before), h("span.k", {}, "With the ontology"), h("p", {}, st.after)]
+               : h("p.same", {}, st.same))));
+  const draw = () => {
+    $("#ochips").replaceChildren(...BA.map((b, i) => h("button.chip", { type: "button", "aria-pressed": String(i === baCur), on: { click: () => { baCur = i; draw(); } } }, b.q)));
+    const b = BA[baCur];
+    const side = (title, x, ans) => h("div.panel", {}, h("h4", {}, title),
+      h("dl", {}, h("dt", {}, "Needs"), h("dd", {}, x.type), h("dt", {}, "About"), h("dd", {}, x.sub), h("dt", {}, "Check"), h("dd", {}, x.check)),
+      h("div.outcome", {}, h("span.v." + x.v, {}, x.vl)), ans ? h("p.answer", {}, ans) : null);
+    const note = h("p.ba-note", {}); note.innerHTML = b.note;   // authored text above
+    $("#ba").replaceChildren(side("Before (fixed word list)", b.before, b.answers && b.answers[0]),
+      side("With the ontology", b.after, b.answers && b.answers[1]), note);
+  };
+  draw();
+  const rows = [
+    ["Brake ECU", "software · safety-critical · interfaces", "ICD, SDD, SRS, STD", "SRS, SDD, STD, ICD", "STD"],
+    ["J1939 backbone", "safety-critical · interfaces", "ICD, SDD, SRS, STD", "ICD", "ICD"],
+    ["Driver cluster", "software · interfaces", "ICD, SDD, SRS, STD", "SRS, SDD, ICD", "ICD"],
+    ["Engine ECM", "interfaces", "ICD, SDD, SRS, STD", "ICD", "ICD"],
+  ];
+  $("#rules-compare").replaceChildren(
+    h("thead", {}, h("tr", {}, ["Subsystem", "What it is", "Before: checked for", "With the rules: must have", "Missing"].map((x) => h("th", {}, x)))),
+    h("tbody", {}, rows.map((r) => h("tr", {}, r.map((c) => h("td", {}, c)))),
+      h("tr", {}, h("td", {}, h("b", {}, "Total")), h("td", {}, ""), h("td", {}, "16 checks, 11 missing"), h("td", {}, "9 required, 5 present"), h("td", {}, h("b", {}, "4 (2 safety-critical)")))));
+}
+
+renderScorecard(); renderBench(); renderCost(); renderEvidence(); renderOntoSection();
 })();
 </script>
 </body>
