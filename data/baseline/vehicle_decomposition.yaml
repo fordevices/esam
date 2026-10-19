@@ -42,6 +42,7 @@ vehicle:
               subsystems:
                 - id: SUB-BRK-ECU
                   name: "Brake Control ECU (ABS)"
+                  aliases: ["brake ECU", "ABS ECU", "brake controller"]
                   safety_critical: true
                   safety_classification: "MIL-STD-882E SwCI 1"
                   os_class: rtos
@@ -64,6 +65,7 @@ vehicle:
               subsystems:
                 - id: SUB-J1939-BB
                   name: "J1939 Vehicle Data Backbone"
+                  aliases: ["J1939 backbone", "CAN backbone", "vehicle bus"]
                   safety_critical: true
                   functions:
                     - id: FN-BB-TRANSPORT
@@ -71,6 +73,7 @@ vehicle:
                       description: "250 kbit/s J1939 CAN segment connecting powertrain, chassis and crew-station ECUs."
                 - id: SUB-DCL
                   name: "Driver Digital Cluster"
+                  aliases: ["cluster", "instrument cluster", "DCL"]
                   safety_critical: false
                   os_class: gpos
                   j1939_source_address: 23      # "Instrument Cluster #1"
@@ -90,6 +93,7 @@ vehicle:
               subsystems:
                 - id: SUB-ENG-ECM
                   name: "Engine Control Module"
+                  aliases: ["ECM", "engine ECU", "engine controller"]
                   safety_critical: false
                   j1939_source_address: 0       # "Engine #1"
 

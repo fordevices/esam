@@ -7,6 +7,7 @@ grows it one tab at a time, on top of esamkit instead of its own SQL:
     Dashboard   graph counts, document coverage per subsystem, interfaces,
                 the last run of each check (e.g. lesson 06's confidence test)
     Graph       the baseline as a tree, a tree with interface arcs, a network
+    Ontology    what's in the SE vocabulary file, and whether the baseline passes it
 
 Still to come (see notes/): the health report (Dashboard), the query tab
 (lesson 05 hybrid), and baseline diff / approve.
@@ -29,17 +30,22 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse
 
+import yaml
+
 from esamkit import runlog
-from esamkit.config import settings
+from esamkit.config import PROJECT_ROOT, settings
 from esamkit.factory import get_graph_store
 from esamkit.graphstores.base import GraphStore
+from esamkit.ontology import check_baseline, default_ontology
 
 PAGE = Path(__file__).parent / "static" / "index.html"
 
-# Which document types every subsystem is checked for on the Dashboard.
-# A stand-in for the SE-owned rule table the health report (manual §5.2) will
-# read from the baseline; until then it is the same list for every subsystem.
-DOC_TYPES = ["icd", "sdd", "srs", "std"]
+# The document types the Dashboard checks: every type some ontology rule can
+# require. Which of them each subsystem actually needs comes from the rules.
+DOC_TYPES = default_ontology().required_types()
+# The ontology is read once, here. Edits to the file need a restart to apply;
+# the Ontology tab says so when the file is newer than this.
+ONTOLOGY_LOADED_AT = datetime.now(timezone.utc)
 
 # The page ships as a fragment (title, style, markup, script) so the very same
 # file can be published as a snapshot; the server adds the document shell.
@@ -71,13 +77,48 @@ def last_runs(dsn: str) -> list[dict]:
         return []
 
 
+def required_by_rules(snapshot: dict) -> dict[str, dict[str, list[str]]]:
+    """{subsystem eid: {doc_type: [why, ...]}} from the ontology's rules."""
+    onto = default_ontology()
+    linked = {e[k] for e in snapshot["edges"] if e["type"] == "INTERFACES_WITH" for k in ("from_eid", "to_eid")}
+    return {v["eid"]: onto.required_documents(v["props"], v["eid"] in linked)
+            for v in snapshot["vertices"] if v["label"] == "Subsystem"}
+
+
+def ontology_payload() -> dict:
+    """The ontology as loaded, where it came from, and the baseline checked against it."""
+    onto, path = default_ontology(), settings.ontology_yaml
+    findings = onto.check_self() + check_baseline(onto, yaml.safe_load(settings.baseline_yaml.read_text()),
+                                                  settings.documents_dir)
+    modified = datetime.fromtimestamp(path.stat().st_mtime, timezone.utc)
+    try:
+        relative = str(path.relative_to(PROJECT_ROOT))
+    except ValueError:
+        relative = str(path)
+    return {
+        "path": str(path),
+        "relative_path": relative,
+        "file_modified": modified.isoformat(timespec="seconds"),
+        "loaded_at": ONTOLOGY_LOADED_AT.isoformat(timespec="seconds"),
+        "changed_since_load": modified > ONTOLOGY_LOADED_AT,
+        "data": onto.data,
+        "check": [{"level": f.level, "where": f.where, "message": f.message} for f in findings],
+    }
+
+
 def collect(graph: GraphStore, doc_types: list[str], runs: list[dict] | None = None) -> dict:
     """Everything the page draws, in one payload (also what a snapshot embeds)."""
+    snapshot = graph.snapshot()
+    onto = default_ontology()
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "graph": graph.snapshot(),
+        "graph": snapshot,
         "doc_types": doc_types,
+        "doc_type_names": {t: d.get("name", t) for t, d in onto.document_types.items()},
         "gaps": {t: [r["eid"] for r in graph.artifact_gaps(t)] for t in doc_types},
+        "required": required_by_rules(snapshot),
+        "rules": onto.rules.get("required_documents", []),
+        "ontology": ontology_payload(),
         "runs": runs or [],
     }
 
@@ -107,6 +148,11 @@ def health(graph: GraphStore = Depends(get_graph)) -> dict:
     except Exception as e:  # report, don't crash: this is what ops will poll
         raise HTTPException(status_code=503, detail=f"graph store unreachable: {e}") from e
     return {"status": "ok", "vertices": len(snap["vertices"]), "edges": len(snap["edges"])}
+
+
+@app.get("/api/ontology")
+def ontology() -> dict:
+    return ontology_payload()
 
 
 @app.get("/api/cockpit")

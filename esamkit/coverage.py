@@ -12,34 +12,39 @@ anything, we work out (1) which document TYPE would answer the question and
 (2) which SUBSYSTEM it's about, and ask the graph whether that document
 exists. If not, the prompt says so in plain words (see hybrid.py).
 
-Step (1) is a keyword table: crude on purpose, and the first thing an
-ontology would replace (notes B3).
+Step (1) reads the ontology (data/ontology/esam_ontology.yaml): each
+document type lists the words that mean it would answer a question, plus its
+synonyms. Step (2) matches subsystem names and their baseline `aliases`.
+Both are SE-owned data, not code.
 """
 
+import re
+
 from .graphstores.base import GraphStore
-
-# Words in a question -> the document type that would answer it.
-DOC_TYPE_CUES = {
-    "std": ("test", "verif", "pass criteria", "pass/fail", "acceptance"),
-    "icd": ("interface", "message", "pgn", "signal", "j1939", "transmit", "receive", "consume"),
-    "sdd": ("design", "architecture", "task set", "scheduler", "implement"),
-    "srs": ("requirement", "shall"),
-}
+from .ontology import Ontology, default_ontology
 
 
-def doc_types_needed(question: str) -> list[str]:
+def _says(text: str, phrase: str) -> bool:
+    # Match at the START of a word: "verif" matches "verified", "test" matches
+    # "tests", but "irs" does not match inside "first".
+    return re.search(r"(?<![a-z0-9])" + re.escape(phrase), text) is not None
+
+
+def doc_types_needed(question: str, onto: Ontology | None = None) -> list[str]:
     q = question.lower()
-    return [t for t, cues in DOC_TYPE_CUES.items() if any(c in q for c in cues)]
+    cues = (onto or default_ontology()).doc_type_cues()
+    return [t for t, words in cues.items() if any(_says(q, w) for w in words)]
 
 
 def mentioned_subsystems(question: str, subsystems: list[dict]) -> list[str]:
-    """Subsystems named in the question, by full name ("Engine Control Module")
-    or by id without its prefix ("DCL"). `subsystems` = [{"eid", "name"}]."""
+    """Subsystems named in the question, by full name, by any alias
+    ("ECM", "brake ECU"), or by id without its prefix ("DCL").
+    `subsystems` = [{"eid", "name", "aliases"?}]."""
     q = question.lower()
     found = []
     for s in subsystems:
-        short = s["eid"].removeprefix("SUB-").lower()
-        if s["name"].lower() in q or f" {short} " in f" {q} ".replace("?", " ").replace(",", " "):
+        names = [s["name"], s["eid"].removeprefix("SUB-"), *s.get("aliases", [])]
+        if any(re.search(r"(?<![a-z0-9])" + re.escape(n.lower()) + r"(?![a-z0-9])", q) for n in names if n):
             found.append(s["eid"])
     return found
 

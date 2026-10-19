@@ -75,7 +75,7 @@ class Baseline:
 
 
 # Optional subsystem / function fields copied onto the vertex when present.
-_SUB_FIELDS = ("safety_critical", "safety_classification", "os_class",
+_SUB_FIELDS = ("safety_critical", "safety_classification", "os_class", "aliases",
                "j1939_source_address", "tsn_profile", "repo_url", "jira_component")
 
 

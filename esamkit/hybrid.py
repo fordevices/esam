@@ -130,7 +130,7 @@ def retrieve(question: str, emb: Embedder, store: VectorStore, graph: GraphStore
     # 3b. COVERAGE: the subsystem the question is about is the one it NAMES,
     #     else the one the vector search landed on. Does it have the document
     #     type the question needs?
-    subsystems = [{"eid": v.eid, "name": v.props.get("name", "")}
+    subsystems = [{"eid": v.eid, "name": v.props.get("name", ""), "aliases": v.props.get("aliases", [])}
                   for v in baseline.vertices if v.label == "Subsystem"]
     focus = mentioned_subsystems(question, subsystems) or [sub["eid"]]
     needed = doc_types_needed(question)

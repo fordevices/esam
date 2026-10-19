@@ -76,3 +76,20 @@ def test_structure_errors(onto, data):
     assert any("id used twice" in x for x in m)
     assert any("attached_to = 'SUB-NOPE' is not a Subsystem" in x for x in m)
     assert any("'STD-BRK-001.md' is listed but not in documents/" in x for x in m)
+
+
+def test_rules_give_each_subsystem_its_own_requirements(onto):
+    brake = {"safety_critical": True, "os_class": "rtos"}
+    assert onto.required_documents(brake, has_interfaces=True) == {
+        "srs": ["Software is specified and designed (MIL-STD-498)."],
+        "sdd": ["Software is specified and designed (MIL-STD-498)."],
+        "icd": ["Every interface is defined in a controlled interface document."],
+        "std": ["Safety-critical software must have a documented test description."]}
+    assert list(onto.required_documents({"safety_critical": True}, has_interfaces=True)) == ["icd"]   # a CAN backbone
+    assert onto.required_documents({"safety_critical": False}, has_interfaces=False) == {}
+    assert onto.required_types() == ["srs", "sdd", "icd", "std"]
+
+
+def test_aliases_must_be_a_list_of_names(onto, data):
+    _sub(data, "SUB-ENG-ECM")["aliases"] = "ECM"
+    assert any("aliases = 'ECM': must be a list" in m for m in messages(check_baseline(onto, data)))

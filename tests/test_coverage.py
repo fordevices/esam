@@ -3,7 +3,8 @@
 from esamkit.coverage import doc_types_needed, mentioned_subsystems, missing_documents
 from esamkit.hybrid import build_prompt
 
-SUBS = [{"eid": "SUB-ENG-ECM", "name": "Engine Control Module"}, {"eid": "SUB-DCL", "name": "Driver Digital Cluster"}]
+SUBS = [{"eid": "SUB-ENG-ECM", "name": "Engine Control Module", "aliases": ["ECM", "engine ECU"]},
+        {"eid": "SUB-DCL", "name": "Driver Digital Cluster"}]
 
 
 def test_doc_types_from_question_words():
@@ -12,10 +13,18 @@ def test_doc_types_from_question_words():
     assert doc_types_needed("What colour is the cab?") == []
 
 
+def test_doc_type_words_come_from_the_ontology():
+    assert doc_types_needed("Where is the test procedure for the ABS mode?") == ["std"]   # a synonym
+    assert doc_types_needed("Which SSR covers ABS mode?") == ["srs"]                      # old name, still understood
+    assert doc_types_needed("What did the first trial show?") == []                       # "irs" inside "first" is not IRS
+
+
 def test_mentioned_subsystems_by_name_or_short_id():
     assert mentioned_subsystems("Does the Engine Control Module use EBC1?", SUBS) == ["SUB-ENG-ECM"]
     assert mentioned_subsystems("What does the DCL show?", SUBS) == ["SUB-DCL"]
     assert mentioned_subsystems("What is the brake period?", SUBS) == []
+    assert mentioned_subsystems("Does the ECM read EBC1?", SUBS) == ["SUB-ENG-ECM"]          # alias
+    assert mentioned_subsystems("Is the ECMX fitted?", SUBS) == []                            # whole words only
 
 
 def test_missing_documents_against_graph(pg_dsn, baseline):

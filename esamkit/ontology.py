@@ -17,6 +17,7 @@ warnings (allowed, but probably a mistake). Nothing here touches a database.
 import re
 import sys
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 import yaml
@@ -55,6 +56,32 @@ class Ontology:
             return set(self.document_types)
         return {str(k) for k in self.value_sets.get(value_set, {})}
 
+    # ── Used by the rest of ESAM ──
+
+    def doc_type_cues(self) -> dict[str, list[str]]:
+        """document type -> lower-case words in a question that mean this type
+        would answer it: its `answers` plus its synonyms ("test procedure")."""
+        return {t: [c.lower() for c in d.get("answers", []) + d.get("synonyms", [])]
+                for t, d in self.document_types.items()}
+
+    def required_documents(self, props: dict, has_interfaces: bool) -> dict[str, list[str]]:
+        """What a subsystem must have under the rules: {doc_type: [why, ...]},
+        in document_types order. `props` are the subsystem's attributes."""
+        facts = {"software": bool(props.get("os_class")),
+                 "safety_critical": props.get("safety_critical") is True,
+                 "has_interfaces": has_interfaces}
+        out: dict[str, list[str]] = {}
+        for rule in self.rules.get("required_documents", []):
+            if all(facts[c] for c in rule["when"]):
+                for t in rule["require"]:
+                    out.setdefault(t, []).append(rule.get("why", ""))
+        return {t: out[t] for t in self.document_types if t in out}
+
+    def required_types(self) -> list[str]:
+        """Every document type some rule can require, in document_types order."""
+        wanted = {t for r in self.rules.get("required_documents", []) for t in r.get("require", [])}
+        return [t for t in self.document_types if t in wanted]
+
     def check_self(self) -> list[Finding]:
         """The ontology's own consistency: every reference inside it resolves."""
         out = []
@@ -92,6 +119,12 @@ def load_ontology(path: Path | None = None) -> Ontology:
     return Ontology(yaml.safe_load((path or settings.ontology_yaml).read_text()))
 
 
+@lru_cache(maxsize=1)
+def default_ontology() -> Ontology:
+    """The configured ontology, read once per process."""
+    return load_ontology()
+
+
 # ── Checking the baseline ────────────────────────────────────────────────────
 
 def _check_value(onto: Ontology, where: str, name: str, value, spec: dict) -> list[Finding]:
@@ -110,6 +143,8 @@ def _check_value(onto: Ontology, where: str, name: str, value, spec: dict) -> li
             bad(f"not an allowed value; use one of {sorted(allowed)}")
     elif t == "wbs" and not _WBS.match(str(value)):
         bad("not a WBS code like 1.1.1.5")
+    elif t == "text_list" and not (isinstance(value, list) and all(isinstance(v, str) and v for v in value)):
+        bad("must be a list of names, e.g. [\"ECM\", \"engine ECU\"]")
     if spec.get("pattern") and isinstance(value, str) and not re.match(spec["pattern"], value):
         bad(f"doesn't match the required form {spec['pattern']}")
     return out

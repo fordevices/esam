@@ -297,7 +297,7 @@ Gaps are normal mid-programme, so checks 1–4 and 6 inform you and never block.
 
 ### 5.3 Tooling status
 
-Only the "missing document of type X" query exists today, and it has to be run by hand. The full health report is planned.
+The SE Cockpit Dashboard shows check 1 today, driven by the ontology's rules (§8.4), so the table above becomes "what each subsystem must have" rather than the same four types for every subsystem. The full health report is planned.
 
 ---
 
@@ -385,7 +385,7 @@ The SE Cockpit Dashboard shows the latest run under **Checks**: date, pass or fa
 
 - **"Doesn't exist yet" is a finding, not a failure.** It usually points at the same gap the Dashboard's document coverage table shows in red.
 - **A new document doesn't confirm a link by itself.** When an ICD shows that a subsystem really does use a message, ESAM will cite it, but still calls a *candidate* interface unconfirmed. Changing it to confirmed is your decision, made in the baseline.
-- **ESAM can only check document types it knows how to recognise in a question.** The matching is deliberately simple today and will improve once the programme's vocabulary (ontology) is defined.
+- **ESAM recognises document types and subsystems through the ontology** (§8): each document type's words and synonyms, and each subsystem's name and aliases. If people use a term ESAM misses, add it to the ontology or the baseline `aliases`; no code change is needed.
 
 ---
 
@@ -458,9 +458,17 @@ ESAM checks the baseline against the ontology and reports:
 
 The SYNTH-LTV baseline currently passes with no errors and no warnings.
 
-### 8.6 Tooling status
+### 8.6 What uses the ontology today
 
-The ontology file and the baseline check exist. Using the ontology's synonyms to understand questions, and its rules in the Dashboard and the health report (§5.2), is the next step.
+| Where | What it takes from the ontology |
+|---|---|
+| **Baseline check** | Everything: classes, ID forms, allowed values, document types |
+| **SE Cockpit Ontology tab** | Shows the whole ontology, the path to the file, and whether the baseline passes it. If the file has been edited since the Cockpit started, it says so: restart the Cockpit to apply the changes |
+| **SE Cockpit Dashboard** | The rules: the document coverage table shows what each subsystem *must* have, marks the rest "not required", and lists the rules under the table |
+| **Answering questions** (§7) | Document-type words and synonyms: "test procedure" means an STD, "IRS" means an ICD, the old "SSR" still means an SRS |
+| **Recognising subsystems in questions** | Each subsystem's `aliases` in the baseline ("ECM", "brake ECU"), declared in the ontology |
+
+Still to come: the health report (§5.2) will use the same rules, and requirements and test cases will become items in the graph of their own, linked by *verifies*.
 
 ---
 

@@ -27,8 +27,10 @@ document has no vectors.
 
 Before the model sees anything, the pipeline works out:
 
-1. **Which document type would answer this?** A keyword table: test/verify → STD; message/interface → ICD;
-   design → SDD; requirement → SRS. It's crude on purpose; an ontology should replace it (notes B3).
+1. **Which document type would answer this?** Read from the ontology (`data/ontology/esam_ontology.yaml`):
+   each document type lists the words that mean it would answer a question, plus its synonyms
+   (test/verify/"test procedure" → STD; message/interface/"IRS" → ICD; design → SDD; requirement/"SSR" → SRS).
+   Until lesson 07 this was a keyword table in code.
 2. **Which subsystem is it about?** The one the question names ("Engine Control Module"), else the one
    the vector search landed on.
 3. **Does the graph say that document exists?** If not, the prompt gets a plain line:

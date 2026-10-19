@@ -26,8 +26,13 @@
 
 metadata:
   name: "ESAM ontology"
-  version: "0.1"
+  version: "0.2"
   owner: "SE team"
+  standards:
+    - "MIL-STD-881F Appendix G: WBS structure and codes"
+    - "MIL-STD-498 / J-STD-016: document types"
+    - "MIL-STD-882E: software criticality index"
+    - "SAE J1939: message names and PGNs"
   synthetic: true            # written for the SYNTH-LTV learning programme
 
 # ── Allowed values ───────────────────────────────────────────────────────────
@@ -97,6 +102,7 @@ classes:
     part_of: [System]
     attributes:
       safety_critical: { type: boolean, required: true, description: "Can its failure contribute to a hazard?" }
+      aliases: { type: text_list, description: "Everyday names people use in questions, e.g. 'ECM'" }
       safety_classification: { type: text, pattern: '^(MIL-STD-882E )?SwCI [1-5]$', description: "MIL-STD-882E software criticality index" }
       os_class: { type: enum, values: os_class, description: "Only for software subsystems" }
       j1939_source_address: { type: integer, min: 0, max: 253 }

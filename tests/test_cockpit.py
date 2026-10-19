@@ -30,7 +30,11 @@ def test_health(client):
 def test_cockpit_payload(client):
     data = client.get("/api/cockpit").json()
     assert len(data["graph"]["vertices"]) == 20 and len(data["graph"]["edges"]) == 22
-    assert data["doc_types"] == ["icd", "sdd", "srs", "std"]
+    assert data["doc_types"] == ["srs", "sdd", "icd", "std"]          # every type a rule can require
+    # what each subsystem must have comes from the ontology's rules
+    assert {k: sorted(v) for k, v in data["required"].items()} == {
+        "SUB-BRK-ECU": ["icd", "sdd", "srs", "std"], "SUB-DCL": ["icd", "sdd", "srs"],
+        "SUB-J1939-BB": ["icd"], "SUB-ENG-ECM": ["icd"]}
     # the headline finding: the safety-critical brake ECU has no test description
     assert "SUB-BRK-ECU" in data["gaps"]["std"]
     assert "SUB-BRK-ECU" not in data["gaps"]["icd"]
@@ -63,3 +67,11 @@ def test_snapshot_bakes_data_safely():
     assert json.loads(blob)["graph"]["vertices"][0]["props"]["name"] == "</script><b>"
     assert json.loads(blob)["source"] == "snapshot"
     assert not page.lstrip().startswith("<!doctype")                # fragment: publishable as-is
+
+
+def test_ontology_tab_payload(client):
+    o = client.get("/api/ontology").json()
+    assert o["path"].endswith("data/ontology/esam_ontology.yaml") and o["relative_path"] == "data/ontology/esam_ontology.yaml"
+    assert o["check"] == []                                        # the committed baseline passes
+    assert {"document_types", "rules", "classes", "relationships", "value_sets", "placement"} <= set(o["data"])
+    assert client.get("/api/cockpit").json()["ontology"]["path"] == o["path"]   # snapshots carry it too

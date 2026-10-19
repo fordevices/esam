@@ -102,6 +102,10 @@ td.cell { white-space: nowrap; }
 .state.have { color: var(--ok); background: var(--ok-bg); }
 .state.miss { color: var(--ink-2); border: 1px dashed var(--rule); }
 .state.miss.sc { color: var(--crit); background: var(--crit-bg); border: 1px solid transparent; font-weight: 600; }
+.state.na { color: var(--ink-2); opacity: 0.7; padding-left: 0; }
+.rules { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 10px; font-size: 13px; color: var(--ink-2); }
+.rules ol { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 2px; }
+.rules b { color: var(--ink); font-weight: 600; }
 .state.confirmed { color: var(--ok); background: var(--ok-bg); }
 .state.candidate { color: var(--signal); background: var(--signal-bg); border: 1px dashed var(--signal); }
 
@@ -181,6 +185,35 @@ svg.net .node { cursor: grab; touch-action: none; }
 .note { color: var(--ink-2); font-size: 12.5px; }
 footer { color: var(--ink-2); font-size: 12px; }
 
+/* ontology tab */
+.onto-head { display: grid; gap: 10px; }
+.onto-head .lbl { font: 600 11.5px var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.pathrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pathbox { font-family: var(--f-mono); font-size: 13.5px; background: var(--paper); border: 1px solid var(--rule); border-radius: 6px;
+           padding: 6px 10px; overflow-wrap: anywhere; user-select: all; min-width: 0; flex: 1 1 380px; }
+.onto-meta { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--ink-2); }
+.onto-meta b { color: var(--ink); font-weight: 600; }
+.banner.warnb { border-color: var(--signal); background: var(--signal-bg); margin: 0; }
+.checkline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13.5px; }
+.checkline ul { flex-basis: 100%; margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
+.stds { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.stds li { font-size: 12.5px; border: 1px solid var(--rule); border-radius: 999px; padding: 1px 10px; color: var(--ink-2); }
+.onto-nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.onto-nav button { border: 1px solid var(--rule); background: var(--sheet); border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 13px; }
+.onto-nav button:hover { border-color: var(--accent); color: var(--accent); }
+.tag { display: inline-block; font: 600 11.5px var(--f-mono); padding: 0 6px; border-radius: 4px; background: var(--paper);
+       border: 1px solid var(--rule); margin: 1px 4px 1px 0; white-space: nowrap; }
+.tag.req::after { content: " *"; color: var(--crit); }
+.tag.planned { color: var(--signal); border-color: var(--signal); background: var(--signal-bg); }
+.tag.on { color: var(--ok); border-color: transparent; background: var(--ok-bg); }
+.vsets { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.vsets table { font-size: 12.5px; }
+.vsets td.mono-cell { white-space: nowrap; width: 1%; overflow-wrap: normal; padding-right: 14px; }
+.vsets h3, .place h3 { font: 600 13px var(--f-display); letter-spacing: 0.05em; text-transform: uppercase; margin: 0 0 6px; }
+.place { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.place ul { margin: 0; padding-left: 18px; font-size: 13px; display: grid; gap: 2px; }
+.mono-cell { font-family: var(--f-mono); font-size: 12px; overflow-wrap: anywhere; }
+
 /* checks (run log) */
 .runhead { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin-bottom: 12px; font-size: 13px; color: var(--ink-2); }
 .verdict { font: 700 12px var(--f-mono); letter-spacing: 0.06em; padding: 1px 8px; border-radius: 4px; }
@@ -217,6 +250,7 @@ footer { color: var(--ink-2); font-size: 12px; }
     <nav class="tabs" role="tablist" aria-label="Cockpit sections" style="flex-basis:100%">
       <button class="tab" role="tab" id="tab-dashboard" aria-controls="dashboard" aria-selected="true" type="button">Dashboard</button>
       <button class="tab" role="tab" id="tab-graph" aria-controls="graph" aria-selected="false" type="button">Graph</button>
+      <button class="tab" role="tab" id="tab-ontology" aria-controls="ontology" aria-selected="false" type="button">Ontology</button>
     </nav>
   </div>
 </header>
@@ -229,9 +263,10 @@ footer { color: var(--ink-2); font-size: 12px; }
       <div class="summary" id="summary"></div>
       <div class="panel">
         <h2>Document coverage</h2>
-        <p class="sub">Which document types each subsystem has. A missing document on a safety-critical subsystem is shown in red.
-          The document types checked are the same for every subsystem until the SE rule table is in place.</p>
+        <p class="sub">The documents each subsystem must have under the ontology's rules (listed below the table), and whether it has them.
+          A missing document on a safety-critical subsystem is shown in red.</p>
         <div class="scroll"><table id="coverage"></table></div>
+        <div class="rules" id="rules"></div>
       </div>
       <div class="panel">
         <h2>Interfaces</h2>
@@ -261,6 +296,20 @@ footer { color: var(--ink-2); font-size: 12px; }
         </div>
         <aside class="panel details" id="details" aria-live="polite"></aside>
       </div>
+    </section>
+
+    <section id="ontology" role="tabpanel" aria-labelledby="tab-ontology" hidden>
+      <div class="panel onto-head">
+        <div class="lbl">Ontology file</div>
+        <div class="pathrow"><code id="onto-path" class="pathbox"></code>
+          <button id="onto-copy" class="btn" type="button">Copy path</button></div>
+        <div class="onto-meta" id="onto-meta"></div>
+        <div id="onto-stale" class="banner warnb" hidden></div>
+        <div id="onto-check"></div>
+        <ul class="stds" id="onto-standards"></ul>
+      </div>
+      <nav class="onto-nav" aria-label="Ontology sections" id="onto-nav"></nav>
+      <div id="onto-body"></div>
     </section>
 
     <footer id="footer"></footer>
@@ -356,16 +405,30 @@ const goto = (eid) => { showTab("graph"); select(eid); };
 const nodeLink = (eid) => h("button.linkish.mono", { type: "button", on: { click: () => goto(eid) } }, eid);
 
 // ── Dashboard ────────────────────────────────────────────────────────────────
+// Which document types a subsystem must have: from the ontology's rules when
+// the payload has them (older snapshots don't: then every type is checked).
+const requiredOf = (eid) => {
+  const req = M.data.required;
+  return req ? Object.keys(req[eid] || {}) : (M.data.doc_types || []);
+};
+function docState(sub, t) {
+  const sc = !!sub.props.safety_critical, required = requiredOf(sub.eid).includes(t);
+  const doc = (M.docsOf.get(sub.eid) || []).find((d) => (d.props.artifact_type || "").toLowerCase() === t);
+  if (doc) return h("span.state.have", {}, "✓ ", nodeLink(doc.eid));
+  if (!required) return h("span.state.na", { title: "No rule requires this document type for this subsystem" }, "not required");
+  const why = ((M.data.required || {})[sub.eid] || {})[t] || [];
+  return h("span.state.miss" + (sc ? ".sc" : ""), { title: why.join(" ") }, "missing");
+}
 function renderDashboard() {
   const { data, byId } = M;
   const subs = [...byId.values()].filter((v) => v.label === "Subsystem")
     .sort((a, b) => String(M.systemOf(a.eid)?.props.wbs_code || "").localeCompare(String(M.systemOf(b.eid)?.props.wbs_code || ""), undefined, { numeric: true }) || a.eid.localeCompare(b.eid));
   const types = data.doc_types || [];
-  let have = 0, scGaps = 0;
-  for (const sub of subs) for (const t of types) {
+  let have = 0, scGaps = 0, need = 0;
+  for (const sub of subs) for (const t of requiredOf(sub.eid)) {
+    need++;
     if ((M.gapsOf.get(sub.eid) || []).includes(t)) { if (sub.props.safety_critical) scGaps++; } else have++;
   }
-  const need = subs.length * types.length;
   const countBy = (list, key) => list.reduce((m, x) => (m[x[key]] = (m[x[key]] || 0) + 1, m), {});
   const vc = countBy(data.graph.vertices, "label"), ec = countBy(data.graph.edges, "type");
   const candidates = M.ifaces.filter((e) => e.props.status === "candidate").length;
@@ -382,7 +445,7 @@ function renderDashboard() {
   );
 
   const head = h("tr", {}, h("th", {}, "Subsystem"), h("th", {}, "System"), h("th", {}, "Class"),
-    types.map((t) => h("th", {}, t.toUpperCase())));
+    types.map((t) => h("th", { title: (data.doc_type_names || {})[t] || "" }, t.toUpperCase())));
   const rows = subs.map((sub) => {
     const sys = M.systemOf(sub.eid), sc = !!sub.props.safety_critical;
     const docs = M.docsOf.get(sub.eid) || [];
@@ -391,14 +454,13 @@ function renderDashboard() {
       h("td", {}, h("div.who", {}, h("span", {}, sys?.props.name || "—"), h("small.mono", {}, sys?.props.wbs_code || ""))),
       h("td.cell", {}, sc ? h("span.chip.sc", { title: sub.props.safety_classification || "safety-critical" }, "SAFETY") : "",
         " ", sub.props.os_class ? h("span.chip.os", {}, sub.props.os_class.toUpperCase()) : ""),
-      types.map((t) => {
-        const missing = (M.gapsOf.get(sub.eid) || []).includes(t);
-        if (missing) return h("td.cell", {}, h("span.state.miss" + (sc ? ".sc" : ""), {}, "missing"));
-        const doc = docs.find((d) => (d.props.artifact_type || "").toLowerCase() === t);
-        return h("td.cell", {}, h("span.state.have", {}, "✓ ", doc ? nodeLink(doc.eid) : "present"));
-      }));
+      types.map((t) => h("td.cell", {}, docState(sub, t))));
   });
   $("#coverage").replaceChildren(h("thead", {}, head), h("tbody", {}, rows));
+  const rules = data.rules || [];
+  $("#rules").replaceChildren(...(rules.length ? [h("span", {}, "Rules (SE-owned, in the ontology): a subsystem must have every document required by every rule that applies to it."),
+    h("ol", {}, rules.map((r) => h("li", {}, "When ", h("b", {}, r.when.map((c) => c.replace(/_/g, " ")).join(" + ")),
+      " → ", h("b", {}, r.require.map((t) => t.toUpperCase()).join(", ")), r.why ? ` · ${r.why}` : "")))] : []));
 
   const ihead = h("tr", {}, ["From", "To", "Message", "Status", "Source document", "Notes"].map((x) => h("th", {}, x)));
   const irows = M.ifaces.map((e) => h("tr", {},
@@ -446,6 +508,82 @@ function renderChecks() {
 }
 // The scenario documents are removed again after a run, so they may not be in the graph.
 const nodeLinkIf = (eid) => (M.byId.has(eid) ? nodeLink(eid) : h("span.mono", {}, eid));
+
+// ── Ontology tab ─────────────────────────────────────────────────────────────
+const tags = (list, cls) => (list || []).map((x) => h("span.tag" + (cls ? "." + cls : ""), {}, String(x)));
+const plannedTag = (o) => (o && o.status === "planned" ? h("span.tag.planned", { title: "Defined, not used yet" }, "planned") : null);
+function ontoTable(head, rows) {
+  return h("div.scroll", {}, h("table", {}, h("thead", {}, h("tr", {}, head.map((x) => h("th", {}, x)))), h("tbody", {}, rows)));
+}
+function ontoPanel(id, title, sub, ...body) {
+  return h("div.panel", { id: "onto-" + id }, h("h2", {}, title), sub ? h("p.sub", {}, sub) : null, ...body);
+}
+function attrTag(name, spec) {
+  const kind = spec.values ? `one of ${spec.values}` : spec.type || "text";
+  return h("span.tag" + (spec.required ? ".req" : ""), { title: [kind, spec.pattern ? `form ${spec.pattern}` : "", spec.description || ""].filter(Boolean).join(" · ") }, name);
+}
+function renderOntology() {
+  const o = M.data.ontology;
+  if (!o) { $("#onto-body").replaceChildren(h("p.note", {}, "This snapshot was taken before the Ontology tab existed.")); return; }
+  const d = o.data, meta = d.metadata || {};
+  $("#onto-path").textContent = o.path;
+  $("#onto-meta").replaceChildren(
+    h("span", {}, "Version ", h("b", {}, meta.version || "?")), h("span", {}, "Owner ", h("b", {}, meta.owner || "?")),
+    h("span", {}, "In the project: ", h("b.mono", {}, o.relative_path)),
+    h("span", {}, "File saved ", h("b", {}, stampOf(o.file_modified))), h("span", {}, "Loaded by the Cockpit ", h("b", {}, stampOf(o.loaded_at))));
+  const stale = $("#onto-stale");
+  stale.hidden = !o.changed_since_load;
+  stale.textContent = "The file has changed since the Cockpit loaded it. What you see here, and the rules the Dashboard uses, are the loaded version. Restart the Cockpit to apply the changes.";
+  const errs = o.check.filter((c) => c.level === "error"), warns = o.check.filter((c) => c.level !== "error");
+  $("#onto-check").replaceChildren(h("div.checkline", {},
+    h("span.verdict." + (errs.length ? "fail" : "pass"), {}, errs.length ? "BASELINE FAILS" : "BASELINE PASSES"),
+    h("span", {}, `${errs.length} errors, ${warns.length} warnings against this ontology`),
+    o.check.length ? h("ul", {}, o.check.map((c) => h("li", {}, (c.level === "error" ? "✗ " : "! ") + c.where + ": " + c.message))) : null));
+  $("#onto-standards").replaceChildren(...(meta.standards || []).map((x) => h("li", {}, x)));
+
+  const required = new Set(M.data.doc_types || []);
+  const sections = [];
+  sections.push(ontoPanel("documents", "Document types", "The kinds of documents ESAM knows. Question words and synonyms are how ESAM tells which document a question needs.",
+    ontoTable(["Code", "Name", "Standard", "Used by rules", "Question words", "Synonyms"],
+      Object.entries(d.document_types || {}).map(([k, t]) => h("tr", {},
+        h("td.mono-cell", {}, k.toUpperCase()), h("td", {}, t.name || ""), h("td", {}, h("span.note", {}, t.standard || "")),
+        h("td.cell", {}, required.has(k) ? h("span.tag.on", {}, "yes") : h("span.note", {}, "no")),
+        h("td", {}, tags(t.answers)), h("td", {}, tags(t.synonyms)))))));
+  sections.push(ontoPanel("rules", "Rules", "What each kind of subsystem must have. A subsystem must have every document required by every rule that applies to it.",
+    ontoTable(["#", "When the subsystem is…", "It must have", "Why"],
+      ((d.rules || {}).required_documents || []).map((r, i) => h("tr", {}, h("td", {}, i + 1),
+        h("td", {}, r.when.map((c) => c.replace(/_/g, " ")).join(" + ")), h("td", {}, tags(r.require.map((x) => x.toUpperCase()))), h("td", {}, r.why || ""))))));
+  sections.push(ontoPanel("classes", "Kinds of things", "Every item in the baseline is one of these. Hover an attribute for its type and allowed values; * = required.",
+    ontoTable(["Class", "Description", "ID form", "Sits under", "Attributes"],
+      Object.entries(d.classes || {}).map(([k, c]) => h("tr", {},
+        h("td", {}, h("b", {}, k), " ", plannedTag(c)), h("td", {}, c.description || ""), h("td.mono-cell", {}, c.id_pattern || ""),
+        h("td", {}, (c.part_of || []).join(", ") || "—"),
+        h("td", {}, Object.entries(c.attributes || {}).map(([n, sp]) => attrTag(n, sp))))))));
+  sections.push(ontoPanel("links", "Kinds of links", "How items may be connected, and in which direction.",
+    ontoTable(["Link", "From → To", "Meaning", "Properties"],
+      Object.entries(d.relationships || {}).map(([k, r]) => h("tr", {},
+        h("td", {}, h("b.mono", {}, k), " ", plannedTag(r)), h("td", {}, `${(r.from || []).join(", ")} → ${(r.to || []).join(", ")}`),
+        h("td", {}, r.meaning || ""), h("td", {}, Object.entries(r.properties || {}).map(([n, sp]) => attrTag(n, sp))))))));
+  sections.push(ontoPanel("values", "Allowed values", "The only values these attributes may take.",
+    h("div.vsets", {}, Object.entries(d.value_sets || {}).map(([k, vs]) => h("div", {}, h("h3", {}, k.replace(/_/g, " ")),
+      h("table", {}, h("tbody", {}, Object.entries(vs).map(([v, m]) => h("tr", {}, h("td.mono-cell", {}, v), h("td", {}, m))))))))));
+  const pl = d.placement || {};
+  const fieldList = (obj) => Array.isArray(obj) ? obj.map((x) => h("li", {}, h("span.mono", {}, x)))
+    : Object.entries(obj || {}).map(([n, sp]) => h("li", {}, h("span.mono", {}, n), sp && (sp.values || sp.description) ? h("span.note", {}, ` · ${sp.values ? "one of " + sp.values : ""}${sp.values && sp.description ? " · " : ""}${sp.description || ""}`) : null));
+  sections.push(ontoPanel("placement", "Where each fact belongs", "A fact about the thing goes in the baseline; a fact about one requirement goes on that requirement's attribute line.",
+    h("div.place", {}, [["In the baseline", pl.baseline], ["In every document's header table", pl.document_header],
+      ["On each requirement's attribute line", pl.requirement_line], ["In each test case", pl.test_case_fields]]
+      .map(([t, v]) => h("div", {}, h("h3", {}, t), h("ul", {}, fieldList(v)))))));
+  $("#onto-body").replaceChildren(...sections);
+  $("#onto-nav").replaceChildren(...[["documents", "Document types"], ["rules", "Rules"], ["classes", "Kinds of things"], ["links", "Kinds of links"], ["values", "Allowed values"], ["placement", "Where facts belong"]]
+    .map(([id, label]) => h("button", { type: "button", on: { click: () => document.getElementById("onto-" + id).scrollIntoView({ behavior: "smooth" }) } }, label)));
+}
+$("#onto-copy").addEventListener("click", async () => {
+  const text = $("#onto-path").textContent, btn = $("#onto-copy");
+  try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; }
+  catch { const r = document.createRange(); r.selectNodeContents($("#onto-path")); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); btn.textContent = "Selected: press Ctrl+C"; }
+  setTimeout(() => { btn.textContent = "Copy path"; }, 2500);
+});
 
 // ── Graph: tree outline ──────────────────────────────────────────────────────
 function treeRow(v) {
@@ -646,12 +784,8 @@ function renderDetails() {
     h("ul", {}, outs.map((e) => ifLine(e, "→")), ins.map((e) => ifLine(e, "←"))));
 
   if (v.label === "Subsystem") {
-    const gaps = M.gapsOf.get(v.eid) || [], sc = !!v.props.safety_critical;
-    parts.push(h("h4", {}, "Documents"), h("ul", {}, (M.data.doc_types || []).map((dt) => {
-      const doc = (M.docsOf.get(v.eid) || []).find((d) => (d.props.artifact_type || "").toLowerCase() === dt);
-      return h("li", {}, h("span.mono", {}, dt.toUpperCase().padEnd(5, " ")), " ",
-        gaps.includes(dt) ? h("span.state.miss" + (sc ? ".sc" : ""), {}, "missing") : h("span.state.have", {}, "✓ ", doc ? nodeLink(doc.eid) : "present"));
-    })));
+    parts.push(h("h4", {}, "Documents"), h("ul", {}, (M.data.doc_types || []).map((dt) =>
+      h("li", {}, h("span.mono", {}, dt.toUpperCase().padEnd(5, " ")), " ", docState(v, dt)))));
   }
   if (v.label === "DesignArtifact") {
     const usedBy = M.ifaces.filter((e) => e.props.source_artifact === v.eid);
@@ -686,7 +820,7 @@ function renderLegend() {
 }
 
 function showTab(name) {
-  for (const id of ["dashboard", "graph"]) {
+  for (const id of ["dashboard", "graph", "ontology"]) {
     $("#" + id).hidden = id !== name;
     $("#tab-" + id).setAttribute("aria-selected", String(id === name));
   }
@@ -694,6 +828,7 @@ function showTab(name) {
 }
 $("#tab-dashboard").addEventListener("click", () => showTab("dashboard"));
 $("#tab-graph").addEventListener("click", () => showTab("graph"));
+$("#tab-ontology").addEventListener("click", () => showTab("ontology"));
 
 // ── Load: baked-in snapshot, or the live API ─────────────────────────────────
 function render(data) {
@@ -710,7 +845,7 @@ function render(data) {
   $("#footer").textContent = snap
     ? "Snapshot: the data is baked into this page and does not update. Re-export after each ingest."
     : "Live: data comes from the graph database each time the page loads or you press Refresh.";
-  renderDashboard(); renderChecks(); renderLegend(); renderView();
+  renderDashboard(); renderChecks(); renderOntology(); renderLegend(); renderView();
   if (!selected || !M.byId.has(selected)) selected = M.byId.has("SUB-BRK-ECU") ? "SUB-BRK-ECU" : M.roots[0];
   select(selected);
 }
@@ -731,7 +866,7 @@ async function loadLive() {
 $("#refresh").addEventListener("click", loadLive);
 
 const baked = JSON.parse(document.getElementById("esam-data").textContent);
-showTab(location.hash === "#graph" ? "graph" : "dashboard");
+showTab(["#graph", "#ontology"].includes(location.hash) ? location.hash.slice(1) : "dashboard");
 if (baked) render(baked); else loadLive();
 })();
 </script>
