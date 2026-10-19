@@ -52,5 +52,7 @@ def test_restore_removes_scenario_documents(stack, baseline):
 
     emb, store, graph = stack
     restore(_scenarios(), store, graph, baseline)
-    assert graph.load(baseline) == {"vertices": 20, "edges": 22}
+    # the baseline (20 vertices, 22 edges) plus the 16 requirements read from the two SRSs
+    assert graph.load(baseline) == {"vertices": 36, "edges": 54}
+    assert graph.existing_ids("TestCase") == set()                  # the scenario STD's test cases are gone
     assert not store.search(emb.embed_query("test case"), k=50, where={"artifact_id": "STD-BRK-001"})

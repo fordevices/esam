@@ -22,6 +22,7 @@ def scenarios():
             document=STAGED / "STD-BRK-001.md", artifact=arts["STD-BRK-001"],
             expect_cited=["STD-BRK-001", "TC-BRK-011"],
             forbid_before=r"TC-[A-Z]+-\d+",           # an invented test case id
+            verifies={"SRS-BRK-011": "TC-BRK-011"},  # traceability the STD must add (lesson 08)
         ),
         Scenario(
             name="engine-icd",

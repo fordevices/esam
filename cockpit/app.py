@@ -117,6 +117,7 @@ def collect(graph: GraphStore, doc_types: list[str], runs: list[dict] | None = N
         "doc_type_names": {t: d.get("name", t) for t, d in onto.document_types.items()},
         "gaps": {t: [r["eid"] for r in graph.artifact_gaps(t)] for t in doc_types},
         "required": required_by_rules(snapshot),
+        "trace": {"summary": graph.trace_summary(), "untested": graph.untested_requirements()},
         "rules": onto.rules.get("required_documents", []),
         "ontology": ontology_payload(),
         "runs": runs or [],

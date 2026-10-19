@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from esamkit.baseline import load_baseline  # noqa: E402
 from esamkit.config import settings  # noqa: E402
 from esamkit.factory import get_graph_store  # noqa: E402
+from esamkit.traceability import load_traceability  # noqa: E402
 
 
 def main() -> None:
@@ -45,6 +46,14 @@ def main() -> None:
     if first != second:
         sys.exit("NOT idempotent: something created duplicates.")
     print("\nIdempotent ✓. Re-loading an unchanged baseline changes nothing.")
+
+    # Requirements and test cases are read out of the SRS/STD documents
+    # (lesson 08). They are separate from the baseline counts above.
+    t = load_traceability(graph, baseline, settings.documents_dir)
+    print(f"\nTraceability (from the documents): {t['requirements']} requirements, "
+          f"{t['test_cases']} test cases, {t['verifies']} verifies links")
+    for u in t["unresolved"]:
+        print(f"  ! {u['test_case']} verifies {u['cites']}, which no SRS defines")
 
 
 if __name__ == "__main__":

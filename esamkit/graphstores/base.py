@@ -57,3 +57,27 @@ class GraphStore(ABC):
         {"vertices": [{eid, label, props}], "edges": [{type, from_eid, to_eid, props}]}.
         For drawing the whole graph (the SE Cockpit). Fine at baseline size
         (thousands of vertices); a million-edge graph would need paging."""
+
+    # ── Traceability (requirements and test cases; see esamkit/traceability.py) ──
+
+    @abstractmethod
+    def remove_derived(self, source_artifact: str) -> int:
+        """Delete the Requirement/TestCase vertices (and their edges) that came
+        from one document, before that document is reloaded. Returns how many."""
+
+    @abstractmethod
+    def existing_ids(self, label: str) -> set[str]:
+        """Entity ids of every vertex with this label."""
+
+    @abstractmethod
+    def untested_requirements(self) -> list[dict]:
+        """Requirements no test case VERIFIES, with their subsystem and document."""
+
+    @abstractmethod
+    def verified_by(self, requirement_id: str) -> list[dict]:
+        """Test cases that VERIFY the requirement, with the document each is in."""
+
+    @abstractmethod
+    def trace_summary(self) -> list[dict]:
+        """Per subsystem: how many requirements are allocated to it, and how many
+        have at least one test case verifying them."""

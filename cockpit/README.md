@@ -8,6 +8,7 @@ graph and vector stores) rather than its own SQL, and is grown one tab at a time
 |---|---|---|
 | **Dashboard** | Node/link counts; document coverage per subsystem, using the **ontology's rules** for what each subsystem must have (missing documents on safety-critical subsystems in red; "not required" where no rule applies); interfaces with confirmed/candidate status; **Checks**: the latest run of each automated check (lesson 06's missing-document test), with before/after answers | ✅ |
 | **Graph** | The baseline three ways: **Tree** (collapsible outline), **Tree + interfaces** (left-to-right tree with the J1939 links drawn as arcs across it), **Network** (force-directed, draggable). Click any node for where it sits, its properties, what it contains, its interfaces and its document gaps. | ✅ |
+| **Requirement coverage** (Dashboard) | Requirements read from each SRS, test cases from each STD; per subsystem how many are verified (a test case's `Verifies:` line), and the untested list. Requirements and test cases also appear in the Graph tab | ✅ |
 | **Ontology** | The SE vocabulary file: its path (with a copy button), version, owner, whether the baseline passes it, and its document types, rules, classes, links, allowed values and placement. Warns when the file has changed since the Cockpit loaded it | ✅ |
 | Health report | The six checks in the SE manual §5.2 | planned (B6) |
 | Query | Natural-language questions via the lesson 05 hybrid | planned |

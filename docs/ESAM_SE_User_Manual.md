@@ -15,6 +15,7 @@
 | 7 | [When ESAM says "that document doesn't exist yet"](#7-when-esam-says-that-document-doesnt-exist-yet) |
 | 8 | [The ESAM ontology: the programme's vocabulary](#8-the-esam-ontology-the-programmes-vocabulary) |
 | 9 | [Where attributes go, and writing documents ESAM can read](#9-where-attributes-go-and-writing-documents-esam-can-read) |
+| 10 | [Requirements and tests in the graph (traceability)](#10-requirements-and-tests-in-the-graph-traceability) |
 
 ---
 
@@ -468,7 +469,9 @@ The SYNTH-LTV baseline currently passes with no errors and no warnings.
 | **Answering questions** (§7) | Document-type words and synonyms: "test procedure" means an STD, "IRS" means an ICD, the old "SSR" still means an SRS |
 | **Recognising subsystems in questions** | Each subsystem's `aliases` in the baseline ("ECM", "brake ECU"), declared in the ontology |
 
-Still to come: the health report (§5.2) will use the same rules, and requirements and test cases will become items in the graph of their own, linked by *verifies*.
+| **Requirements and test cases** (§10) | The `Requirement` and `TestCase` classes and the *verifies*, *specified in* and *allocated to* links |
+
+Still to come: the health report (§5.2) will use the same rules.
 
 ---
 
@@ -544,5 +547,43 @@ Pass criteria: …
 | 6 | Real heading styles, one "shall" per paragraph, consistent units (`ms`, not `msec`) | Clean chunking (§2.4) |
 
 A Word template with the header table and a styled attribute line makes items 1 and 3 a matter of filling in fields.
+
+---
+
+## 10. Requirements and tests in the graph (traceability)
+
+### 10.1 What changed
+
+Until now the graph knew about **documents**: the Brake ECU has an SRS. It now also knows what is **inside** them:
+
+| Item | Read from | Linked to |
+|---|---|---|
+| **Requirement** | Each `SRS-…` line in an SRS (§9.4) | *specified in* its SRS; *allocated to* the SRS's subsystem |
+| **Test case** | Each `TC-…` heading in an STD, with its fixed fields (§9.5) | *specified in* its STD; **verifies** each requirement on its `Verifies:` line |
+
+Nothing is guessed. ESAM reads the formats this manual asks you to write, and every item remembers which document it came from. When a new revision of a document is loaded, everything the old revision contributed is replaced, so a deleted requirement or test case doesn't linger.
+
+### 10.2 What you can now ask
+
+| Question | How ESAM answers it |
+|---|---|
+| Which requirements have no test? | Requirements with no test case verifying them |
+| What verifies SRS-BRK-011? | The test cases whose `Verifies:` line names it, and the STD each is in |
+| How well is each subsystem covered? | Requirements allocated to it, and how many are verified |
+| Does any test cite a requirement that doesn't exist? | Reported when the STD is loaded (e.g. a typo `SRS-BRK-999`) |
+
+### 10.3 Where you see it
+
+- **SE Cockpit Dashboard, Requirement coverage:** per subsystem, how many requirements and how many are verified, plus the list of untested requirements. For SYNTH-LTV today: **0 of 16 verified**, because no test description exists yet. When the Brake ECU's STD is added, four of its nine requirements become verified.
+- **SE Cockpit Graph tab:** requirements sit under their SRS and test cases under their STD. Selecting a requirement shows what verifies it, or "no test case verifies this".
+- **Answers to questions:** asked "How is SRS-BRK-011 verified?", ESAM now checks the requirement itself, not just whether an STD exists, and reports *"no test case verifies SRS-BRK-011"* when that is the case. Once the STD exists, it names TC-BRK-011 and its document.
+
+### 10.4 What it depends on
+
+Traceability is only as good as the documents' structure:
+
+- Requirement lines in the `- **SRS-BRK-011** …` form, one requirement per line item.
+- Test cases as `TC-…` headings with a `Verifies:` line listing requirement IDs exactly as written in the SRS.
+- Consistent IDs (§9.6). A `Verifies:` line that says "SRS BRK 11" links to nothing.
 
 ---

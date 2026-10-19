@@ -16,6 +16,7 @@
   --ok: #2e7a4c;  --crit: #b3261e;  --crit-bg: #fbe9e7;  --ok-bg: #e6f2ea;  --signal-bg: #fbf0e3;
   /* vertex types */
   --t-top: #5d6b78;  --t-sys: #2b5d87;  --t-sub: #0d7584;  --t-fn: #557a26;  --t-doc: #7b4f8f;
+  --t-req: #8a5a12;  --t-tc: #2f6f5a;
   --f-display: "Bahnschrift", "DIN Alternate", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
   --f-body: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
   --f-mono: ui-monospace, "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", Menlo, monospace;
@@ -25,6 +26,7 @@
   --accent: #6aa8d8;  --signal: #eb9a3c;
   --ok: #6cc28f;  --crit: #ff7b6f;  --crit-bg: #3a1d1a;  --ok-bg: #16301f;  --signal-bg: #33240f;
   --t-top: #96a5b3;  --t-sys: #72a4d0;  --t-sub: #4fb7c5;  --t-fn: #9cc36b;  --t-doc: #c59bd8;
+  --t-req: #e0b062;  --t-tc: #6fcfae;
   color-scheme: dark;
 } }
 :root[data-theme="dark"] {
@@ -32,6 +34,7 @@
   --accent: #6aa8d8;  --signal: #eb9a3c;
   --ok: #6cc28f;  --crit: #ff7b6f;  --crit-bg: #3a1d1a;  --ok-bg: #16301f;  --signal-bg: #33240f;
   --t-top: #96a5b3;  --t-sys: #72a4d0;  --t-sub: #4fb7c5;  --t-fn: #9cc36b;  --t-doc: #c59bd8;
+  --t-req: #e0b062;  --t-tc: #6fcfae;
   color-scheme: dark;
 }
 
@@ -103,6 +106,11 @@ td.cell { white-space: nowrap; }
 .state.miss { color: var(--ink-2); border: 1px dashed var(--rule); }
 .state.miss.sc { color: var(--crit); background: var(--crit-bg); border: 1px solid transparent; font-weight: 600; }
 .state.na { color: var(--ink-2); opacity: 0.7; padding-left: 0; }
+.untested { margin-top: 12px; font-size: 13px; }
+.untested summary { cursor: pointer; color: var(--accent); }
+.untested ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 2px; }
+.bar { display: inline-block; width: 120px; height: 8px; border-radius: 4px; background: var(--paper); border: 1px solid var(--rule); vertical-align: middle; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--ok); }
 .rules { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 10px; font-size: 13px; color: var(--ink-2); }
 .rules ol { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 2px; }
 .rules b { color: var(--ink); font-weight: 600; }
@@ -110,7 +118,7 @@ td.cell { white-space: nowrap; }
 .state.candidate { color: var(--signal); background: var(--signal-bg); border: 1px dashed var(--signal); }
 
 .t-top { color: var(--t-top); } .t-sys { color: var(--t-sys); } .t-sub { color: var(--t-sub); }
-.t-fn { color: var(--t-fn); }  .t-doc { color: var(--t-doc); }
+.t-fn { color: var(--t-fn); }  .t-doc { color: var(--t-doc); }  .t-req { color: var(--t-req); }  .t-tc { color: var(--t-tc); }
 
 /* Graph tab */
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 12px; }
@@ -164,6 +172,9 @@ svg .iflabel { font: 600 10.5px var(--f-mono); fill: var(--signal); }
 svg .arrow { fill: var(--signal); }
 svg .s-top { stroke: var(--t-top); } svg .s-sys { stroke: var(--t-sys); } svg .s-sub { stroke: var(--t-sub); }
 svg .s-fn { stroke: var(--t-fn); }   svg .s-doc { stroke: var(--t-doc); }
+svg .s-req { stroke: var(--t-req); } svg .s-tc { stroke: var(--t-tc); }
+svg .f-req { fill: var(--t-req); }   svg .f-tc { fill: var(--t-tc); }
+svg .link.verifies { stroke: var(--t-tc); stroke-width: 2; stroke-dasharray: 4 3; }
 svg .f-top { fill: var(--t-top); } svg .f-sys { fill: var(--t-sys); } svg .f-sub { fill: var(--t-sub); }
 svg .f-fn { fill: var(--t-fn); }   svg .f-doc { fill: var(--t-doc); }
 svg.net circle { stroke: var(--sheet); stroke-width: 2; }
@@ -273,6 +284,13 @@ footer { color: var(--ink-2); font-size: 12px; }
         <p class="sub">Messages that cross between subsystems. <em>Candidate</em> links are proposed but not yet confirmed by an SE.</p>
         <div class="scroll"><table id="interfaces"></table></div>
       </div>
+      <div class="panel">
+        <h2>Requirement coverage</h2>
+        <p class="sub">Requirements are read from each SRS and test cases from each STD; a test case covers a requirement through its
+          <em>Verifies:</em> line. A requirement with no test case verifying it is untested.</p>
+        <div class="scroll"><table id="tracecov"></table></div>
+        <details class="untested" id="untested"></details>
+      </div>
       <div class="panel" id="checks-panel">
         <h2>Checks</h2>
         <p class="sub">The latest run of each automated check. Each run replaces the previous one.</p>
@@ -332,6 +350,8 @@ const TYPES = {
   Subsystem:      { code: "SUB", cls: "sub", name: "Subsystem",      rank: 4, r: 10 },
   Function:       { code: "FN",  cls: "fn",  name: "Function",       rank: 5, r: 7 },
   DesignArtifact: { code: "DOC", cls: "doc", name: "Document",       rank: 6, r: 7 },
+  Requirement:    { code: "REQ", cls: "req", name: "Requirement",    rank: 7, r: 5 },
+  TestCase:       { code: "TC",  cls: "tc",  name: "Test case",      rank: 8, r: 5 },
 };
 const typeOf = (v) => TYPES[v.label] || { code: v.label.slice(0, 3).toUpperCase(), cls: "top", name: v.label, rank: 9, r: 8 };
 
@@ -367,7 +387,7 @@ const store = {
 let M = null;
 function buildModel(data) {
   const byId = new Map(data.graph.vertices.map((v) => [v.eid, v]));
-  const parent = new Map(), children = new Map(), ifaces = [], docsOf = new Map();
+  const parent = new Map(), children = new Map(), ifaces = [], docsOf = new Map(), verifies = [];
   const kid = (p, c) => { if (!children.has(p)) children.set(p, []); children.get(p).push(c); };
   for (const e of data.graph.edges) {
     if (e.type === "PART_OF") { parent.set(e.from_eid, e.to_eid); kid(e.to_eid, e.from_eid); }
@@ -375,7 +395,9 @@ function buildModel(data) {
       parent.set(e.to_eid, e.from_eid); kid(e.from_eid, e.to_eid);
       if (!docsOf.has(e.from_eid)) docsOf.set(e.from_eid, []);
       docsOf.get(e.from_eid).push(byId.get(e.to_eid));
-    } else if (e.type === "INTERFACES_WITH") ifaces.push(e);
+    } else if (e.type === "SPECIFIED_IN") { parent.set(e.from_eid, e.to_eid); kid(e.to_eid, e.from_eid); }
+    else if (e.type === "VERIFIES") verifies.push(e);
+    else if (e.type === "INTERFACES_WITH") ifaces.push(e);
   }
   const order = (a, b) => {
     const va = byId.get(a), vb = byId.get(b);
@@ -390,7 +412,7 @@ function buildModel(data) {
     for (const id of eids) { if (!gapsOf.has(id)) gapsOf.set(id, []); gapsOf.get(id).push(t); }
   const path = (id) => { const p = []; let c = parent.get(id); while (c) { p.unshift(c); c = parent.get(c); } return p; };
   const systemOf = (id) => path(id).map((x) => byId.get(x)).find((v) => v.label === "System");
-  return { data, byId, parent, children, roots, ifaces, docsOf, gapsOf, path, systemOf };
+  return { data, byId, parent, children, roots, ifaces, docsOf, gapsOf, path, systemOf, verifies };
 }
 
 // ── Selection, shared by every view ──────────────────────────────────────────
@@ -462,6 +484,7 @@ function renderDashboard() {
     h("ol", {}, rules.map((r) => h("li", {}, "When ", h("b", {}, r.when.map((c) => c.replace(/_/g, " ")).join(" + ")),
       " → ", h("b", {}, r.require.map((t) => t.toUpperCase()).join(", ")), r.why ? ` · ${r.why}` : "")))] : []));
 
+  renderTrace();
   const ihead = h("tr", {}, ["From", "To", "Message", "Status", "Source document", "Notes"].map((x) => h("th", {}, x)));
   const irows = M.ifaces.map((e) => h("tr", {},
     h("td", {}, h("div.who", {}, h("span", {}, byId.get(e.from_eid).props.name), nodeLink(e.from_eid))),
@@ -471,6 +494,26 @@ function renderDashboard() {
     h("td.cell", {}, e.props.source_artifact && byId.has(e.props.source_artifact) ? nodeLink(e.props.source_artifact) : h("span.note", {}, "none")),
     h("td", {}, h("span.note", {}, e.props.notes || ""))));
   $("#interfaces").replaceChildren(h("thead", {}, ihead), h("tbody", {}, irows));
+}
+
+// ── Dashboard: requirement coverage (traceability) ───────────────────────────
+function renderTrace() {
+  const tr = M.data.trace;
+  if (!tr) { $("#tracecov").replaceChildren(h("tbody", {}, h("tr", {}, h("td.note", {}, "Not available in this snapshot.")))); $("#untested").hidden = true; return; }
+  const rows = tr.summary.filter((r) => r.requirements > 0);
+  const total = rows.reduce((n, r) => n + r.requirements, 0), ver = rows.reduce((n, r) => n + r.verified, 0);
+  $("#tracecov").replaceChildren(
+    h("thead", {}, h("tr", {}, ["Subsystem", "Requirements", "Verified by a test", ""].map((x) => h("th", {}, x)))),
+    h("tbody", {}, rows.map((r) => h("tr", {},
+      h("td", {}, h("div.who", {}, h("span", {}, r.name, " ", r.safety_critical ? h("span.chip.sc", {}, "SAFETY") : null), nodeLink(r.eid))),
+      h("td", {}, r.requirements), h("td", {}, `${r.verified} of ${r.requirements}`),
+      h("td", {}, h("span.bar", { role: "img", "aria-label": `${Math.round(100 * r.verified / r.requirements)}% verified` },
+        h("i", { style: `width:${(100 * r.verified / r.requirements).toFixed(1)}%` }))))),
+      h("tr", {}, h("td", {}, h("b", {}, "Total")), h("td", {}, h("b", {}, total)), h("td", {}, h("b", {}, `${ver} of ${total}`)), h("td", {}, ""))));
+  const un = tr.untested || [];
+  $("#untested").hidden = !un.length;
+  $("#untested").replaceChildren(h("summary", {}, `${un.length} untested requirement${un.length === 1 ? "" : "s"}`),
+    h("ul", {}, un.map((u) => h("li", {}, nodeLinkIf(u.eid), " ", h("span.note", {}, `${u.name} (${u.subsystem}, ${u.document})`)))));
 }
 
 // ── Dashboard: checks (latest run of each) ───────────────────────────────────
@@ -511,7 +554,8 @@ const nodeLinkIf = (eid) => (M.byId.has(eid) ? nodeLink(eid) : h("span.mono", {}
 
 // ── Ontology tab ─────────────────────────────────────────────────────────────
 const tags = (list, cls) => (list || []).map((x) => h("span.tag" + (cls ? "." + cls : ""), {}, String(x)));
-const plannedTag = (o) => (o && o.status === "planned" ? h("span.tag.planned", { title: "Defined, not used yet" }, "planned") : null);
+const plannedTag = (o) => (o && o.status === "planned" ? h("span.tag.planned", { title: "Defined, not used yet" }, "planned")
+  : o && o.source === "document" ? h("span.tag.on", { title: "Read out of the documents, not written in the baseline" }, "from documents") : null);
 function ontoTable(head, rows) {
   return h("div.scroll", {}, h("table", {}, h("thead", {}, h("tr", {}, head.map((x) => h("th", {}, x)))), h("tbody", {}, rows)));
 }
@@ -681,7 +725,7 @@ function simulate() {
   const ids = [...M.byId.keys()];
   const P = new Map(ids.map((id) => [id, { x: depthOf.get(id) * 120, y: y.get(id) * 1.1, vx: 0, vy: 0 }]));
   const links = M.data.graph.edges;
-  const rest = { PART_OF: 70, HAS_ARTIFACT: 55, INTERFACES_WITH: 110 };
+  const rest = { PART_OF: 70, HAS_ARTIFACT: 55, INTERFACES_WITH: 110, SPECIFIED_IN: 40, VERIFIES: 60, ALLOCATED_TO: 0 };
   for (let it = 0; it < 500; it++) {
     const cool = 1 - it / 500;
     for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
@@ -691,6 +735,7 @@ function simulate() {
       a.vx += f * dx / d; a.vy += f * dy / d; b.vx -= f * dx / d; b.vy -= f * dy / d;
     }
     for (const e of links) {
+      if (e.type === "ALLOCATED_TO") continue;
       const a = P.get(e.from_eid), b = P.get(e.to_eid);
       const dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 0.01;
       const f = (d - (rest[e.type] || 70)) * 0.04;
@@ -714,8 +759,9 @@ function renderNetwork() {
   mk.append(s("path", { d: "M0,0 L10,5 L0,10 z", class: "arrow" })); defs.append(mk); svg.append(defs);
   const lines = [];
   for (const e of M.data.graph.edges) {
+    if (e.type === "ALLOCATED_TO") continue;      // shown in the details panel; would double every requirement's links
     const cls = e.type === "INTERFACES_WITH" ? "iface" + (e.props.status === "candidate" ? " candidate" : "")
-      : "link" + (e.type === "HAS_ARTIFACT" ? " doc" : "");
+      : e.type === "VERIFIES" ? "link verifies" : "link" + (e.type === "HAS_ARTIFACT" || e.type === "SPECIFIED_IN" ? " doc" : "");
     const l = s("line", { class: cls, "marker-end": e.type === "INTERFACES_WITH" ? "url(#arw2)" : null });
     l.append(s("title", {}, `${e.from_eid} —${e.type}→ ${e.to_eid}${e.props.message ? " · " + e.props.message : ""}`));
     lines.push([l, e]); svg.append(l);
@@ -787,6 +833,18 @@ function renderDetails() {
     parts.push(h("h4", {}, "Documents"), h("ul", {}, (M.data.doc_types || []).map((dt) =>
       h("li", {}, h("span.mono", {}, dt.toUpperCase().padEnd(5, " ")), " ", docState(v, dt)))));
   }
+  if (v.label === "Requirement") {
+    const by = M.verifies.filter((e) => e.to_eid === v.eid);
+    parts.push(h("h4", {}, "Verified by"), by.length
+      ? h("ul", {}, by.map((e) => h("li", {}, nodeLink(e.from_eid), " ", h("span.note", {}, M.byId.get(e.from_eid)?.props.name || ""))))
+      : h("p", {}, h("span.state.miss" + (M.byId.get(v.props.subsystem)?.props.safety_critical ? ".sc" : ""), {}, "no test case verifies this")));
+  }
+  if (v.label === "TestCase") {
+    const outs = M.verifies.filter((e) => e.from_eid === v.eid);
+    const missing = (v.props.verifies || []).filter((r) => !M.byId.has(r));
+    parts.push(h("h4", {}, "Verifies"), h("ul", {}, outs.map((e) => h("li", {}, nodeLink(e.to_eid), " ", h("span.note", {}, M.byId.get(e.to_eid)?.props.name || ""))),
+      missing.map((r) => h("li", {}, h("span.state.miss", {}, `${r}: no such requirement`)))));
+  }
   if (v.label === "DesignArtifact") {
     const usedBy = M.ifaces.filter((e) => e.props.source_artifact === v.eid);
     if (usedBy.length) parts.push(h("h4", {}, "Defines interfaces"),
@@ -813,7 +871,7 @@ document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("clic
 
 function renderLegend() {
   const seen = new Set([...M.byId.values()].map((v) => typeOf(v).cls));
-  const groups = [["top", "Vehicle / family / variant"], ["sys", "System"], ["sub", "Subsystem"], ["fn", "Function"], ["doc", "Document"]];
+  const groups = [["top", "Vehicle / family / variant"], ["sys", "System"], ["sub", "Subsystem"], ["fn", "Function"], ["doc", "Document"], ["req", "Requirement"], ["tc", "Test case"]];
   $("#legend").replaceChildren(
     ...groups.filter(([c]) => seen.has(c)).map(([c, n]) => h("span.t-" + c, {}, h("i.sw", {}), h("span", { style: "color:var(--ink-2)" }, n))),
     h("span", {}, h("i.ln", {}), "interface"), h("span", {}, h("i.ln.dash", {}), "candidate"));

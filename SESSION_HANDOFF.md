@@ -1,7 +1,7 @@
 # ESAM learning project: session handoff
 
 **Status (2026-10-18):** resumed on a fast connection. Everything is installed, every lesson
-runs end to end on the real stack, and **48/48 tests pass**. What's left is in
+runs end to end on the real stack, and **54/54 tests pass**. What's left is in
 [§5 Pending tasks](#5-pending-tasks-in-order): mainly pushing to GitHub and connecting a chat model.
 
 History: paused 2026-10-17 at ~15–75 KB/s, resumed 2026-10-18 at ~8.5 MB/s.
@@ -15,7 +15,7 @@ Day-to-day restart steps for the user are in [`HOW_TO_START.md`](HOW_TO_START.md
    lesson or corpus before moving on.
 2. Bring the database back: `docker compose up -d --wait` (stopped at the end of the 2026-10-18
    session to save resources; data is kept in volume `esam-pgdata`).
-3. Sanity check: `source .venv/bin/activate && pytest -q` (expect 48 passed).
+3. Sanity check: `source .venv/bin/activate && pytest -q` (expect 54 passed).
 
 ---
 
@@ -91,7 +91,7 @@ Everything is installed. To pick up again:
 cd /home/dev/Documents/kirahi/aidev/esam
 source .venv/bin/activate
 docker compose up -d --wait          # if the container isn't running (e.g. after a reboot)
-pytest -q                            # expect 48 passed
+pytest -q                            # expect 54 passed
 ```
 
 To rebuild from scratch on another machine (needs ~1 GB of downloads), see the Quick start in
@@ -112,12 +112,20 @@ top-level README update; also turned on pgvector 0.8 iterative scans for filtere
    model weights"*, but a local embedder *is* model weights (~440 MB, MIT). Get an exception, or
    request an embeddings route on the IL5 API Gateway (then set `ESAM_EMBED_BACKEND=openai`).
 
-### Known issue: intermittent crash at the end of pytest (2026-10-19)
-Twice in ~15 runs, `pytest -q` printed a native "Fatal Python error" dump (module list: torch, psycopg_binary,
-scipy, sklearn) after the tests had run. 13 runs were clean (49 passed, exit 0), including 6 back-to-back
-with `PYTHONFAULTHANDLER=1`, which never reproduced it. Likely an interpreter-shutdown race between torch's
-threads and psycopg's C extension. If it recurs, capture the head of the output (`grep -A30 "Fatal Python error"`)
-and try `pytest -p no:faulthandler` or closing the store connections in fixture teardown.
+### Known issue: intermittent "Illegal instruction" crash while embedding (2026-10-19)
+About 1 run in 7, a run that embeds text (pytest, ingest) dies with `Fatal Python error: Illegal instruction`
+(SIGILL, exit 132). Caught with a traceback on 2026-10-19: it happens **inside torch's GELU activation while
+the BGE model embeds** (`esamkit/embedders/local_st.py` → sentence-transformers → BERT layer).
+
+Cause, as far as diagnosed: this laptop's CPU is an **Intel i5-3320M (Ivy Bridge, 2012): AVX but no AVX2/FMA**.
+torch 2.14.1's own dispatch is already at `DEFAULT` (safe), so the bad instruction most likely comes from a
+bundled math library (MKL or oneDNN) choosing an AVX2 code path at run time. Not seen on any other step.
+The pilot VMs are modern CPUs, so this is a learning-machine issue, not a pilot risk.
+
+To try (one at a time, ~10 pytest runs each to judge): `export MKL_ENABLE_INSTRUCTIONS=AVX`;
+`export DNNL_MAX_CPU_ISA=AVX`; `torch.set_num_threads(1)` in the embedder; or the planned ONNX Runtime
+embedder (no torch at all). If a run crashes, just re-run it: no data is left half-written (ingest replaces
+a document's chunks; tests use their own database).
 
 ## 6. Decisions made this session (don't re-litigate)
 

@@ -26,7 +26,7 @@
 
 metadata:
   name: "ESAM ontology"
-  version: "0.2"
+  version: "0.3"
   owner: "SE team"
   standards:
     - "MIL-STD-881F Appendix G: WBS structure and codes"
@@ -124,15 +124,27 @@ classes:
       revision: { type: text, pattern: '^[A-Z]{1,2}$', required: true }
       attached_to: { type: ref, class: Subsystem, required: true }
       file: { type: text, required: true }
-  # Planned (step 4): requirements and test cases as vertices of their own.
+  # Requirements and test cases are read out of the documents (SRS and STD),
+  # not written in the baseline: esamkit/traceability.py. Each records the
+  # document it came from, so a new revision replaces what the old one gave.
   Requirement:
-    description: "One 'shall' statement in an SRS."
+    description: "One 'shall' statement in an SRS, read from its '- **SRS-…**' line."
     id_pattern: '^SRS-[A-Z0-9]+-0[1-9]\d$'
-    status: planned
+    source: document
+    attributes:
+      text: { type: text, required: true }
+      section: { type: text }
+      subsystem: { type: ref, class: Subsystem }
+      source_artifact: { type: ref, class: DesignArtifact, required: true }
   TestCase:
-    description: "One test case in an STD, with a Verifies: line."
+    description: "One test case in an STD, read from its 'TC-…' heading and fixed fields."
     id_pattern: '^TC-[A-Z0-9]+-\d{3}$'
-    status: planned
+    source: document
+    attributes:
+      verifies: { type: text_list, required: true, description: "Requirement IDs from the Verifies: line" }
+      method: { type: text, description: "From the Method: line" }
+      pass_criteria: { type: text }
+      source_artifact: { type: ref, class: DesignArtifact, required: true }
 
 # ── Kinds of links ───────────────────────────────────────────────────────────
 relationships:
@@ -153,9 +165,9 @@ relationships:
       status: { type: enum, values: link_status, required: true }
       message: { type: text, description: "Required for signal interfaces, e.g. 'EBC1 (PGN 61441)'" }
       source_artifact: { type: ref, class: DesignArtifact, description: "The interface document that defines it" }
-  VERIFIES:      { from: [TestCase], to: [Requirement], meaning: "test case verifies requirement", status: planned }
-  SPECIFIED_IN:  { from: [Requirement], to: [DesignArtifact], meaning: "requirement is stated in document", status: planned }
-  ALLOCATED_TO:  { from: [Requirement], to: [Subsystem], meaning: "requirement is met by subsystem", status: planned }
+  VERIFIES:      { from: [TestCase], to: [Requirement], meaning: "test case verifies requirement (from its Verifies: line)" }
+  SPECIFIED_IN:  { from: [Requirement, TestCase], to: [DesignArtifact], meaning: "item is stated in document" }
+  ALLOCATED_TO:  { from: [Requirement], to: [Subsystem], meaning: "requirement is met by subsystem (the SRS's subsystem)" }
 
 # ── Kinds of documents ───────────────────────────────────────────────────────
 # standard:  where the name comes from.

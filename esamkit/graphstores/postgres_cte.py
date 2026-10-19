@@ -239,6 +239,48 @@ ORDER BY wbs_code, eid
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# TRACEABILITY — requirements and test cases (esamkit/traceability.py).
+# One-hop anti-joins and counts, like Q4: "which requirement has NO test?"
+# ─────────────────────────────────────────────────────────────────────────────
+UNTESTED_REQUIREMENTS = """
+SELECT r.properties->>'id'              AS eid,
+       r.properties->>'name'            AS name,
+       r.properties->>'subsystem'       AS subsystem,
+       r.properties->>'source_artifact' AS document
+FROM graph_vertices r
+WHERE r.label = 'Requirement'
+  AND NOT EXISTS (SELECT 1 FROM graph_edges v WHERE v.to_id = r.id AND v.type = 'VERIFIES')
+ORDER BY eid
+"""
+
+VERIFIED_BY = """
+SELECT t.properties->>'id'              AS eid,
+       t.properties->>'name'            AS name,
+       t.properties->>'method'          AS method,
+       t.properties->>'source_artifact' AS document
+FROM graph_vertices r
+JOIN graph_edges v    ON v.to_id = r.id AND v.type = 'VERIFIES'
+JOIN graph_vertices t ON t.id = v.from_id
+WHERE r.properties->>'id' = %(req)s
+ORDER BY eid
+"""
+
+TRACE_SUMMARY = """
+SELECT s.properties->>'id'   AS eid,
+       s.properties->>'name' AS name,
+       (s.properties->>'safety_critical')::boolean AS safety_critical,
+       count(r.id)           AS requirements,
+       count(r.id) FILTER (WHERE EXISTS (
+           SELECT 1 FROM graph_edges v WHERE v.to_id = r.id AND v.type = 'VERIFIES')) AS verified
+FROM graph_vertices s
+LEFT JOIN graph_edges a    ON a.to_id = s.id AND a.type = 'ALLOCATED_TO'
+LEFT JOIN graph_vertices r ON r.id = a.from_id AND r.label = 'Requirement'
+WHERE s.label = 'Subsystem'
+GROUP BY s.id
+ORDER BY eid
+"""
+
+# ─────────────────────────────────────────────────────────────────────────────
 # SNAPSHOT — the whole graph, for drawing it (SE Cockpit Graph tab).
 # Not a query anyone "asks"; just every row, with UUIDs swapped for entity ids
 # so the caller never sees database internals.
@@ -310,3 +352,22 @@ class PostgresCTEGraphStore(GraphStore):
 
     def snapshot(self) -> dict:
         return {"vertices": self._rows(SNAPSHOT_VERTICES), "edges": self._rows(SNAPSHOT_EDGES)}
+
+    def remove_derived(self, source_artifact: str) -> int:
+        cur = self._conn.execute(
+            "DELETE FROM graph_vertices WHERE label IN ('Requirement', 'TestCase') "
+            "AND properties->>'source_artifact' = %(src)s", {"src": source_artifact})
+        return cur.rowcount
+
+    def existing_ids(self, label: str) -> set[str]:
+        return {r["eid"] for r in self._rows(
+            "SELECT properties->>'id' AS eid FROM graph_vertices WHERE label = %(label)s", label=label)}
+
+    def untested_requirements(self) -> list[dict]:
+        return self._rows(UNTESTED_REQUIREMENTS)
+
+    def verified_by(self, requirement_id: str) -> list[dict]:
+        return self._rows(VERIFIED_BY, req=requirement_id)
+
+    def trace_summary(self) -> list[dict]:
+        return self._rows(TRACE_SUMMARY)

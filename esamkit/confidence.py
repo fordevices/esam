@@ -28,6 +28,7 @@ from .embedders.base import Embedder
 from .graphstores.base import GraphStore
 from .hybrid import SYSTEM_PROMPT, retrieve
 from .ingest import ingest_file
+from .traceability import load_traceability
 from .vectorstores.base import VectorStore
 
 # Ways a model says "that document doesn't exist". Lower-case substrings.
@@ -48,6 +49,7 @@ class Scenario:
     artifact: dict          # its baseline `artifacts:` entry
     expect_cited: list[str] = field(default_factory=list)   # ids the AFTER answer must mention
     forbid_before: str = ""  # regex the BEFORE answer must NOT match (an invented value)
+    verifies: dict = field(default_factory=dict)  # {requirement: test case} the new document must add
 
 
 def baseline_with(base_yaml: Path, artifacts: list[dict], out: Path) -> Baseline:
@@ -59,12 +61,17 @@ def baseline_with(base_yaml: Path, artifacts: list[dict], out: Path) -> Baseline
     return load_baseline(out)
 
 
-def restore(scenarios: list[Scenario], store: VectorStore, graph: GraphStore, base: Baseline) -> None:
-    """Back to the committed baseline: scenario documents out of both stores."""
+def restore(scenarios: list[Scenario], store: VectorStore, graph: GraphStore, base: Baseline,
+            documents_dir: Path | None = None) -> None:
+    """Back to the committed baseline: scenario documents out of both stores,
+    and the requirements/test cases of the committed documents reloaded."""
+    from .config import settings
+
     for sc in scenarios:
         store.delete_source(sc.artifact["file"])
     graph.reset()
     graph.load(base)
+    load_traceability(graph, base, documents_dir or settings.documents_dir)
 
 
 def _check(label: str, ok: bool, kind: str) -> dict:
@@ -87,7 +94,8 @@ def run_scenario(sc: Scenario, emb: Embedder, store: VectorStore, graph: GraphSt
         _check(f"graph reports {sc.subsystem} has no {sc.doc_type.upper()}",
                (sc.subsystem, sc.doc_type) in missing1, "deterministic"),
         _check("prompt tells the model it is MISSING", "MISSING: " + sc.subsystem in r1["prompt"], "deterministic"),
-    ]}
+    ] + [_check(f"graph: no test case verifies {req}", not graph.verified_by(req), "deterministic")
+         for req in sc.verifies]}
     if ask:
         a1 = ask(SYSTEM_PROMPT, r1["prompt"])
         before["answer"] = a1
@@ -105,6 +113,7 @@ def run_scenario(sc: Scenario, emb: Embedder, store: VectorStore, graph: GraphSt
     graph.load(overlay)
     facts = overlay.artifact_index()[sc.artifact["file"]]
     n, _ = ingest_file(sc.document, sc.artifact["file"], facts, emb, store)
+    load_traceability(graph, overlay, sc.document.parent, only={art})   # its test cases / requirements
     ingest = {"artifact": art, "attached_to": sc.artifact["attached_to"], "chunks": n}
 
     # ── AFTER: same question ──
@@ -114,7 +123,8 @@ def run_scenario(sc: Scenario, emb: Embedder, store: VectorStore, graph: GraphSt
         _check(f"graph now has a {sc.doc_type.upper()} for {sc.subsystem}",
                (sc.subsystem, sc.doc_type) not in missing2, "deterministic"),
         _check(f"{art} retrieved as evidence", art in r2["evidence"], "deterministic"),
-    ]}
+    ] + [_check(f"graph: {tc} verifies {req}", tc in [v["eid"] for v in graph.verified_by(req)], "deterministic")
+         for req, tc in sc.verifies.items()]}
     if ask:
         a2 = ask(SYSTEM_PROMPT, r2["prompt"])
         after["answer"] = a2
