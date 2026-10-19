@@ -14,6 +14,22 @@ that level is invented.
 
 > **Coming back after a break or a reboot?** See [`HOW_TO_START.md`](HOW_TO_START.md).
 
+## Release 0.1.0: what ESAM does
+
+The lessons grew into a working system an SE can use (learning build, synthetic data):
+
+| Part | What it gives an SE | Read |
+|---|---|---|
+| **SE baseline + ontology** | The vehicle structure in YAML, checked against the programme vocabulary (MIL-STD-498 document names, MIL-STD-882E criticality, rules for which documents each subsystem needs) | SE manual §1, §8 |
+| **Hybrid answers** | Questions answered from the documents *and* the graph, with **MISSING** when a needed document or test doesn't exist | §7, `docs/how_esam_finds_answers.html` |
+| **Traceability + health report** | Requirements and test cases read from the documents; six checks on the baseline, only integrity blocks | §5, §10 |
+| **SE Cockpit** | Dashboard, Graph, Ontology and Tasks tabs (`uvicorn cockpit.app:app --port 8080`) | `cockpit/README.md` |
+| **The agents (CrewAI)** | Review a document → **SE approves** → ingest + verify; ask questions; draft an SRS from an SE brief with an evidence pack; a task list and worker; full run logs | §11, §12, `crew/README.md` |
+| **Standards library** | MIL-STD-882E (extract) and the SRS DID (DI-IPSC-81433A), cited only by real clause | §11.4 |
+
+**For SEs:** [`docs/ESAM_SE_User_Manual.md`](docs/ESAM_SE_User_Manual.md) (§12: working with the agents).
+**For whoever runs it:** [`HOW_TO_START.md`](HOW_TO_START.md) and [`crew/README.md`](crew/README.md).
+
 ## Built for the ESAM pilot's constraints
 
 | Constraint (from `ESAM_Pilot_Implementation_v1.0.md`) | How this code handles it |
@@ -46,18 +62,30 @@ esam/
 │   └── graphstores/
 │       ├── base.py           GraphStore interface
 │       └── postgres_cte.py   pilot graph schema + recursive-CTE queries (commented SQL)
+│   ├── ontology.py, health.py, traceability.py, coverage.py, hybrid.py   ontology, checks, answers
+│   ├── intake.py, srs.py, standards.py      document intake, SRS checks + evidence pack, standards library
+│   ├── environment.py, usage.py, tasks.py, runs.py   environments, usage ledger, task list, run folders
+├── cockpit/                  SE Cockpit (FastAPI + one offline HTML page; snapshot export)
+├── crew/                     the agents: main.py, crew.py, custom_tools.py, config/agents.yaml, config/tasks.yaml
+├── config/environments/      environment profiles (local, pilot-il5, full-janusgraph); secrets by name only
 ├── data/
 │   ├── baseline/vehicle_decomposition.yaml   SE-owned structure (ESAM YAML format)
-│   └── documents/*.md                        synthetic ICD / SDD / SRS documents (MIL-STD-498 names)
-├── docs/reference/           MIL-STD-881F Appendix G excerpt (source of the WBS codes)
+│   ├── documents/*.md                        synthetic ICD / SDD / SRS documents (MIL-STD-498 names)
+│   ├── ontology/esam_ontology.yaml           the SE vocabulary and rules
+│   ├── standards/                            standards library (clause text + catalogue with source hashes)
+│   └── briefs/                               SE authoring briefs for SRS drafting
+├── docs/                     SE manual, SE/PM briefing page, source PDFs of the standards, MIL-STD-881F excerpt
+├── work/                     (not in git) inbox, runs with their logs, drafts, task logs
 ├── lessons/
 │   ├── 00_setup/             install, stage the model, air-gap transfer bundle
 │   ├── 01_corpus/            what we're embedding and why it's shaped this way
 │   ├── 02_embeddings/        vectors and cosine similarity, by hand
 │   ├── 03_vector_store/      chunk -> embed -> store -> search, and its blind spot
 │   ├── 04_graph/             recursive CTEs (+ Gremlin / Cypher equivalents)
-│   └── 05_hybrid/            vector entry point -> graph reach -> chat model answer
-└── tests/                    pytest: pure, graph, pgvector, embedder (DB tests use database esam_test)
+│   ├── 05_hybrid/            vector entry point -> graph reach -> chat model answer
+│   ├── 06_missing_document/  "that document doesn't exist" -> ingest -> right answer
+│   └── 07-09/                ontology, traceability, health report
+└── tests/                    pytest (DB tests use database esam_test)
 ```
 
 ## Quick start
@@ -77,7 +105,11 @@ python lessons/04_graph/load_graph.py --reset
 python lessons/04_graph/queries.py
 python lessons/05_hybrid/hybrid.py "If we change the EBC1 message period, what is affected?"
 
-pytest -q                                           # 24 tests
+pytest -q                                           # 131 tests
+
+pip install -r requirements-crew.txt                # the agents (CrewAI) and run logs
+uvicorn cockpit.app:app --port 8080                 # SE Cockpit at http://127.0.0.1:8080
+python -m crew.main env                             # the agents' environment check
 ```
 
 ## Moving to the pilot / swapping backends

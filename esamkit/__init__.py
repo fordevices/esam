@@ -14,3 +14,5 @@ the lessons never care which concrete backend is in use:
 right concrete objects. To move from this laptop to the ESAM pilot you change
 environment variables, not code.
 """
+
+__version__ = "0.1.0"

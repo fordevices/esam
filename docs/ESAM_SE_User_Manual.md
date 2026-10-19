@@ -17,6 +17,7 @@
 | 9 | [Where attributes go, and writing documents ESAM can read](#9-where-attributes-go-and-writing-documents-esam-can-read) |
 | 10 | [Requirements and tests in the graph (traceability)](#10-requirements-and-tests-in-the-graph-traceability) |
 | 11 | [Drafting a software requirements specification with ESAM](#11-drafting-a-software-requirements-specification-with-esam) |
+| 12 | [Working with the ESAM agents](#12-working-with-the-esam-agents) |
 
 ---
 
@@ -684,4 +685,144 @@ The level-of-rigor tasks (analysis of requirements, architecture, design and cod
 ### 11.6 After the draft
 
 Review the draft and the evidence pack, then put the draft through the normal document review: the ontology check, the content review and **your approval** before it enters the baseline. Fix the baseline findings from §11.2 step 1 (for example, mark the subsystem safety-critical) as baseline changes in their own right.
+
+---
+
+## 12. Working with the ESAM agents
+
+ESAM has a small team of AI agents that do the reading, checking and drafting an SE would otherwise do by hand. This section is about using them day to day: asking questions, bringing in documents, drafting an SRS, and following what they did. You work with them from the **Tasks** tab of the SE Cockpit. Everything can also be done from a command line (§12.8).
+
+### 12.1 The team, and what it will never do
+
+| Agent | Its job |
+|---|---|
+| **Triage** | Works out what a request is about: which subsystem, which documents and requirements, and what is missing |
+| **Researcher / Author** | Gathers the evidence or writes the draft, citing a document or clause for every fact |
+| **SE Reviewer** | Checks the work against ESAM's rules and the sources, removes what isn't supported, and gives a verdict |
+| **Environment Engineer** | Confirms the models, databases and tools are available before work starts |
+
+The agents read the baseline, the documents and the standards library **only through ESAM's own checks**: the ontology, the graph, the health report and the document search. They interpret what those checks report. They don't decide what is true.
+
+**What the agents never do:**
+
+- **Approve anything.** A document enters the baseline only after **you** approve it, and the approval is recorded under your name.
+- **Make a safety assessment.** Severity and software control category come from you and the system safety engineer, in a brief (§11.1).
+- **Invent a value.** A time, rate or limit that isn't in a source document is written as `TBD` and reported, never guessed.
+- **Cite a clause that doesn't exist.** Only clauses held in the standards library (§11.4) can be cited.
+- **Work out of sight.** Every run keeps its reports and a full log of each agent step and tool call (§12.6).
+
+### 12.2 Before you start
+
+1. **Open the SE Cockpit** (on the ESAM machine: `http://127.0.0.1:8080`) and go to the **Tasks** tab. The number on the tab counts documents waiting for your decision.
+2. **Type your name** under *Add a task*. Every task you add and every decision you make is recorded under it. The Cockpit remembers it in your browser.
+3. **A worker must be running.** Tasks wait in a queue until a *worker* on the ESAM machine picks them up. If a task stays *queued* for more than two minutes and nothing is *running*, the Worker panel says so: ask whoever runs ESAM to start one (`python -m crew.main worker`).
+
+### 12.3 Asking a question
+
+*Add a task* → **Ask a question** → type it → **Queue task**.
+
+The answer comes back with a citation for each fact (a document id such as `[SRS-BRK-001]`, or `[graph]` for structure and traceability) and a **MISSING** section listing every document or test the answer needed but the baseline doesn't have. An empty MISSING section means nothing was missing, not that nobody checked. Asking never changes anything. Open the answer from the *Recent runs* list.
+
+Good questions name the thing you care about: *"Which brake ECU requirements have no test?"*, *"What consumes EBC1, and is any of it unconfirmed?"*, *"How fast must the brake ECU release pressure on lock-up, and what verifies it?"*
+
+### 12.4 Bringing in a new document
+
+**1. Prepare it** the way §9 describes. ESAM must be able to tell what the document is from the document itself:
+
+```
+# STD-BRK-001 — Brake Control ECU Software Test Description
+
+| Document | Type | Revision | Subsystem |
+|---|---|---|---|
+| STD-BRK-001 | STD | A | SUB-BRK-ECU |
+```
+
+The file name must be the document id (`STD-BRK-001.md`). For a new revision of an existing document, raise the revision letter: ESAM refuses a second copy at the same revision.
+
+**2. Queue the review.** Put the file in the ESAM inbox (`work/inbox/`), then in the Cockpit choose *Review a document for ingestion* and pick it.
+
+**3. The agents review it, then stop.** Triage checks it against the ontology: the right document type for that subsystem, a real subsystem, a valid id and revision. The Researcher reads its content. For a test description, it compares every test case's pass criteria with the requirement it verifies and marks each one **matches**, **stricter**, **weaker** or **unclear**, quoting both. The SE Reviewer writes an **approval request** ending with *RECOMMENDATION: INGEST* or *DO NOT INGEST*.
+
+**4. You decide**, in *Waiting for your decision*:
+
+| You | What happens |
+|---|---|
+| Read the **approval request** (and the log, if you want the detail) | Nothing changes until you decide |
+| **Approve: ingest + verify** | ESAM adds the document to the baseline and the search store, reloads the graph, and checks that it is really in: chunks stored, attached to its subsystem, its requirements or test cases and their links present, findable by search, integrity check passing. It also compares the health report before and after. The result is *verified* or *verification failed*. |
+| **Reject**, with a note saying why | Recorded with your name; nothing is ingested. Fix the document and queue it again. |
+| Approve when the recommendation was *DO NOT INGEST* | Tick *Approve against the recommendation* and say why in the note. Both are recorded. An **ontology error can't be approved past**: fix the document instead. |
+
+Approving changes the baseline file (one line is added under `artifacts:`, and its comments and layout are kept) and copies the document into the documents folder. Review it with the baseline owner and put it under configuration control as usual. If an ingest has to be reversed, whoever runs ESAM can undo exactly that ingest (`crew.main undo <run>`).
+
+**Read the verification report** after an approval. "Findings closed" is the point: for example, *"Brake Control ECU has no STD"* and *"SRS-BRK-011: no test case verifies it"* disappear once the test description is in.
+
+### 12.5 Drafting an SRS
+
+Write a brief (§11.1) and place it in `data/briefs/`. Then *Add a task* → **Draft an SRS from a brief** → pick it. When the run finishes, its row in *Recent runs* shows the reviewer's verdict, the check counts and a link to the **evidence pack**. Read §11.5 for what each file shows.
+
+A draft is a **candidate**. Fix the open items (often an SE decision the agents raised, such as a hazard the source document creates), then bring the draft in like any other document (§12.4).
+
+### 12.6 Following a task
+
+| Status | Meaning |
+|---|---|
+| **queued** | Waiting for a worker. You can **Cancel** it. |
+| **running** | A worker has it. The page refreshes every few seconds. |
+| **done** | Finished. The *Outcome* says how: *awaiting SE approval*, *verified*, *GREEN LIGHT*, a draft with its check counts, or an answer. |
+| **failed** | It stopped. The *Outcome* gives the reason (§12.7). |
+
+Every run has a folder. *Recent runs* links to what's in it:
+
+| Link | What it is |
+|---|---|
+| **approval request** | The SE Reviewer's one-page summary for a document review |
+| **verification** | What the ingest did, every check expected vs found, findings closed and opened |
+| **answer** | The answer to a question |
+| **evidence pack** | An SRS draft's evidence (§11.5) |
+| **terminal log** | Everything the agents did, step by step: which agent, which check it ran, what the check returned, what it concluded. Read this when you want to know *why* an agent said something. |
+| **error** | Present only if the run failed |
+
+### 12.7 When something goes wrong
+
+| You see | It means | Do this |
+|---|---|---|
+| Tasks stay *queued*; the Worker panel warns | No worker is running | Ask whoever runs ESAM to start one |
+| *failed: NOT READY …* | A model, database or tool isn't available in this environment | Queue **Check the environment**: its report names the exact fix |
+| *ONTOLOGY FAIL* in the approval request | The document's header doesn't match the ontology (wrong type for the id, unknown subsystem, bad revision) | Fix the header (§12.4 step 1) and review again |
+| The document isn't in the list to review | It isn't in `work/inbox/`, or isn't a `.md` file | Put it there; the list refreshes |
+| *Approve* is refused | It's no longer waiting (already decided), or the reviewer said *DO NOT INGEST* and the override box or note is missing | Read the message under the buttons |
+| *verification failed* | The document went in, but a check didn't pass | Read the verification report; if needed, have the ingest undone |
+| An answer says *MISSING* | The baseline lacks a document or test the question needs | That's the finding: §7 explains what to do |
+
+### 12.8 Without the Cockpit
+
+Whoever runs ESAM can do the same from a terminal on the ESAM machine:
+
+| Task | Command |
+|---|---|
+| Ask a question | `python -m crew.main ask "Which brake ECU requirements have no test?"` |
+| Review one document | `python -m crew.main review work/inbox/STD-BRK-001.md` |
+| Review everything in the inbox | `python -m crew.main inbox` |
+| List runs and their state | `python -m crew.main runs` |
+| Approve / reject | `python -m crew.main approve <run>` · `python -m crew.main reject <run> --note "why"` |
+| Undo an ingest | `python -m crew.main undo <run>` |
+| Draft an SRS | `python -m crew.main author data/briefs/SRS-ENG-001.yaml` |
+| Check the environment | `python -m crew.main env` |
+| Queue instead of running now | `python -m crew.main tasks add ask "…"` · `tasks list` · `worker` |
+
+A run started from the terminal shows in the Cockpit like any other.
+
+### 12.9 How long it takes, and what it costs
+
+Measured on the learning system (GPT-5.1). The pilot's numbers will differ, but the proportions hold:
+
+| Task | Typical time | Model tokens |
+|---|---|---|
+| Check the environment | ~15 s | ~3 thousand |
+| Review a document | ~1 min | ~70 thousand |
+| Approve (ingest + verify) | ~40 s | ~13 thousand |
+| Ask a question | a few minutes | ~80 thousand |
+| Draft an SRS | ~5 min | ~500 thousand |
+
+Drafting an SRS is by far the most expensive task. Make sure the brief and its sources are right before you queue one.
 
